@@ -11,6 +11,7 @@
   <ItemGroup>
     <Compile Include="Fixtures.fs" />
     <Compile Include="EventStoreTests.fs" />
+    <Compile Include="SerializeTests.fs" />
     <Compile Include="DomainTests.fs" />
     <Compile Include="Main.fs" />
     <None Include="paket.references" />

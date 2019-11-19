@@ -9,6 +9,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Serialize.fs" />
+    <Compile Include="Deserialize.fs" />
     <Compile Include="Main.fs" />
     <None Include="paket.references" />
   </ItemGroup>

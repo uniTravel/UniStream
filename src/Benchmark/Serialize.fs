@@ -2,12 +2,10 @@
 
 open System
 open System.IO
-open System.Text.Json
 open BenchmarkDotNet.Attributes
 
 type MetaEvent = { AggregateId: Guid; TraceId: Guid; Version: int }
 
-[<DryJob>]
 [<MemoryDiagnoser>]
 type Serialize () =
 
@@ -43,4 +41,16 @@ type Serialize () =
             ((e.AggregateId.ToByteArray ()).AsSpan ()).CopyTo a
             ((e.TraceId.ToByteArray ()).AsSpan ()).CopyTo t
             ((BitConverter.GetBytes e.Version).AsSpan ()).CopyTo v
+        )
+
+    [<Benchmark>]
+    member self.Array () =
+        [ 1 .. self.count ]
+        |> List.iter (fun i ->
+            let e = { AggregateId = aggId; TraceId = traceId; Version = i }
+            let a = e.AggregateId.ToByteArray ()
+            let t = e.TraceId.ToByteArray ()
+            let v = BitConverter.GetBytes e.Version
+            let array = Array.concat [ a; t; v]
+            ()
         )
