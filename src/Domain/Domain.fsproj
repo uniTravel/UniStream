@@ -8,8 +8,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="IDomain.fsi" />
-    <Compile Include="IDomain.fs" />
     <Compile Include="MetaTrace.fsi" />
     <Compile Include="MetaTrace.fs" />
     <Compile Include="LogType.fsi" />
@@ -26,10 +24,10 @@
     <Compile Include="Repository.fs" />
     <Compile Include="Aggregate.fsi" />
     <Compile Include="Aggregate.fs" />
-    <Compile Include="Note.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Abstract\Abstract.fsproj" />
     <ProjectReference Include="..\Infrastructure\Infrastructure.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

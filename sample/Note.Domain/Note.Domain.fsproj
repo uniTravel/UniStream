@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <AssemblyName>Note.Domain</AssemblyName>
+    <Version>0.0.1</Version>
+    <Authors>Eric</Authors>
+    <Company>UniCloud</Company>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="NoteAgg\Aggregate.fsi" />
+    <Compile Include="NoteAgg\Aggregate.fs" />
+    <Compile Include="NoteAgg\Event.fsi" />
+    <Compile Include="NoteAgg\Event.fs" />
+    <Compile Include="NoteAgg\Command.fsi" />
+    <Compile Include="NoteAgg\Command.fs" />
+    <None Include="paket.references" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Domain\Domain.fsproj" />
+    <ProjectReference Include="..\Note.Contract\Note.Contract.fsproj" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

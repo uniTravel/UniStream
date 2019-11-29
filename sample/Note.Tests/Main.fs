@@ -1,4 +1,4 @@
-﻿module UniStream.Test
+﻿module Note.Test
 
 open Expecto
 

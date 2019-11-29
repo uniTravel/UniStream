@@ -2,6 +2,7 @@ namespace UniStream.Domain
 
 open System
 open System.Text
+open UniStream.Abstract
 
 
 module DomainLog =

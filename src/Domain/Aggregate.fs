@@ -1,6 +1,7 @@
 namespace UniStream.Domain
 
 open System.Text.Json
+open UniStream.Abstract
 
 
 type AccessRepository<'agg when 'agg :> IAggregate> =
