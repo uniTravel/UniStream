@@ -2,6 +2,7 @@ namespace UniStream.Domain
 
 open System
 
+
 /// <summary>聚合仓储
 /// <para>1、管理聚合的缓存，采用聚合ID为键的Map。</para>
 /// <para>1.1、采用聚合ID为键的Map。</para>

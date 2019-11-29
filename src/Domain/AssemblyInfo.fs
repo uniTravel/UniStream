@@ -9,7 +9,7 @@ open System.Runtime.CompilerServices
 [<assembly: AssemblyDescriptionAttribute("Domain layer library for UniStream")>]
 [<assembly: AssemblyVersionAttribute("0.0.1")>]
 [<assembly: AssemblyFileVersionAttribute("0.0.1")>]
-[<assembly: InternalsVisibleToAttribute("UniStream.Tests")>]
+[<assembly: InternalsVisibleToAttribute("Tests")>]
 do ()
 
 module internal AssemblyVersionInformation =

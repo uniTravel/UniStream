@@ -1,8 +1,9 @@
 namespace UniStream.Domain
 
+
 module DomainCommand =
 
-    let create<'v, 'agg, 'c, 'e when 'v :> IValue and 'agg :> IAggregate and 'e :> IDomainEvent<'agg> and 'c :> IDomainCommand<'agg, 'e>> isValid (ctor: 'v -> 'c) c =
+    let create<'v, 'agg, 'c, 'e when 'v :> IValue and 'agg :> IAggregate and 'e :> IDomainEvent<'v, 'agg> and 'c :> IDomainCommand<'v, 'agg, 'e>> isValid (ctor: 'v -> 'c) c =
         if isValid c
         then ctor c
         else failwithf "值验证错误：%A" c

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1</TargetFrameworks>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
     <AssemblyName>UniStream.Domain</AssemblyName>
     <Version>0.0.1</Version>
     <Authors>Eric</Authors>
@@ -8,24 +8,29 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="BaseInterface.fsi" />
-    <Compile Include="BaseInterface.fs" />
-    <Compile Include="MetaLog.fsi" />
-    <Compile Include="MetaLog.fs" />
-    <Compile Include="MetaEvent.fsi" />
-    <Compile Include="MetaEvent.fs" />
+    <Compile Include="IDomain.fsi" />
+    <Compile Include="IDomain.fs" />
+    <Compile Include="MetaTrace.fsi" />
+    <Compile Include="MetaTrace.fs" />
+    <Compile Include="LogType.fsi" />
+    <Compile Include="LogType.fs" />
+    <Compile Include="DomainLog.fsi" />
+    <Compile Include="DomainLog.fs" />
+    <Compile Include="DiagnoseLog.fsi" />
+    <Compile Include="DiagnoseLog.fs" />
     <Compile Include="DomainEvent.fsi" />
     <Compile Include="DomainEvent.fs" />
     <Compile Include="DomainCommand.fsi" />
     <Compile Include="DomainCommand.fs" />
-    <Compile Include="DomainLog.fsi" />
-    <Compile Include="DomainLog.fs" />
     <Compile Include="Repository.fsi" />
     <Compile Include="Repository.fs" />
     <Compile Include="Aggregate.fsi" />
     <Compile Include="Aggregate.fs" />
     <Compile Include="Note.fs" />
     <None Include="paket.references" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Infrastructure\Infrastructure.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
