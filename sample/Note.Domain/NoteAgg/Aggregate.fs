@@ -1,6 +1,6 @@
 namespace Note.Domain.NoteAgg
 
-open UniStream.Abstract
+open UniStream.Domain
 
 
 module Note =

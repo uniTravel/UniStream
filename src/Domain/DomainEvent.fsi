@@ -1,7 +1,5 @@
 namespace UniStream.Domain
 
-open UniStream.Abstract
-
 
 [<RequireQualifiedAccess>]
 module DomainEvent =
@@ -27,3 +25,19 @@ module DomainEvent =
     /// <returns>应用函数返回的结果。</returns>
     val apply<'v, 'a when 'v :> IValue> :
         ('v -> 'a) -> IWrapped<'v> -> 'a
+
+    /// <summary>转成UTF8字节数组
+    /// <para>领域事件数据采用UTF8格式的Json序列化。</para>
+    /// </summary>
+    /// <typeparam name="'v">领域值类型。</typeparam>
+    /// <param name="e">领域事件数据。</param>
+    /// <returns>领域事件数据的UTF8字节数组。</returns>
+    val internal asBytes<'v when 'v :> IValue> : 'v -> byte[]
+
+    /// <summary>转成领域事件数据
+    /// <para>领域事件数据采用UTF8格式的Json反序列化。</para>
+    /// </summary>
+    /// <typeparam name="'v">领域值类型。</typeparam>
+    /// <param name="bytes">领域事件数据的UTF8字节数组。</param>
+    /// <returns>领域事件数据。</returns>
+    val internal fromBytes<'v when 'v :> IValue> : byte[] -> 'v

@@ -2,7 +2,6 @@ namespace UniStream.Domain
 
 open System
 open System.Text
-open UniStream.Abstract
 
 
 module DomainLog =
@@ -38,9 +37,8 @@ module DomainLog =
     let log logger meta status format =
         let doAfter s =
             let m = MetaTrace.asBytes meta
-            let v = MetaTrace.value meta
             let d = { Status = status; Message = s } |> asBytes
-            logger.LogFunc logger.Name v.TraceId v.TypeName m d
+            logger.LogFunc logger.Name meta.TraceId meta.TypeName m d
         Printf.ksprintf doAfter format
 
     type Logger with

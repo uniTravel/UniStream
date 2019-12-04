@@ -4,13 +4,12 @@
     <TargetFramework>netcoreapp3.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Fixtures.fs" />
     <Compile Include="NoteTests.fs" />
     <Compile Include="Main.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Note.Contract\Note.Contract.fsproj" />
+    <ProjectReference Include="..\Note.Domain\Note.Domain.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

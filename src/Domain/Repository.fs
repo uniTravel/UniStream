@@ -1,7 +1,6 @@
 namespace UniStream.Domain
 
 open System
-open UniStream.Abstract
 
 
 type Repository<'agg when 'agg :> IAggregate> = Repository of Map<Guid, Ref<'agg>>

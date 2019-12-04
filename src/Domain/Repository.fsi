@@ -1,7 +1,6 @@
 namespace UniStream.Domain
 
 open System
-open UniStream.Abstract
 
 
 /// <summary>聚合仓储

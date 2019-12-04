@@ -4,12 +4,28 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build",
+            "label": "build UniStream.Tests",
             "command": "dotnet",
             "type": "shell",
             "args": [
                 "build",
                 "src/Tests",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build Note.Tests",
+            "command": "dotnet",
+            "type": "shell",
+            "args": [
+                "build",
+                "sample/Note.Tests",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],

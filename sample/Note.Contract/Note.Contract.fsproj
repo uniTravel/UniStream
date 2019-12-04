@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1</TargetFrameworks>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
     <AssemblyName>Note.Contract</AssemblyName>
     <Version>0.0.1</Version>
     <Authors>Eric</Authors>
@@ -12,7 +12,7 @@
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Abstract\Abstract.fsproj" />
+    <ProjectReference Include="..\..\src\Domain\Domain.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

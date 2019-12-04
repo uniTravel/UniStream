@@ -1,7 +1,5 @@
 namespace UniStream.Domain
 
-open UniStream.Abstract
-
 
 [<RequireQualifiedAccess>]
 module DomainCommand =

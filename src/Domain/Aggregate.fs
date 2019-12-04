@@ -1,8 +1,5 @@
 namespace UniStream.Domain
 
-open System.Text.Json
-open UniStream.Abstract
-
 
 type AccessRepository<'agg when 'agg :> IAggregate> =
     | Take of MetaTrace.T * AsyncReplyChannel<Result<'agg, string>>
@@ -23,7 +20,7 @@ type Aggregate<'agg when 'agg :> IAggregate> (get, esFunc, ldFunc, lgFunc, block
                 match! inbox.Receive () with
                 | Take (meta, channel) ->
                     try
-                        let id = (meta |> MetaTrace.value).AggregateId
+                        let id = meta.AggregateId
                         let newRepo = repo.Take id get blockTicks channel
                         return! loop newRepo
                     with ex ->
@@ -48,9 +45,8 @@ type Aggregate<'agg when 'agg :> IAggregate> (get, esFunc, ldFunc, lgFunc, block
     let apply meta (agg': 'agg, version: int, event) =
         try
             let m = MetaTrace.asBytes meta
-            let v = MetaTrace.value meta
-            let e = JsonSerializer.SerializeToUtf8Bytes event
-            esFunc v.AggregateId version v.TraceId v.TypeName m e
+            let e = DomainEvent.asBytes event
+            esFunc meta.AggregateId version meta.TraceId meta.TypeName m e
             Ok agg'
         with ex -> Error ex.Message
 

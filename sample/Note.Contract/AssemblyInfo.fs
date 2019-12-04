@@ -1,7 +1,6 @@
 namespace Note.Contract.AssemblyInfo
 
 open System.Reflection
-open System.Runtime.CompilerServices
 
 [<assembly: AssemblyTitleAttribute("Note.Contract")>]
 [<assembly: AssemblyProductAttribute("Note.Contract")>]
@@ -9,7 +8,6 @@ open System.Runtime.CompilerServices
 [<assembly: AssemblyDescriptionAttribute("Domain Contract for Note")>]
 [<assembly: AssemblyVersionAttribute("0.0.1")>]
 [<assembly: AssemblyFileVersionAttribute("0.0.1")>]
-[<assembly: InternalsVisibleToAttribute("Note.Tests")>]
 do ()
 
 module internal AssemblyVersionInformation =
@@ -19,3 +17,10 @@ module internal AssemblyVersionInformation =
     let [<Literal>] AssemblyDescription = "Domain Contract for Note"
     let [<Literal>] AssemblyVersion = "0.0.1"
     let [<Literal>] AssemblyFileVersion = "0.0.1"
+
+module TypeName =
+    let map =
+        let assem = Assembly.GetExecutingAssembly ()
+        assem.GetExportedTypes ()
+        |> Array.map (fun t -> t.FullName, t)
+        |> Map.ofArray

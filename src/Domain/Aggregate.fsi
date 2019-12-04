@@ -1,14 +1,13 @@
 namespace UniStream.Domain
 
 open System
-open UniStream.Abstract
 
 
 [<Sealed>]
 /// <summary>聚合
 /// </summary>
 /// <typeparam name="'agg">聚合类型。</typeparam>
-type Aggregate<'agg when 'agg :> IAggregate> =
+type internal Aggregate<'agg when 'agg :> IAggregate> =
 
     /// <summary>构造函数
     /// </summary>

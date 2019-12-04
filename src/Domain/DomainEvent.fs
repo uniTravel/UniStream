@@ -1,6 +1,7 @@
 namespace UniStream.Domain
 
-open UniStream.Abstract
+open System
+open System.Text.Json
 
 
 module DomainEvent =
@@ -16,3 +17,10 @@ module DomainEvent =
 
     let equals left right =
         (value left) = (value right)
+
+    let asBytes<'v when 'v :> IValue> (e: 'v) =
+        JsonSerializer.SerializeToUtf8Bytes e
+
+    let fromBytes<'v when 'v :> IValue> (bytes: byte[]) : 'v =
+        let span = ReadOnlySpan bytes
+        JsonSerializer.Deserialize<'v> span

@@ -1,7 +1,6 @@
 namespace UniStream.Domain
 
 open System
-open UniStream.Abstract
 
 
 [<RequireQualifiedAccess>]
@@ -13,12 +12,10 @@ module MetaTrace =
     /// <param name="TraceId">跟踪ID。</param>
     /// <param name="TypeName">事件类型全名。</param>
     type T
-
-    /// <summary>获取领域追踪元数据的值
-    /// </summary>
-    /// <param name="meta">领域追踪元数据。</param>
-    /// <returns>领域追踪元数据的值。</returns>
-    val internal value : T -> {| AggregateId: Guid; TraceId: Guid; TypeName: string |}
+    type T with
+        member internal AggregateId: Guid
+        member internal TraceId: Guid
+        member internal TypeName: string
 
     /// <summary>创建领域追踪元数据
     /// </summary>
