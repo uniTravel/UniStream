@@ -1,16 +1,21 @@
 namespace Note.Domain.NoteAgg
 
 
+[<CLIMutable>]
+type Create = { Title: string; Content: string }
+
+[<CLIMutable>]
+type Change = { Content: string }
+
+
 [<RequireQualifiedAccess>]
 module internal Note =
-
-    type Active = { Title: string; Content: string }
 
     /// <summary>Note聚合
     /// </summary>
     type T =
         | Init
-        | Active of Active
+        | Active of {| Title: string; Content: string |}
 
     /// <summary>创建Note事件处理函数
     /// </summary>
