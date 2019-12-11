@@ -12,7 +12,7 @@ module Command =
     /// <param name="ctor">构造领域命令的函数。</param>
     /// <param name="d">边际影响。</param>
     /// <returns>领域命令。</returns>
-    val inline create : ('d -> bool) -> ('d -> 'c) -> 'd -> 'c
+    val create : ('d -> bool) -> ('d -> 'c) -> 'd -> 'c
 
     /// <summary>应用函数
     /// <para>应用以领域命令作为参数的函数，返回相应结果。</para>

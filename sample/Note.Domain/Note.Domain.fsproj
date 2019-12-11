@@ -8,16 +8,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="NoteAgg\NoteAgg.fs" />
     <Compile Include="NoteAgg\Aggregate.fsi" />
     <Compile Include="NoteAgg\Aggregate.fs" />
-    <Compile Include="NoteAgg\Event.fsi" />
-    <Compile Include="NoteAgg\Event.fs" />
     <Compile Include="NoteAgg\Command.fsi" />
     <Compile Include="NoteAgg\Command.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Note.Contract\Note.Contract.fsproj" />
+    <ProjectReference Include="..\..\src\Domain\Domain.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

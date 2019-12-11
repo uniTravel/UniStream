@@ -4,7 +4,6 @@ open System
 open System.Text.Json
 open Expecto
 open UniStream.Domain
-open Note.Contract.AssemblyInfo
 open Note.Domain.NoteAgg
 open System.IO
 open System.Text

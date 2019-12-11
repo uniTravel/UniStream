@@ -1,29 +1,26 @@
 namespace Note.Domain.NoteAgg
 
-open UniStream.Domain
-
 
 module Note =
 
-    type Active = { Title: string; Content: string; Version: int }
+    type Active = { Title: string; Content: string }
 
     type T =
         | Init
         | Active of Active
-        with interface IAggregate
 
-    let noteCreated wrap t =
+    let inline noteCreated c t =
         match t with
         | Init ->
-            let v = (wrap :> IWrapped<CreateNote>).Value
-            let agg = { Title = v.Title; Content = v.Content; Version = 0 }
-            Active agg, agg.Version, v
+            let delta = (^c : (member Value: Create) c)
+            let agg' = { Title = delta.Title; Content = delta.Content }
+            Active agg'
         | Active _ -> failwith "只有初始状态才能创建Note。"
 
-    let noteChanged wrap t =
+    let inline noteChanged c t =
         match t with
         | Init -> failwith "初始状态不能更改Note。"
         | Active agg ->
-            let v = (wrap :> IWrapped<ChangeNote>).Value
-            let agg' = { agg with Content = v.Content; Version = agg.Version + 1 }
-            Active agg', agg.Version, v
+            let delta = (^c : (member Value: Change) c)
+            let agg' = { agg with Content = delta.Content }
+            Active agg'

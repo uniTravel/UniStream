@@ -1,15 +1,13 @@
 namespace Note.Domain.NoteAgg
 
-open UniStream.Domain
-
 
 [<CLIMutable>]
-type CreateNote = {
+type Create = {
     Title: string
     Content: string
-} with interface IValue
+}
 
 [<CLIMutable>]
-type ChangeNote = {
+type Change = {
     Content: string
-} with interface IValue
+}

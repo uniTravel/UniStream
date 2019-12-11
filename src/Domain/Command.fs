@@ -5,7 +5,7 @@ open System.Text.Json
 
 module Command =
 
-    let inline create isValid ctor d =
+    let create isValid ctor d =
         if isValid d
         then ctor d
         else failwithf "值验证错误：%A" d

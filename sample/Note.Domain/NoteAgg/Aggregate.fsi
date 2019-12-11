@@ -1,27 +1,29 @@
 namespace Note.Domain.NoteAgg
 
-open UniStream.Domain
-
 
 [<RequireQualifiedAccess>]
-module Note =
+module internal Note =
+
+    type Active = { Title: string; Content: string }
 
     /// <summary>Note聚合
     /// </summary>
-    [<Sealed>]
     type T =
-        interface IAggregate
+        | Init
+        | Active of Active
 
     /// <summary>创建Note事件处理函数
     /// </summary>
-    /// <param name="wrap">包装的事件值。</param>
+    /// <param name="c">应用的命令。</param>
     /// <param name="t">当前聚合值。</param>
-    /// <returns>新聚合 * 版本 * 事件值。</returns>
-    val noteCreated : IWrapped<CreateNote> -> T -> (T * int * CreateNote)
+    /// <returns>新聚合。</returns>
+    val inline noteCreated : ^c -> T -> T
+        when ^c : (member Value: Create)
 
     /// <summary>更改Note内容事件处理函数
     /// </summary>
-    /// <param name="wrap">包装的事件值。</param>
+    /// <param name="c">应用的命令。</param>
     /// <param name="t">当前聚合值。</param>
-    /// <returns>新聚合 * 版本 * 事件值。</returns>
-    val noteChanged : IWrapped<ChangeNote> -> T -> (T * int * ChangeNote)
+    /// <returns>新聚合。</returns>
+    val inline noteChanged : ^c -> T -> T
+        when ^c : (member Value: Change)
