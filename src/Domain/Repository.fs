@@ -3,27 +3,41 @@ namespace UniStream.Domain
 open System
 
 
-type Repository<'agg when 'agg :> IAggregate> = Repository of Map<Guid, Ref<'agg>>
+type Repository<'agg> = {
+    Get: string -> Guid -> (byte[] * byte[]) array
+    EsFunc: string -> Guid -> string -> byte[] -> byte[] -> unit
+    TimeOut: int64
+    Map: Map<Guid, 'agg ref>
+}
+
 
 module Repository =
 
-    let empty<'agg when 'agg :> IAggregate> : Repository<'agg> = Repository <| Map.empty
+    let empty<'agg> get esFunc timeout : Repository<'agg> =
+        { Get = get; EsFunc = esFunc; TimeOut = timeout; Map = Map.empty }
 
-    let take<'agg when 'agg :> IAggregate>
-        (repo: Repository<'agg>) (id: Guid) (get: Guid -> 'agg) (timeout: int64) (channel: AsyncReplyChannel<Result<'agg, string>>)
+    let take<'agg>
+        (repo: Repository<'agg>) (id: Guid) (channel: AsyncReplyChannel<Result<'agg, string>>)
         : Repository<'agg> =
-        let q = 1
         failwith ""
 
-    let put<'agg when 'agg :> IAggregate>
-        (repo: Repository<'agg>) (agg: 'agg) (timeout: int64) : Repository<'agg> =
+    let save<'agg>
+        (repo: Repository<'agg>) (agg': 'agg) (metaTrace: MetaTrace.T) (delta: byte[])
+        : Repository<'agg> =
+        failwith ""
+
+    let put<'agg>
+        (repo: Repository<'agg>) (agg: 'agg) : Repository<'agg> =
         failwith ""
 
 
-type Repository<'agg when 'agg :> IAggregate> with
+type Repository<'agg> with
 
-    member this.Take : (Guid -> (Guid -> 'agg) -> int64 -> AsyncReplyChannel<Result<'agg, string>> -> Repository<'agg>) =
+    member this.Take : (Guid -> AsyncReplyChannel<Result<'agg, string>> -> Repository<'agg>) =
         Repository.take this
 
-    member this.Put : ('agg -> int64 -> Repository<'agg>) =
+    member this.Save : ('agg -> MetaTrace.T -> byte[] -> Repository<'agg>) =
+        Repository.save this
+
+    member this.Put : ('agg -> Repository<'agg>) =
         Repository.put this

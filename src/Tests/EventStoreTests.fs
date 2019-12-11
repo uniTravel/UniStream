@@ -25,3 +25,4 @@ let tests =
                 finish 1
         ]
     ]
+    |> testLabel "UniStream.Domain"

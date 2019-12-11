@@ -126,3 +126,4 @@ let testBinaryDeserialize =
                 finish "数组"
         ]
     ]
+    |> testLabel "UniStream.Domain"

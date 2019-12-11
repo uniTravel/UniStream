@@ -6,12 +6,14 @@ open Expecto
 open UniStream.Domain
 open Note.Contract.AssemblyInfo
 open Note.Domain.NoteAgg
+open System.IO
+open System.Text
 
 let inline getLongId (node: ^t) = (^t:(member LongId: string) node)
 
 let inline (+@) x y = x + x * y
 
-let inline get (agg: ^t) = (^t:(member Title: string) agg)
+
 
 [<Tests>]
 let tests =

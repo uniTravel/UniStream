@@ -15,9 +15,8 @@ module DomainLog =
 
     type Logger = { Name: string; LogFunc: string -> Guid -> string -> byte[] -> byte[] -> unit }
 
-    let logger<'agg when 'agg :> IAggregate> logFunc =
-        let name = typeof<'agg>.ToString ()
-        { Name = name; LogFunc = logFunc }
+    let logger aggType logFunc =
+        { Name = aggType; LogFunc = logFunc }
 
     let asBytes log =
         let array = Array.zeroCreate<byte> <| 4 + log.Message.Length
@@ -34,14 +33,14 @@ module DomainLog =
         let msg = Encoding.UTF8.GetString (span.Slice (4, bytes.Length - 4))
         { Status = status; Message = msg }
 
-    let log logger meta status format =
+    let log logger metaTrace status format =
         let doAfter s =
-            let m = MetaTrace.asBytes meta
+            let m = MetaTrace.asBytes metaTrace
             let d = { Status = status; Message = s } |> asBytes
-            logger.LogFunc logger.Name meta.TraceId meta.TypeName m d
+            logger.LogFunc logger.Name metaTrace.TraceId metaTrace.DeltaType m d
         Printf.ksprintf doAfter format
 
     type Logger with
-        member this.Process meta format = log this meta Status.Processing format
-        member this.Success meta format = log this meta Status.Successed format
-        member this.Fail meta format = log this meta Status.Failed format
+        member this.Process metaTrace format = log this metaTrace Status.Processing format
+        member this.Success metaTrace format = log this metaTrace Status.Successed format
+        member this.Fail metaTrace format = log this metaTrace Status.Failed format

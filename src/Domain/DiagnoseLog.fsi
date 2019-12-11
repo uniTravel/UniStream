@@ -6,15 +6,10 @@ module DiagnoseLog =
 
     /// <summary>诊断日志数据
     /// </summary>
-    /// <param name="Level">诊断日志级别。</param>
-    /// <param name="Message">日志消息。</param>
-    /// <param name="StackTrace">可选的错误堆栈。</param>
     type T
 
     /// <summary>诊断日志记录器
     /// </summary>
-    /// <param name="Name">日志名称。</param>
-    /// <param name="LogFunc">诊断日志流存储函数。</param>
     type Logger
 
     /// <summary>诊断日志记录器

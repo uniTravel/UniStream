@@ -1,12 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Fixtures.fs" />
     <Compile Include="EventStoreTests.fs" />
     <Compile Include="SerializeTests.fs" />
+    <Compile Include="DeserializeTests.fs" />
     <Compile Include="DomainTests.fs" />
     <Compile Include="Main.fs" />
     <None Include="paket.references" />

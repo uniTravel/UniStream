@@ -112,3 +112,4 @@ let tests =
 
             printfn "Done!"
     ]
+    |> testLabel "UniStream.Domain"
