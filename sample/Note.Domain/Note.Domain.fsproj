@@ -8,6 +8,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="ActorAgg\Aggregate.fsi" />
+    <Compile Include="ActorAgg\Aggregate.fs" />
+    <Compile Include="ActorAgg\Command.fsi" />
+    <Compile Include="ActorAgg\Command.fs" />
     <Compile Include="NoteAgg\Aggregate.fsi" />
     <Compile Include="NoteAgg\Aggregate.fs" />
     <Compile Include="NoteAgg\Command.fsi" />

@@ -19,8 +19,8 @@ module MetaTrace =
     let createImpl aggId deltaType =
         { _aggregateId = aggId; _traceId = Guid.NewGuid (); _deltaType = deltaType; _bytes = None }
 
-    let inline create< ^d when ^d : (static member DeltaType: string)> (aggId: Guid) : T =
-        createImpl aggId (^d : (static member DeltaType: string) ())
+    let inline create< ^d> (aggId: Guid) : T =
+        createImpl aggId typeof< ^d>.FullName
 
     let asBytes metaTrace =
         match metaTrace._bytes with

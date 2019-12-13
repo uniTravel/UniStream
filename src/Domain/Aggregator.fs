@@ -1,6 +1,7 @@
 namespace UniStream.Domain
 
 open System
+open System.Text.Json
 
 
 module Aggregator =
@@ -15,7 +16,7 @@ module Aggregator =
         BlockTicks: int64
         DomainLog: DomainLog.Logger
         DiagnoseLog: DiagnoseLog.Logger
-        Get: (string -> Guid -> (byte[] * byte[]) array)
+        Get: (string -> Guid -> (byte[] * byte[])[])
         EsFunc: (string -> Guid -> string -> byte[] -> byte[] -> unit)
     }
 
@@ -56,7 +57,8 @@ module Aggregator =
             }
             loop <| Repository.empty get esFunc blockTicks
 
-    let createImpl<'agg> get esFunc ldFunc lgFunc blockSeconds aggType =
+    let create<'agg> get esFunc ldFunc lgFunc blockSeconds =
+        let aggType = typeof<'agg>.FullName
         let cfg = {
             AggType = aggType
             BlockTicks = blockSeconds * 10000000L
@@ -67,10 +69,7 @@ module Aggregator =
         }
         { Config = cfg; Agent = agent<'agg> cfg }
 
-    let inline create< ^agg when ^agg : (static member AggType: string) > get esFunc ldFunc lgFunc blockSeconds =
-        createImpl< ^agg> get esFunc ldFunc lgFunc blockSeconds (^agg : (static member AggType: string) ())
-
-    let applyImpl apply delta { Config = cfg; Agent = agent } metaTrace = async {
+    let apply apply delta { Config = cfg; Agent = agent } metaTrace = async {
         let { DomainLog = ld; DiagnoseLog = lg } = cfg
         ld.Process metaTrace "开始。"
         match! agent.PostAndAsyncReply (fun channel -> Take (metaTrace, channel)) with
@@ -87,8 +86,15 @@ module Aggregator =
         | Error err -> ld.Fail metaTrace "取出聚合出错：%s" err
     }
 
-    let inline apply t metaTrace command = async {
-        let apply = (^c : (member Apply: ('agg -> 'agg)) command)
+    let inline applyCommand t metaTrace command = async {
         let delta = Command.asBytes command
-        do! applyImpl apply delta t metaTrace
+        do! apply (^c : (member Apply: ('agg -> 'agg)) command) delta t metaTrace
+    }
+
+    let inline applyRaw t aggId cBytes f = async {
+        let span = ReadOnlySpan cBytes
+        let d = JsonSerializer.Deserialize< ^d> span
+        let command = f d
+        let meta = MetaTrace.create< ^d> aggId
+        do! applyCommand t meta command
     }

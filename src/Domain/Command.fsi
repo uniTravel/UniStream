@@ -19,19 +19,17 @@ module Command =
     /// </summary>
     /// <typeparam name="'d">边际影响类型。</typeparam>
     /// <typeparam name="^c">领域命令类型。</typeparam>
-    /// <typeparam name="'a">应用函数返回值的类型。</typeparam>a
     /// <param name="f">待应用的函数。</param>e
     /// <param name="c">领域命令。</param>
     /// <returns>应用函数返回的结果。</returns>
-    val inline apply : ('d -> 'a) -> ^c -> 'a
+    val inline private apply : ('d -> 'a) -> ^c -> 'a
         when ^c : (member Value: 'd)
 
     /// <summary>转成UTF8字节数组
     /// <para>领域命令数据采用UTF8格式的Json序列化。</para>
     /// </summary>
-    /// <typeparam name="'d">边际影响类型。</typeparam>
     /// <typeparam name="^c">领域命令类型。</typeparam>
     /// <param name="c">领域命令。</param>
     /// <returns>领域命令数据的UTF8字节数组。</returns>
-    val inline asBytes : ^c -> byte[]
+    val inline internal asBytes : ^c -> byte[]
         when ^c : (member Value: 'd)

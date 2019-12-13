@@ -23,7 +23,7 @@ module internal Repository =
     /// <param name="esFunc">领域事件流存储函数。</param>
     /// <param name="timeout">超时的Ticks约束。</param>
     val empty<'agg> :
-        (string -> Guid -> (byte[] * byte[]) array) ->
+        (string -> Guid -> (byte[] * byte[])[]) ->
         (string -> Guid -> string -> byte[] -> byte[] -> unit) ->
         int64 -> Repository<'agg>
 

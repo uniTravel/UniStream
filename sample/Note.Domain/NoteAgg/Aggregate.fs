@@ -5,7 +5,6 @@ type Create = { Title: string; Content: string }
 
 type Change = { Content: string }
 
-
 module Note =
 
     type T =

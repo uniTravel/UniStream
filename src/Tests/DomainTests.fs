@@ -103,8 +103,6 @@ let tests =
             // let add m = m + 1
             // let q = foo add arr
 
-            let s = "test"
-
             let x = block {
                 push 1
                 push 2

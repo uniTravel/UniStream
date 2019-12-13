@@ -4,11 +4,14 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ApiConfig.fs" />
+    <Compile Include="ActorTests.fs" />
     <Compile Include="NoteTests.fs" />
     <Compile Include="Main.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Infrastructure\Infrastructure.fsproj" />
     <ProjectReference Include="..\Note.Domain\Note.Domain.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

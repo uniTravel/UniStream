@@ -15,15 +15,14 @@ module MetaTrace =
     /// <param name="aggId">聚合ID。</param>
     /// <param name="deltaType">边际影响类型全名。</param>
     /// <returns>领域追踪元数据。</returns>
-    val internal createImpl : Guid -> string -> T
+    val createImpl : Guid -> string -> T
 
     /// <summary>创建领域追踪元数据
     /// </summary>
     /// <typeparam name="^d">边际影响类型。</typeparam>
     /// <param name="aggId">聚合ID。</param>
     /// <returns>领域追踪元数据。</returns>
-    val inline internal create< ^d> : Guid -> T
-        when ^d : (static member DeltaType: string)
+    val inline create< ^d> : Guid -> T
 
     /// <summary>转成字节数组
     /// <para>领域追踪元数据采用二进制序列化。</para>

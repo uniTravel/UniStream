@@ -1,7 +1,6 @@
 namespace Note.Domain.AssemblyInfo
 
 open System.Reflection
-open System.Runtime.CompilerServices
 
 [<assembly: AssemblyTitleAttribute("Note.Domain")>]
 [<assembly: AssemblyProductAttribute("Note.Domain")>]
@@ -9,7 +8,6 @@ open System.Runtime.CompilerServices
 [<assembly: AssemblyDescriptionAttribute("Domain layer library for Note")>]
 [<assembly: AssemblyVersionAttribute("0.0.1")>]
 [<assembly: AssemblyFileVersionAttribute("0.0.1")>]
-[<assembly: InternalsVisibleToAttribute("Note.Tests")>]
 do ()
 
 module internal AssemblyVersionInformation =

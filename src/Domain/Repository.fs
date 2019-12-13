@@ -4,7 +4,7 @@ open System
 
 
 type Repository<'agg> = {
-    Get: string -> Guid -> (byte[] * byte[]) array
+    Get: string -> Guid -> (byte[] * byte[])[]
     EsFunc: string -> Guid -> string -> byte[] -> byte[] -> unit
     TimeOut: int64
     Map: Map<Guid, 'agg ref>
