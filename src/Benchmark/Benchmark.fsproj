@@ -10,6 +10,7 @@
   <ItemGroup>
     <Compile Include="Serialize.fs" />
     <Compile Include="Deserialize.fs" />
+    <Compile Include="Collections.fs" />
     <Compile Include="Main.fs" />
     <None Include="paket.references" />
   </ItemGroup>

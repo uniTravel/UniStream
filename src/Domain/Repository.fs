@@ -1,43 +1,54 @@
 namespace UniStream.Domain
 
 open System
-
-
-type Repository<'agg> = {
-    Get: string -> Guid -> (byte[] * byte[])[]
-    EsFunc: string -> Guid -> string -> byte[] -> byte[] -> unit
-    TimeOut: int64
-    Map: Map<Guid, 'agg ref>
-}
+open System.Collections.Generic
 
 
 module Repository =
 
-    let empty<'agg> get esFunc timeout : Repository<'agg> =
-        { Get = get; EsFunc = esFunc; TimeOut = timeout; Map = Map.empty }
+    type State<'agg> =
+        | Available of 'agg
+        | Pending of int64
+        | Blocked of int64
 
-    let take<'agg>
-        (repo: Repository<'agg>) (id: Guid) (channel: AsyncReplyChannel<Result<'agg, string>>)
-        : Repository<'agg> =
-        failwith ""
+    type T<'agg> = {
+        _get: Guid -> (byte[] * byte[])[]
+        _esFunc: Guid -> string -> byte[] -> byte[] -> unit
+        _timeout: int64
+        _map: Map<Guid, Queue<int64 * AsyncReplyChannel<Result<'agg, string>>> * (int * State<'agg>) ref>
+    }
 
-    let save<'agg>
-        (repo: Repository<'agg>) (agg': 'agg) (metaTrace: MetaTrace.T) (delta: byte[])
-        : Repository<'agg> =
-        failwith ""
+    let refresh repo agg aggId (queue: Queue<int64 * AsyncReplyChannel<Result<'agg, string>>>) item version state =
+        let setItem ticks t =
+            if DateTime.Now.Ticks - ticks > repo._timeout then item := version, Blocked t
+            else item := version, Pending t
+        match queue.Count with
+        | 0 -> item := version, Available agg
+        | _ ->
+            let (t, channel) = queue.Dequeue()
+            match state with
+            | Pending ticks -> setItem ticks t
+            | Blocked ticks -> setItem ticks t
+            | Available _ -> failwithf "聚合%A，状态为Available。" aggId
+            channel.Reply <| Ok agg
+        repo
 
-    let put<'agg>
-        (repo: Repository<'agg>) (agg: 'agg) : Repository<'agg> =
-        failwith ""
+    let empty get esFunc timeout =
+        { _get = get; _esFunc = esFunc; _timeout = timeout; _map = Map.empty }
 
+    let take (repo: T<'agg>) (id: Guid) (channel: AsyncReplyChannel<Result<'agg, string>>) =
 
-type Repository<'agg> with
+        repo
 
-    member this.Take : (Guid -> AsyncReplyChannel<Result<'agg, string>> -> Repository<'agg>) =
-        Repository.take this
+    let save repo agg' (metaTrace: MetaTrace.T) delta =
+        let (queue, item) = repo._map.[metaTrace.AggregateId]
+        let (v, state) = !item
+        let version = v + 1
+        let e = MetaEvent.create metaTrace version |> MetaEvent.asBytes
+        repo._esFunc metaTrace.TraceId metaTrace.DeltaType delta e
+        refresh repo agg' metaTrace.AggregateId queue item version state
 
-    member this.Save : ('agg -> MetaTrace.T -> byte[] -> Repository<'agg>) =
-        Repository.save this
-
-    member this.Put : ('agg -> Repository<'agg>) =
-        Repository.put this
+    let put repo agg (metaTrace: MetaTrace.T) =
+        let (queue, item) = repo._map.[metaTrace.AggregateId]
+        let (v, state) = !item
+        refresh repo agg metaTrace.AggregateId queue item v state

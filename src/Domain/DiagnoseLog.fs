@@ -7,12 +7,12 @@ open System.Text.Json
 module DiagnoseLog =
 
     [<CLIMutable>]
-    type T = { Level: LogLevel; Message: string; StackTrack: string option }
+    type T = { _level: LogLevel; _message: string; _stackTrack: string option }
 
-    type Logger = { Name: string; LogFunc: string -> byte[] -> unit }
+    type Logger = { _name: string; _logFunc: string -> byte[] -> unit }
 
     let logger name logFunc =
-        { Name = name; LogFunc = logFunc }
+        { _name = name; _logFunc = logFunc }
 
     let asBytes (log: T) =
         JsonSerializer.SerializeToUtf8Bytes log
@@ -23,14 +23,14 @@ module DiagnoseLog =
 
     let log lg level format =
         let doAfter s =
-            let d = { Level = level; Message = s; StackTrack = None } |> asBytes
-            lg.LogFunc lg.Name d
+            let d = { _level = level; _message = s; _stackTrack = None } |> asBytes
+            lg._logFunc lg._name d
         Printf.ksprintf doAfter format
 
     let logWithStack lg level stack format =
         let doAfter s =
-            let d = { Level = level; Message = s; StackTrack = Some stack } |> asBytes
-            lg.LogFunc lg.Name d
+            let d = { _level = level; _message = s; _stackTrack = Some stack } |> asBytes
+            lg._logFunc lg._name d
         Printf.ksprintf doAfter format
 
     type Logger with

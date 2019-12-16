@@ -12,33 +12,33 @@ module Aggregator =
         | Put of 'agg * MetaTrace.T
 
     type Config = {
-        AggType: string
-        BlockTicks: int64
-        DomainLog: DomainLog.Logger
-        DiagnoseLog: DiagnoseLog.Logger
-        Get: (string -> Guid -> (byte[] * byte[])[])
-        EsFunc: (string -> Guid -> string -> byte[] -> byte[] -> unit)
+        _aggType: string
+        _blockTicks: int64
+        _domainLog: DomainLog.Logger
+        _diagnoseLog: DiagnoseLog.Logger
+        _get: (Guid -> (byte[] * byte[])[])
+        _esFunc: (Guid -> string -> byte[] -> byte[] -> unit)
     }
 
     type T<'agg> = {
-        Config: Config
-        Agent: MailboxProcessor<Accessor<'agg>>
+        _config: Config
+        _agent: MailboxProcessor<Accessor<'agg>>
     }
 
-    let agent<'agg> { BlockTicks = blockTicks; DomainLog = ld; DiagnoseLog = lg; Get = get; EsFunc = esFunc } =
+    let agent<'agg> { _blockTicks = blockTicks; _domainLog = ld; _diagnoseLog = lg; _get = get; _esFunc = esFunc } =
         MailboxProcessor<Accessor<'agg>>.Start <| fun inbox ->
-            let rec loop (repo: Repository<'agg>) = async {
-                match! inbox.Receive () with
+            let rec loop repo = async {
+                match! inbox.Receive() with
                 | Take (metaTrace, channel) ->
                     try
-                        let newRepo = repo.Take metaTrace.AggregateId channel
+                        let newRepo = Repository.take repo metaTrace.AggregateId channel
                         return! loop newRepo
                     with ex ->
                         channel.Reply <| Error ex.Message
                         return! loop repo
                 | Save (agg', metaTrace, delta) ->
                     try
-                        let newRepo = repo.Save agg' metaTrace delta
+                        let newRepo = Repository.save repo agg' metaTrace delta
                         ld.Success metaTrace "保存聚合成功。"
                         return! loop newRepo
                     with ex ->
@@ -47,7 +47,7 @@ module Aggregator =
                         return! loop repo
                 | Put (agg, metaTrace) ->
                     try
-                        let newRepo = repo.Put agg
+                        let newRepo = Repository.put repo agg metaTrace
                         ld.Fail metaTrace "放回聚合成功。"
                         return! loop newRepo
                     with ex ->
@@ -60,24 +60,24 @@ module Aggregator =
     let create<'agg> get esFunc ldFunc lgFunc blockSeconds =
         let aggType = typeof<'agg>.FullName
         let cfg = {
-            AggType = aggType
-            BlockTicks = blockSeconds * 10000000L
-            DomainLog = DomainLog.logger aggType ldFunc
-            DiagnoseLog = DiagnoseLog.logger aggType lgFunc
-            Get = get
-            EsFunc = esFunc
+            _aggType = aggType
+            _blockTicks = blockSeconds * 10000000L
+            _domainLog = DomainLog.logger aggType ldFunc
+            _diagnoseLog = DiagnoseLog.logger aggType lgFunc
+            _get = get aggType
+            _esFunc = esFunc aggType
         }
-        { Config = cfg; Agent = agent<'agg> cfg }
+        { _config = cfg; _agent = agent<'agg> cfg }
 
-    let apply apply delta { Config = cfg; Agent = agent } metaTrace = async {
-        let { DomainLog = ld; DiagnoseLog = lg } = cfg
+    let apply apply delta { _config = cfg; _agent = agent } metaTrace = async {
+        let { _domainLog = ld; _diagnoseLog = lg } = cfg
         ld.Process metaTrace "开始。"
         match! agent.PostAndAsyncReply (fun channel -> Take (metaTrace, channel)) with
         | Ok agg ->
             ld.Process metaTrace "取到聚合。"
             try
                 let agg' = apply agg
-                ld.Process metaTrace "执行命令成功，保存聚合。"
+                ld.Process metaTrace "执行命令成功。"
                 agent.Post <| Save (agg', metaTrace, delta)
             with ex ->
                 ld.Fail metaTrace "执行命令出错：%s" ex.Message

@@ -23,10 +23,10 @@ module MetaEvent =
         let tId = span.Slice (16, 16)
         let ver = span.Slice (32, 4)
         let name = span.Slice (36, metaEvent._deltaType.Length)
-        ((metaEvent._aggregateId.ToByteArray ()).AsSpan ()).CopyTo aId
-        ((metaEvent._traceId.ToByteArray ()).AsSpan ()).CopyTo tId
-        ((BitConverter.GetBytes metaEvent._version).AsSpan ()).CopyTo ver
-        ((metaEvent._deltaType |> Encoding.UTF8.GetBytes).AsSpan ()).CopyTo name
+        ((metaEvent._aggregateId.ToByteArray()).AsSpan()).CopyTo aId
+        ((metaEvent._traceId.ToByteArray()).AsSpan()).CopyTo tId
+        ((BitConverter.GetBytes metaEvent._version).AsSpan()).CopyTo ver
+        ((Encoding.UTF8.GetBytes metaEvent._deltaType).AsSpan()).CopyTo name
         array
 
     let fromBytes bytes =

@@ -17,7 +17,7 @@ module MetaTrace =
         member this.DeltaType = this._deltaType
 
     let createImpl aggId deltaType =
-        { _aggregateId = aggId; _traceId = Guid.NewGuid (); _deltaType = deltaType; _bytes = None }
+        { _aggregateId = aggId; _traceId = Guid.NewGuid(); _deltaType = deltaType; _bytes = None }
 
     let inline create< ^d> (aggId: Guid) : T =
         createImpl aggId typeof< ^d>.FullName
@@ -31,9 +31,9 @@ module MetaTrace =
             let aId = span.Slice (0, 16)
             let tId = span.Slice (16, 16)
             let name = span.Slice (32, metaTrace._deltaType.Length)
-            ((metaTrace._aggregateId.ToByteArray ()).AsSpan ()).CopyTo aId
-            ((metaTrace._traceId.ToByteArray ()).AsSpan ()).CopyTo tId
-            ((metaTrace._deltaType |> Encoding.UTF8.GetBytes).AsSpan ()).CopyTo name
+            ((metaTrace._aggregateId.ToByteArray()).AsSpan()).CopyTo aId
+            ((metaTrace._traceId.ToByteArray()).AsSpan()).CopyTo tId
+            ((Encoding.UTF8.GetBytes metaTrace._deltaType).AsSpan()).CopyTo name
             array
 
     let fromBytes bytes =
