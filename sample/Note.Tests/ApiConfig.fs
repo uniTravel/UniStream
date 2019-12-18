@@ -1,3 +1,4 @@
+[<AutoOpen>]
 module ApiConfig
 
 open UniStream.Infrastructure

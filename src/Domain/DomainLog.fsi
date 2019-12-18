@@ -41,7 +41,6 @@ module internal DomainLog =
     /// <returns>领域日志数据。</returns>
     val private fromBytes : byte[] -> T
 
-    [<Sealed>]
     type Logger with
 
         /// <summary>记录Processing状态的领域日志

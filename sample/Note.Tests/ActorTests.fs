@@ -2,7 +2,6 @@ module Actor.Tests
 
 open System
 open Expecto
-open ApiConfig
 open Note.Domain.ActorAgg
 
 

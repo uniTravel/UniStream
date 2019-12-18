@@ -32,7 +32,6 @@ module DiagnoseLog =
     /// <returns>诊断日志数据。</returns>
     val private fromBytes : byte[] -> T
 
-    [<Sealed>]
     type Logger with
 
         /// <summary>记录Trace级别的诊断日志

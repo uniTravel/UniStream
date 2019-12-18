@@ -9,7 +9,17 @@ module Api =
     /// <summary>开放Api
     /// <para>单个Cqrs应用只需创建一个Api实例，用于注入一些基础配置。</para>
     /// </summary>
-    type T
+    /// <param name="Get">重建聚合的函数。</param>
+    /// <param name="EsFunc">领域事件流存储函数。</param>
+    /// <param name="LdFunc">领域日志流存储函数。</param>
+    /// <param name="LgFunc">诊断日志流存储函数。</param>
+    /// <param name="BlockSeconds">挂起超过设定的秒数，阻塞聚合请求。</param>
+    type T =
+        { Get: (string -> Guid -> (byte[] * byte[])[])
+          EsFunc: (string -> Guid -> string -> byte[] -> byte[] -> unit)
+          LdFunc: (string -> Guid -> string -> byte[] -> byte[] -> unit)
+          LgFunc: (string -> byte[] -> unit)
+          BlockSeconds: int64 }
 
     /// <summary>创建Api
     /// </summary>
@@ -50,10 +60,3 @@ module Api =
     val inline applyRaw : T -> Guid -> byte[] -> (^d -> ^c) -> Async<unit>
         when ^c : (member Value: 'a)
         and ^c : (member Apply: ('agg -> 'agg))
-
-    type T with
-        member Get: (string -> Guid -> (byte[] * byte[])[])
-        member EsFunc: (string -> Guid -> string -> byte[] -> byte[] -> unit)
-        member LdFunc: (string -> Guid -> string -> byte[] -> byte[] -> unit)
-        member LgFunc: (string -> byte[] -> unit)
-        member BlockSeconds: int64

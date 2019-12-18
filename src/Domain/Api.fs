@@ -5,23 +5,17 @@ open System
 
 module Api =
 
-    type T = {
-        _get: string -> Guid -> (byte[] * byte[])[]
-        _esFunc: string -> Guid -> string -> byte[] -> byte[] -> unit
-        _ldFunc: string -> Guid -> string -> byte[] -> byte[] -> unit
-        _lgFunc: string -> byte[] -> unit
-        _blockSeconds: int64
-    } with
-        member this.Get = this._get
-        member this.EsFunc = this._esFunc
-        member this.LdFunc = this._ldFunc
-        member this.LgFunc = this._lgFunc
-        member this.BlockSeconds = this._blockSeconds
+    type T =
+        { Get: string -> Guid -> (byte[] * byte[])[]
+          EsFunc: string -> Guid -> string -> byte[] -> byte[] -> unit
+          LdFunc: string -> Guid -> string -> byte[] -> byte[] -> unit
+          LgFunc: string -> byte[] -> unit
+          BlockSeconds: int64 }
 
     let create get esFunc ldFunc lgFunc blockSeconds =
-        { _get = get; _esFunc = esFunc; _ldFunc = ldFunc; _lgFunc = lgFunc; _blockSeconds = blockSeconds }
+        { Get = get; EsFunc = esFunc; LdFunc = ldFunc; LgFunc = lgFunc; BlockSeconds = blockSeconds }
 
-    let inline applyCommand  (cfg: T) metaTrace command = async {
+    let inline applyCommand (cfg: T) metaTrace command = async {
         let aggregator = Aggregator.create<'agg> cfg.Get cfg.EsFunc cfg.LdFunc cfg.LgFunc cfg.BlockSeconds
         do! Aggregator.applyCommand aggregator metaTrace command
     }

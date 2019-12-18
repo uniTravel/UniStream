@@ -11,21 +11,19 @@ module Aggregator =
         | Save of 'agg * MetaTrace.T * byte[]
         | Put of 'agg * MetaTrace.T
 
-    type Config = {
-        _aggType: string
-        _blockTicks: int64
-        _domainLog: DomainLog.Logger
-        _diagnoseLog: DiagnoseLog.Logger
-        _get: (Guid -> (byte[] * byte[])[])
-        _esFunc: (Guid -> string -> byte[] -> byte[] -> unit)
-    }
+    type Config =
+        { AggType: string
+          BlockTicks: int64
+          DomainLog: DomainLog.Logger
+          DiagnoseLog: DiagnoseLog.Logger
+          Get: (Guid -> (byte[] * byte[])[])
+          EsFunc: (Guid -> string -> byte[] -> byte[] -> unit) }
 
-    type T<'agg> = {
-        _config: Config
-        _agent: MailboxProcessor<Accessor<'agg>>
-    }
+    type T<'agg> =
+        { Config: Config
+          Agent: MailboxProcessor<Accessor<'agg>> }
 
-    let agent<'agg> { _blockTicks = blockTicks; _domainLog = ld; _diagnoseLog = lg; _get = get; _esFunc = esFunc } =
+    let agent<'agg> { BlockTicks = blockTicks; DomainLog = ld; DiagnoseLog = lg; Get = get; EsFunc = esFunc } =
         MailboxProcessor<Accessor<'agg>>.Start <| fun inbox ->
             let rec loop repo = async {
                 match! inbox.Receive() with
@@ -59,18 +57,17 @@ module Aggregator =
 
     let create<'agg> get esFunc ldFunc lgFunc blockSeconds =
         let aggType = typeof<'agg>.FullName
-        let cfg = {
-            _aggType = aggType
-            _blockTicks = blockSeconds * 10000000L
-            _domainLog = DomainLog.logger aggType ldFunc
-            _diagnoseLog = DiagnoseLog.logger aggType lgFunc
-            _get = get aggType
-            _esFunc = esFunc aggType
-        }
-        { _config = cfg; _agent = agent<'agg> cfg }
+        let cfg =
+            { AggType = aggType
+              BlockTicks = blockSeconds * 10000000L
+              DomainLog = DomainLog.logger aggType ldFunc
+              DiagnoseLog = DiagnoseLog.logger aggType lgFunc
+              Get = get aggType
+              EsFunc = esFunc aggType }
+        { Config = cfg; Agent = agent<'agg> cfg }
 
-    let apply apply delta { _config = cfg; _agent = agent } metaTrace = async {
-        let { _domainLog = ld; _diagnoseLog = lg } = cfg
+    let apply apply delta { Config = cfg; Agent = agent } metaTrace = async {
+        let { DomainLog = ld; DiagnoseLog = lg } = cfg
         ld.Process metaTrace "开始。"
         match! agent.PostAndAsyncReply (fun channel -> Take (metaTrace, channel)) with
         | Ok agg ->

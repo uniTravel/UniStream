@@ -11,33 +11,33 @@ module DomainLog =
         | Successed = 1
         | Failed = 2
 
-    type T = { _status: Status; _message: string }
+    type T = { Status: Status; Message: string }
 
-    type Logger = { _name: string; _logFunc: string -> Guid -> string -> byte[] -> byte[] -> unit }
+    type Logger = { Name: string; LogFunc: string -> Guid -> string -> byte[] -> byte[] -> unit }
 
     let logger aggType logFunc =
-        { _name = aggType; _logFunc = logFunc }
+        { Name = aggType; LogFunc = logFunc }
 
     let asBytes log =
-        let array = Array.zeroCreate<byte> <| 4 + log._message.Length
+        let array = Array.zeroCreate<byte> <| 4 + log.Message.Length
         let span = Span array
         let status = span.Slice (0, 4)
-        let msg = span.Slice (4, log._message.Length)
-        ((BitConverter.GetBytes (int log._status)).AsSpan()).CopyTo status
-        ((Encoding.UTF8.GetBytes log._message).AsSpan()).CopyTo msg
+        let msg = span.Slice (4, log.Message.Length)
+        ((BitConverter.GetBytes (int log.Status)).AsSpan()).CopyTo status
+        ((Encoding.UTF8.GetBytes log.Message).AsSpan()).CopyTo msg
         array
 
     let fromBytes bytes =
         let span = ReadOnlySpan bytes
         let status = BitConverter.ToInt32 (span.Slice (0, 4)) |> enum<Status>
         let msg = Encoding.UTF8.GetString (span.Slice (4, bytes.Length - 4))
-        { _status = status; _message = msg }
+        { Status = status; Message = msg }
 
     let log logger metaTrace status format =
         let doAfter s =
             let m = MetaTrace.asBytes metaTrace
-            let d = { _status = status; _message = s } |> asBytes
-            logger._logFunc logger._name metaTrace.TraceId metaTrace.DeltaType m d
+            let d = { Status = status; Message = s } |> asBytes
+            logger.LogFunc logger.Name metaTrace.TraceId metaTrace.DeltaType m d
         Printf.ksprintf doAfter format
 
     type Logger with

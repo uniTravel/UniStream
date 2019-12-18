@@ -2,7 +2,6 @@ module Note.Tests
 
 open System
 open Expecto
-open ApiConfig
 open Note.Domain.NoteAgg
 
 
