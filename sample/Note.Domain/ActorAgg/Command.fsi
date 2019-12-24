@@ -6,7 +6,7 @@ module CreateActor =
 
     [<Sealed>]
     type T =
-        member Value : Create
-        member Apply : (Actor.T -> Actor.T)
+        member Value : ActorCreated
+        member ApplyEvent : (Actor.T -> Actor.T)
 
-    val create : (Create -> T)
+    val create : (ActorCreated -> T)

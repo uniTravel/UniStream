@@ -2,15 +2,16 @@ namespace Note.Domain.ActorAgg
 
 
 [<CLIMutable>]
-type Create = { Name: string }
+type ActorCreated = { Name: string }
 
 
 [<RequireQualifiedAccess>]
 module Actor =
 
-    type T =
-        | Init
-        | Active of {| Name: string |}
+    type T
 
-    val inline internal actorCreated : ^c -> T -> T
-        when ^c : (member Value: Create)
+    val internal actorCreated : ActorCreated -> T -> T
+
+    type T with
+        static member Empty : T
+        member Apply : (string -> byte[] -> T)

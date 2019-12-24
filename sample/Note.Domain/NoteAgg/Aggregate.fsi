@@ -2,19 +2,19 @@ namespace Note.Domain.NoteAgg
 
 
 [<CLIMutable>]
-type Create = { Title: string; Content: string }
+type NoteCreated = { Title: string; Content: string }
 
 [<CLIMutable>]
-type Change = { Content: string }
+type NoteChanged = { Content: string }
 
 module Note =
 
-    type T =
-        | Init
-        | Active of {| Title: string; Content: string |}
+    type T
 
-    val inline internal noteCreated : ^c -> T -> T
-        when ^c : (member Value: Create)
+    val internal noteCreated : NoteCreated -> T -> T
 
-    val inline internal noteChanged : ^c -> T -> T
-        when ^c : (member Value: Change)
+    val internal noteChanged : NoteChanged -> T -> T
+
+    type T with
+        static member Empty : T
+        member Apply : (string -> byte[] -> T)

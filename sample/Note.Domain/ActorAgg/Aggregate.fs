@@ -1,7 +1,7 @@
 namespace Note.Domain.ActorAgg
 
 
-type Create = { Name: string }
+type ActorCreated = { Name: string }
 
 module Actor =
 
@@ -9,9 +9,11 @@ module Actor =
         | Init
         | Active of {| Name: string |}
 
-    let inline actorCreated c t =
+    let actorCreated delta t =
         match t with
-        | Init ->
-            let delta = (^c : (member Value: Create) c)
-            Active  {| Name = delta.Name |}
+        | Init -> Active  {| Name = delta.Name |}
         | Active _ -> failwith "只有初始状态才能创建Note。"
+
+    type T with
+        static member Empty = Init
+        member this.Apply : (string -> byte[] -> T) = failwith ""

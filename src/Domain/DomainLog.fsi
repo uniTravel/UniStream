@@ -4,18 +4,11 @@ open System
 
 
 [<RequireQualifiedAccess>]
-module internal DomainLog =
-
-    /// <summary>业务状态
-    /// </summary>
-    type Status =
-        | Processing = 0
-        | Successed = 1
-        | Failed = 2
+module DomainLog =
 
     /// <summary>领域日志数据
     /// </summary>
-    type T
+    type internal T
 
     /// <summary>领域日志记录器
     /// </summary>
@@ -25,7 +18,7 @@ module internal DomainLog =
     /// </summary>
     /// <param name="aggType">领域类型全名。</param>
     /// <param name="logFunc">领域日志流存储函数。</param>
-    val logger : string -> (string -> Guid -> string -> byte[] -> byte[] -> unit) -> Logger
+    val logger : string -> (string -> Guid -> string -> byte[] -> unit) -> Logger
 
     /// <summary>转成字节数组
     /// <para>领域日志数据采用二进制序列化。</para>
@@ -45,18 +38,21 @@ module internal DomainLog =
 
         /// <summary>记录Processing状态的领域日志
         /// </summary>
-        /// <param name="metaTrace">领域追踪元数据。</param>
+        /// <param name="aggId">聚合ID。</param>
+        /// <param name="traceId">跟踪ID。</param>
         /// <param name="format">字符串格式。</param>
-        member Process : MetaTrace.T -> Printf.StringFormat<'a, unit> -> 'a
+        member Process : Guid -> Guid -> Printf.StringFormat<'a, unit> -> 'a
 
         /// <summary>记录Successed状态的领域日志
         /// </summary>
-        /// <param name="metaTrace">领域追踪元数据。</param>
+        /// <param name="aggId">聚合ID。</param>
+        /// <param name="traceId">跟踪ID。</param>
         /// <param name="format">字符串格式。</param>
-        member Success : MetaTrace.T -> Printf.StringFormat<'a, unit> -> 'a
+        member Success : Guid -> Guid -> Printf.StringFormat<'a, unit> -> 'a
 
         /// <summary>记录Failed状态的领域日志
         /// </summary>
-        /// <param name="metaTrace">领域追踪元数据。</param>
+        /// <param name="aggId">聚合ID。</param>
+        /// <param name="traceId">跟踪ID。</param>
         /// <param name="format">字符串格式。</param>
-        member Fail : MetaTrace.T -> Printf.StringFormat<'a, unit> -> 'a
+        member Fail : Guid -> Guid -> Printf.StringFormat<'a, unit> -> 'a

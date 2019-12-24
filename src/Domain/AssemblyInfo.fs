@@ -7,8 +7,8 @@ open System.Runtime.CompilerServices
 [<assembly: AssemblyProductAttribute("UniStream.Domain")>]
 [<assembly: AssemblyCopyrightAttribute("Copyright 2019")>]
 [<assembly: AssemblyDescriptionAttribute("Domain layer library for UniStream")>]
-[<assembly: AssemblyVersionAttribute("0.0.1")>]
-[<assembly: AssemblyFileVersionAttribute("0.0.1")>]
+[<assembly: AssemblyVersionAttribute("0.1.0")>]
+[<assembly: AssemblyFileVersionAttribute("0.1.0")>]
 [<assembly: InternalsVisibleToAttribute("Tests")>]
 do ()
 
@@ -17,5 +17,5 @@ module internal AssemblyVersionInformation =
     let [<Literal>] AssemblyProduct = "UniStream.Domain"
     let [<Literal>] AssemblyCopyright = "Copyright 2019"
     let [<Literal>] AssemblyDescription = "Domain layer library for UniStream"
-    let [<Literal>] AssemblyVersion = "0.0.1"
-    let [<Literal>] AssemblyFileVersion = "0.0.1"
+    let [<Literal>] AssemblyVersion = "0.1.0"
+    let [<Literal>] AssemblyFileVersion = "0.1.0"

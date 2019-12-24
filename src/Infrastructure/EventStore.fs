@@ -5,13 +5,16 @@ open System
 
 module EventStore =
 
-    let getAgg (stream: string) (aId: Guid) : (byte[] * byte[])[] =
+    let getAgg (aggType: string) (aggId: Guid) : (Guid * string * byte[])[] * int64 =
         failwith ""
 
-    let esWrite (stream: string) (tId: Guid) (delta: string) (metaEvent: byte[]) (event: byte[]) : unit =
+    let getFromAgg (aggType: string) (aggId: Guid) (version: int64) : (Guid * string * byte[])[] * int64 =
         failwith ""
 
-    let ldWrite (stream: string) (tId: Guid) (delta: string) (metaTrace: byte[]) (dLog: byte[]) : unit =
+    let esWrite (aggType: string) (aggId: Guid) (version: int64) (traceId: Guid) (deltaType: string) (delta: byte[]) : unit =
+        failwith ""
+
+    let ldWrite (aggType: string) (traceId: Guid) (deltaType: string) (dLog: byte[]) : unit =
         failwith ""
 
     let lgWrite (stream: string) (gLog: byte[]) : unit =

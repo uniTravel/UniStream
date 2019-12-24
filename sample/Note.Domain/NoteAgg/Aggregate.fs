@@ -1,9 +1,11 @@
 namespace Note.Domain.NoteAgg
 
+open UniStream.Domain
 
-type Create = { Title: string; Content: string }
 
-type Change = { Content: string }
+type NoteCreated = { Title: string; Content: string }
+
+type NoteChanged = { Content: string }
 
 module Note =
 
@@ -11,17 +13,28 @@ module Note =
         | Init
         | Active of {| Title: string; Content: string |}
 
-    let inline noteCreated c t =
+    let noteCreated delta t =
         match t with
-        | Init ->
-            let delta = (^c : (member Value: Create) c)
-            Active  {| Title = delta.Title; Content = delta.Content |}
+        | Init -> Active  {| Title = delta.Title; Content = delta.Content |}
         | Active _ -> failwith "只有初始状态才能创建Note。"
 
-    let inline noteChanged c t =
+    let noteChanged delta t =
         match t with
         | Init -> failwith "初始状态不能更改Note。"
         | Active agg ->
-            let delta = (^c : (member Value: Change) c)
             let agg' = {| agg with Content = delta.Content |}
             Active agg'
+
+    let apply t deltaType deltaBytes : T =
+        match deltaType with
+        | "Note.Domain.NoteAgg.NoteCreated" ->
+            let delta = Delta.fromBytes<NoteCreated> deltaBytes
+            noteCreated delta t
+        | "Note.Domain.NoteAgg.NoteChanged" ->
+            let delta = Delta.fromBytes<NoteChanged> deltaBytes
+            noteChanged delta t
+        | _ -> failwith ""
+
+    type T with
+        static member Empty = Init
+        member this.Apply = apply this

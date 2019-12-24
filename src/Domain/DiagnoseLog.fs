@@ -4,6 +4,15 @@ open System
 open System.Text.Json
 
 
+type LogLevel =
+    | Trace = 0
+    | Debug = 1
+    | Info = 2
+    | Warn = 3
+    | Error = 4
+    | Critical = 5
+
+
 module DiagnoseLog =
 
     [<CLIMutable>]
