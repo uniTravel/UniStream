@@ -8,6 +8,7 @@ module Aggregator =
     type Accessor<'agg> =
         | Take of Guid * AsyncReplyChannel<Result<'agg * int64, string>>
         | Put of Guid * 'agg * int64
+        | Scavenge of int64
 
     type StoreConfig =
         { Get: string -> Guid -> (Guid * string * byte[])[] * int64
@@ -29,7 +30,7 @@ module Aggregator =
     let config get getFrom esFunc ldFunc lgFunc =
         { Get = get; GetFrom = getFrom; EsFunc = esFunc; LdFunc = ldFunc; LgFunc = lgFunc }
 
-    let inline agent< ^agg when ^agg : (static member Empty : ^agg) and ^agg : (member Apply : (string -> byte[] -> ^agg))> timeout (lg: DiagnoseLog.Logger) get =
+    let inline agent< ^agg when ^agg : (static member Empty : ^agg) and ^agg : (member Apply : (string -> byte[] -> ^agg))> (lg: DiagnoseLog.Logger) get timeout =
         MailboxProcessor<Accessor< ^agg>>.Start <| fun inbox ->
             let rec loop repo = async {
                 match! inbox.Receive() with
@@ -47,19 +48,32 @@ module Aggregator =
                     with ex ->
                         lg.Error ex.StackTrace "放回聚合失败：%s" ex.Message
                         return! loop repo
+                | Scavenge interval ->
+                    try
+                        let newRepo = Repository.scavenge repo interval
+                        return! loop newRepo
+                    with ex ->
+                        lg.Error ex.StackTrace "清扫聚合仓储出错：%s" ex.Message
+                        return! loop repo
             }
             loop <| Repository.empty get timeout
 
     let inline create cfg blockSeconds =
+        let createTimer interval handler =
+            let timer = new Timers.Timer(interval)
+            timer.AutoReset <- true
+            timer.Elapsed.Add handler
+            async { timer.Start() }
         let aggType = typeof< ^agg>.FullName
-        if blockSeconds <= 0L then invalidArg "blockSeconds" "超时锁定的秒数应该非负。"
+        if blockSeconds <= 0L || blockSeconds >= 10L then invalidArg "blockSeconds" "超时锁定的秒数应该介于0~10之间。"
         let timeout = blockSeconds * 10000000L
         let ld = DomainLog.logger aggType cfg.LdFunc
         let lg = DiagnoseLog.logger aggType cfg.LgFunc
         let get = cfg.Get aggType
         let getFrom = cfg.GetFrom aggType
         let esFunc = cfg.EsFunc aggType
-        let agent = agent< ^agg> timeout lg get
+        let agent = agent< ^agg> lg get timeout
+        Async.Start <| createTimer 15000.0 (fun _ -> agent.Post <| Scavenge 150000000L)
         { AggType = aggType; Timeout = timeout; DomainLog = ld; DiagnoseLog = lg; Get = get; GetFrom = getFrom; EsFunc = esFunc; Agent = agent }
 
     let inline apply t applyEvent aggId traceId deltaType deltaBytes = async {

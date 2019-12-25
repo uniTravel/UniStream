@@ -14,17 +14,12 @@ module Repository =
     /// <param name="Pending">Pending状态。</param>
     /// <param name="Blocked">Blocked状态，等待堆积的事件跨度超过设定阈值后阻塞。</param>
     type State<'agg> =
-        | Available of 'agg * int64
+        | Available of 'agg * int64 * int64
         | Empty
         | Pending of int64
-        | Blocked
+        | Blocked of int64
 
     /// <summary>聚合仓储
-    /// <para>1、管理聚合的缓存，采用聚合ID为键的Map。</para>
-    /// <para>1.1、采用聚合ID为键的Map。</para>
-    /// <para>1.2、取用的聚合必然会在缓存Map内。</para>
-    /// <para>1.3、通过状态控制聚合的取用，超时则阻塞。</para>
-    /// <para>2、管理EventStore的读写。</para>
     /// </summary>
     /// <typeparam name="'agg">聚合的类型。</typeparam>
     /// <param name="Get">获取聚合全部事件的函数。</param>
@@ -54,7 +49,6 @@ module Repository =
         when ^agg : (member Apply : (string -> byte[] -> ^agg))
 
     /// <summary>取出一个聚合
-    /// <para>取用聚合都是为了执行一个命令。</para>
     /// </summary>
     /// <typeparam name="^agg">聚合的类型。</typeparam>
     /// <param name="repo">聚合仓储。</param>
@@ -65,10 +59,17 @@ module Repository =
         and ^agg : (member Apply : (string -> byte[] -> ^agg))
 
     /// <summary>放回聚合
-    /// <para>由于命令执行失败，放回原来的聚合。</para>
     /// </summary>
     /// <param name="repo">聚合仓储。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="agg">要放回的聚合。</param>
     /// <param name="version">聚合版本。</param>
-    val put :T<'agg> -> Guid -> 'agg -> int64 -> T<'agg>
+    val put : T<'agg> -> Guid -> 'agg -> int64 -> T<'agg>
+
+    /// <summary>清扫聚合仓储
+    /// <para>1、移除长时间未使用的聚合。</para>
+    /// <para>2、移除长时间处于Blocked状态的聚合。</para>
+    /// </summary>
+    /// <param name="repo">聚合仓储。</param>
+    /// <param name="interval">以Ticks表示的间隔阈值。</param>
+    val scavenge : T<'agg> -> int64 -> T<'agg>

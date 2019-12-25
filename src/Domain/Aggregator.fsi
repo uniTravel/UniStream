@@ -11,6 +11,7 @@ module Aggregator =
     type Accessor<'agg> =
         | Take of Guid * AsyncReplyChannel<Result<'agg * int64, string>>
         | Put of Guid * 'agg * int64
+        | Scavenge of int64
 
     /// <summary>存储配置
     /// </summary>
@@ -63,10 +64,10 @@ module Aggregator =
 
     /// <summary>创建聚合仓储访问代理
     /// </summary>
-    /// <param name="timeout">聚合的超时Ticks约束。</param>
     /// <param name="lg">诊断日志记录器。</param>
     /// <param name="get">获取聚合全部事件的函数。</param>
-    val inline agent : int64 -> DiagnoseLog.Logger -> (Guid -> (Guid * string * byte[])[] * int64) -> MailboxProcessor<Accessor< ^agg>>
+    /// <param name="timeout">聚合的超时Ticks约束。</param>
+    val inline agent : DiagnoseLog.Logger -> (Guid -> (Guid * string * byte[])[] * int64) -> int64 -> MailboxProcessor<Accessor< ^agg>>
         when ^agg : (static member Empty : ^agg)
         and ^agg : (member Apply : (string -> byte[] -> ^agg))
 
