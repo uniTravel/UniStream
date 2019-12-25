@@ -26,6 +26,9 @@ module Aggregator =
           EsFunc: Guid -> int64 -> Guid -> string -> byte[] -> unit
           Agent: MailboxProcessor<Accessor<'agg>> }
 
+    let config get getFrom esFunc ldFunc lgFunc =
+        { Get = get; GetFrom = getFrom; EsFunc = esFunc; LdFunc = ldFunc; LgFunc = lgFunc }
+
     let inline agent< ^agg when ^agg : (static member Empty : ^agg) and ^agg : (member Apply : (string -> byte[] -> ^agg))> timeout (lg: DiagnoseLog.Logger) get =
         MailboxProcessor<Accessor< ^agg>>.Start <| fun inbox ->
             let rec loop repo = async {
@@ -47,9 +50,6 @@ module Aggregator =
             }
             loop <| Repository.empty get timeout
 
-    let config get getFrom esFunc ldFunc lgFunc =
-        { Get = get; GetFrom = getFrom; EsFunc = esFunc; LdFunc = ldFunc; LgFunc = lgFunc }
-
     let inline create cfg blockSeconds =
         let aggType = typeof< ^agg>.FullName
         if blockSeconds <= 0L then invalidArg "blockSeconds" "超时锁定的秒数应该非负。"
@@ -63,8 +63,8 @@ module Aggregator =
         { AggType = aggType; Timeout = timeout; DomainLog = ld; DiagnoseLog = lg; Get = get; GetFrom = getFrom; EsFunc = esFunc; Agent = agent }
 
     let inline apply t applyEvent aggId traceId deltaType deltaBytes = async {
-        let launch t applyEvent aggId agg version traceId deltaType deltaBytes refreshed =
-            let { DomainLog = ld; DiagnoseLog = lg; EsFunc = esFunc; Agent = agent; GetFrom = getFrom } = t
+        let { DomainLog = ld; DiagnoseLog = lg; EsFunc = esFunc; Agent = agent; GetFrom = getFrom } = t
+        let launch applyEvent aggId agg version traceId deltaType deltaBytes refreshed =
             try
                 let agg' = applyEvent agg
                 ld.Process aggId traceId "执行命令成功。"
@@ -86,14 +86,14 @@ module Aggregator =
                 lg.Error ex.StackTrace "执行命令出错：%s。" ex.Message
                 agent.Post <| Put (aggId, agg, version)
                 false
-        t.DomainLog.Process aggId traceId "开始。"
-        match! t.Agent.PostAndAsyncReply (fun channel -> Take (aggId, channel)) with
+        ld.Process aggId traceId "开始。"
+        match! agent.PostAndAsyncReply (fun channel -> Take (aggId, channel)) with
         | Ok (agg, version) ->
-            t.DomainLog.Process aggId traceId "取到聚合。"
-            if launch t applyEvent aggId agg version traceId deltaType deltaBytes false then
+            ld.Process aggId traceId "取到聚合。"
+            if launch applyEvent aggId agg version traceId deltaType deltaBytes false then
                 let agg, version = Repository.refresh aggId agg version t.GetFrom
-                launch t applyEvent aggId agg version traceId deltaType deltaBytes true |> ignore
-        | Error err -> t.DomainLog.Fail aggId traceId "取聚合出错：%s" err
+                launch applyEvent aggId agg version traceId deltaType deltaBytes true |> ignore
+        | Error err -> ld.Fail aggId traceId "取聚合出错：%s" err
     }
 
     let inline applyCommand t aggId traceId command = async {
