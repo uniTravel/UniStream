@@ -3,10 +3,12 @@ namespace UniStream.Domain
 open System
 
 
+/// <summary>领域日志模块
+/// </summary>
 [<RequireQualifiedAccess>]
 module DomainLog =
 
-    /// <summary>领域日志数据
+    /// <summary>领域日志
     /// </summary>
     type internal T
 
@@ -14,7 +16,7 @@ module DomainLog =
     /// </summary>
     type Logger
 
-    /// <summary>领域日志记录器
+    /// <summary>创建领域日志记录器
     /// </summary>
     /// <param name="aggType">领域类型全名。</param>
     /// <param name="logFunc">领域日志流存储函数。</param>

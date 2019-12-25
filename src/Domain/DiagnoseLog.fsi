@@ -12,10 +12,12 @@ type internal LogLevel =
     | Critical = 5
 
 
+/// <summary>诊断日志模块
+/// </summary>
 [<RequireQualifiedAccess>]
 module DiagnoseLog =
 
-    /// <summary>诊断日志数据
+    /// <summary>诊断日志
     /// </summary>
     type T
 
@@ -23,7 +25,7 @@ module DiagnoseLog =
     /// </summary>
     type Logger
 
-    /// <summary>诊断日志记录器
+    /// <summary>创建诊断日志记录器
     /// </summary>
     /// <param name="name">日志名称。</param>
     /// <param name="logFunc">诊断日志流存储函数。</param>

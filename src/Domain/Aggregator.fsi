@@ -3,6 +3,8 @@ namespace UniStream.Domain
 open System
 
 
+/// <summary>聚合器模块
+/// </summary>
 [<RequireQualifiedAccess>]
 module Aggregator =
 

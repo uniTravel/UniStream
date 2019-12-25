@@ -1,6 +1,8 @@
 namespace UniStream.Domain
 
 
+/// <summary>领域命令模块
+/// </summary>
 [<RequireQualifiedAccess>]
 module Command =
 

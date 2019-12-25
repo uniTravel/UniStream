@@ -1,6 +1,8 @@
 namespace UniStream.Domain
 
 
+/// <summary>边际影响模块
+/// </summary>
 [<RequireQualifiedAccess>]
 module Delta =
 

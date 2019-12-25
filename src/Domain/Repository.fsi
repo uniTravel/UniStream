@@ -4,6 +4,8 @@ open System
 open System.Collections.Generic
 
 
+/// <summary>聚合仓储模块
+/// </summary>
 [<RequireQualifiedAccess>]
 module Repository =
 
