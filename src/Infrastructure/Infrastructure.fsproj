@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.1</TargetFrameworks>
     <AssemblyName>UniStream.Infrastructure</AssemblyName>
-    <Version>0.0.1</Version>
+    <Version>0.1.0</Version>
     <Authors>Eric</Authors>
     <Company>UniCloud</Company>
   </PropertyGroup>

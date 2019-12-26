@@ -10,10 +10,10 @@ let uri = Uri "tcp://admin:changeit@localhost:1113"
 let conn = Array.zeroCreate 5
 [ 0 .. 4 ] |> List.iter (fun i ->
     conn.[i] <- EventStoreConnection.Create uri
-    conn.[i].ConnectAsync () |> Async.AwaitTask |> Async.RunSynchronously |> ignore
+    conn.[i].ConnectAsync () |> Async.AwaitTask |> Async.RunSynchronously
 )
 
-[<PTests>]
+[<FTests>]
 let tests =
     testSequenced <| testList "EventStore" [
         let withArgs f () =
@@ -47,7 +47,7 @@ let tests =
                 |> ignore
                 finish 2
             "顺序读", fun streamName finish ->
-                let rs = (conn.[0].ReadStreamEventsForwardAsync(streamName, int64 StreamPosition.Start, 4 * 1024, true)).Result
+                let rs = (conn.[0].ReadStreamEventsForwardAsync(streamName, 0L, 4 * 1024, true)).Result
                 finish 3
             "反向读", fun streamName finish ->
                 let rs = (conn.[0].ReadStreamEventsBackwardAsync(streamName, int64 StreamPosition.End, 4 * 1024, true)).Result
