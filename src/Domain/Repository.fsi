@@ -24,20 +24,20 @@ module Repository =
     /// <summary>聚合仓储
     /// </summary>
     /// <typeparam name="'agg">聚合的类型。</typeparam>
-    /// <param name="Get">获取聚合全部事件的函数。</param>
+    /// <param name="Get">从某个版本开始获取聚合事件的函数。</param>
     /// <param name="Timeout">聚合的超时Ticks约束。</param>
     /// <param name="Map">聚合Map，以聚合ID为键，值包括一个等待队列和聚合状态。</param>
     type T<'agg> =
-        { Get: Guid -> (Guid * string * byte[])[] * int64
+        { Get: Guid -> int64 -> (Guid * string * byte[])[] * int64
           Timeout: int64
           Map: Map<Guid, Queue<int64 * AsyncReplyChannel<Result<'agg * int64, string>>> * State<'agg> ref> }
 
     /// <summary>初始化一个空的聚合仓储
     /// </summary>
     /// <typeparam name="'agg">聚合的类型。</typeparam>
-    /// <param name="get">获取聚合全部事件的函数。</param>
+    /// <param name="get">从某个版本开始获取聚合事件的函数。</param>
     /// <param name="timeout">聚合的超时Ticks约束。</param>
-    val empty : (Guid -> (Guid * string * byte[])[] * int64) -> int64 -> T<'agg>
+    val empty : (Guid -> int64 -> (Guid * string * byte[])[] * int64) -> int64 -> T<'agg>
 
     /// <summary>刷新聚合
     /// </summary>
@@ -45,7 +45,7 @@ module Repository =
     /// <param name="aggId">聚合ID。</param>
     /// <param name="agg">当前聚合。</param>
     /// <param name="version">聚合版本。</param>
-    /// <param name="getFrom">从某个版本开始获取聚合事件的函数。</param>
+    /// <param name="get">从某个版本开始获取聚合事件的函数。</param>
     /// <returns>刷新后的聚合及相应的聚合版本。</returns>
     val inline refresh< ^agg> : Guid -> ^agg -> int64 -> (Guid -> int64 -> (Guid * string * byte[])[] * int64) -> (^agg * int64)
         when ^agg : (member Apply : (string -> byte[] -> ^agg))

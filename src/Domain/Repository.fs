@@ -13,15 +13,15 @@ module Repository =
         | Blocked of int64
 
     type T<'agg> =
-        { Get: Guid -> (Guid * string * byte[])[] * int64
+        { Get: Guid -> int64 -> (Guid * string * byte[])[] * int64
           Timeout: int64
           Map: Map<Guid, Queue<int64 * AsyncReplyChannel<Result<'agg * int64, string>>> * State<'agg> ref> }
 
     let empty get timeout =
         { Get = get; Timeout = timeout; Map = Map.empty }
 
-    let inline refresh aggId agg version (getFrom: Guid -> int64 -> (Guid * string * byte[])[] * int64) =
-        let (events, version) = getFrom aggId version
+    let inline refresh aggId agg version (get: Guid -> int64 -> (Guid * string * byte[])[] * int64) =
+        let (events, version) = get aggId version
         match events with
         | [||] -> agg, version
         | _ ->
@@ -50,11 +50,11 @@ module Repository =
             | Blocked _ -> failwithf "聚合%A，状态为Blocked。" aggId
             repo
         else
-            let (events, version) = repo.Get aggId
+            let (events, version) = repo.Get aggId 0L
             let init = (^agg : (static member Empty : ^agg) ())
             let map = repo.Map.Add (aggId, (new Queue<int64 * AsyncReplyChannel<Result< ^agg * int64, string>>>(), ref Empty))
             match events with
-            | [||] -> channel.Reply <| Ok (init, 0L)
+            | [||] -> channel.Reply <| Ok (init, -1L)
             | _ ->
                 let agg =
                     Array.fold (fun agg elem ->

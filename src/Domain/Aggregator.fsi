@@ -17,14 +17,12 @@ module Aggregator =
 
     /// <summary>存储配置
     /// </summary>
-    /// <param name="Get">获取聚合全部事件的函数。</param>
-    /// <param name="GetFrom">从某个版本开始获取聚合事件的函数。</param>
+    /// <param name="Get">从某个版本开始获取聚合事件的函数。</param>
     /// <param name="EsFunc">领域事件流存储函数。</param>
     /// <param name="LdFunc">领域日志流存储函数。</param>
     /// <param name="LgFunc">诊断日志流存储函数。</param>
     type StoreConfig =
-        { Get: string -> Guid -> (Guid * string * byte[])[] * int64
-          GetFrom: string -> Guid -> int64 -> (Guid * string * byte[])[] * int64
+        { Get: string -> Guid -> int64 -> (Guid * string * byte[])[] * int64
           EsFunc: string -> Guid -> int64 -> Guid -> string -> byte[] -> unit
           LdFunc: string -> Guid -> string -> byte[] -> unit
           LgFunc: string -> byte[] -> unit }
@@ -36,8 +34,7 @@ module Aggregator =
     /// <param name="Timeout">聚合的超时Ticks约束。</param>
     /// <param name="DomainLog">领域日志记录器。</param>
     /// <param name="DiagnoseLog">诊断日志记录器。</param>
-    /// <param name="Get">获取聚合全部事件的函数。</param>
-    /// <param name="GetFrom">从某个版本开始获取聚合事件的函数。</param>
+    /// <param name="Get">从某个版本开始获取聚合事件的函数。</param>
     /// <param name="EsFunc">领域事件流存储函数。</param>
     /// <param name="Agent">聚合仓储访问代理。</param>
     type T<'agg> =
@@ -45,20 +42,17 @@ module Aggregator =
           Timeout: int64
           DomainLog: DomainLog.Logger
           DiagnoseLog: DiagnoseLog.Logger
-          Get: Guid -> (Guid * string * byte[])[] * int64
-          GetFrom: Guid -> int64 -> (Guid * string * byte[])[] * int64
+          Get: Guid -> int64 -> (Guid * string * byte[])[] * int64
           EsFunc: Guid -> int64 -> Guid -> string -> byte[] -> unit
           Agent: MailboxProcessor<Accessor<'agg>> }
 
     /// <summary>创建存储配置
     /// </summary>
-    /// <param name="get">获取聚合全部事件的函数。</param>
-    /// <param name="getFrom">从某个版本开始获取聚合事件的函数。</param>
+    /// <param name="get">从某个版本开始获取聚合事件的函数。</param>
     /// <param name="esFunc">领域事件流存储函数。</param>
     /// <param name="ldFunc">领域日志流存储函数。</param>
     /// <param name="lgFunc">诊断日志流存储函数。</param>
     val config :
-        (string -> Guid -> (Guid * string * byte[])[] * int64) ->
         (string -> Guid -> int64 -> (Guid * string * byte[])[] * int64) ->
         (string -> Guid -> int64 -> Guid -> string -> byte[] -> unit) ->
         (string -> Guid -> string -> byte[] -> unit) ->
@@ -67,9 +61,9 @@ module Aggregator =
     /// <summary>创建聚合仓储访问代理
     /// </summary>
     /// <param name="lg">诊断日志记录器。</param>
-    /// <param name="get">获取聚合全部事件的函数。</param>
+    /// <param name="get">从某个版本开始获取聚合事件的函数。</param>
     /// <param name="timeout">聚合的超时Ticks约束。</param>
-    val inline agent : DiagnoseLog.Logger -> (Guid -> (Guid * string * byte[])[] * int64) -> int64 -> MailboxProcessor<Accessor< ^agg>>
+    val inline agent : DiagnoseLog.Logger -> (Guid -> int64 -> (Guid * string * byte[])[] * int64) -> int64 -> MailboxProcessor<Accessor< ^agg>>
         when ^agg : (static member Empty : ^agg)
         and ^agg : (member Apply : (string -> byte[] -> ^agg))
 

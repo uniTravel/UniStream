@@ -11,8 +11,7 @@ module Aggregator =
         | Scavenge of int64
 
     type StoreConfig =
-        { Get: string -> Guid -> (Guid * string * byte[])[] * int64
-          GetFrom: string -> Guid -> int64 -> (Guid * string * byte[])[] * int64
+        { Get: string -> Guid -> int64 -> (Guid * string * byte[])[] * int64
           EsFunc: string -> Guid -> int64 -> Guid -> string -> byte[] -> unit
           LdFunc: string -> Guid -> string -> byte[] -> unit
           LgFunc: string -> byte[] -> unit }
@@ -22,13 +21,12 @@ module Aggregator =
           Timeout: int64
           DomainLog: DomainLog.Logger
           DiagnoseLog: DiagnoseLog.Logger
-          Get: Guid -> (Guid * string * byte[])[] * int64
-          GetFrom: Guid -> int64 -> (Guid * string * byte[])[] * int64
+          Get: Guid -> int64 -> (Guid * string * byte[])[] * int64
           EsFunc: Guid -> int64 -> Guid -> string -> byte[] -> unit
           Agent: MailboxProcessor<Accessor<'agg>> }
 
-    let config get getFrom esFunc ldFunc lgFunc =
-        { Get = get; GetFrom = getFrom; EsFunc = esFunc; LdFunc = ldFunc; LgFunc = lgFunc }
+    let config get esFunc ldFunc lgFunc =
+        { Get = get; EsFunc = esFunc; LdFunc = ldFunc; LgFunc = lgFunc }
 
     let inline agent< ^agg when ^agg : (static member Empty : ^agg) and ^agg : (member Apply : (string -> byte[] -> ^agg))> (lg: DiagnoseLog.Logger) get timeout =
         MailboxProcessor<Accessor< ^agg>>.Start <| fun inbox ->
@@ -70,14 +68,13 @@ module Aggregator =
         let ld = DomainLog.logger aggType cfg.LdFunc
         let lg = DiagnoseLog.logger aggType cfg.LgFunc
         let get = cfg.Get aggType
-        let getFrom = cfg.GetFrom aggType
         let esFunc = cfg.EsFunc aggType
         let agent = agent< ^agg> lg get timeout
         Async.Start <| createTimer 15000.0 (fun _ -> agent.Post <| Scavenge 150000000L)
-        { AggType = aggType; Timeout = timeout; DomainLog = ld; DiagnoseLog = lg; Get = get; GetFrom = getFrom; EsFunc = esFunc; Agent = agent }
+        { AggType = aggType; Timeout = timeout; DomainLog = ld; DiagnoseLog = lg; Get = get; EsFunc = esFunc; Agent = agent }
 
     let inline apply t applyEvent aggId traceId deltaType deltaBytes = async {
-        let { DomainLog = ld; DiagnoseLog = lg; EsFunc = esFunc; Agent = agent; GetFrom = getFrom } = t
+        let { DomainLog = ld; DiagnoseLog = lg; EsFunc = esFunc; Agent = agent; Get = get } = t
         let launch applyEvent aggId agg version traceId deltaType deltaBytes refreshed =
             try
                 let agg' = applyEvent agg
@@ -105,7 +102,7 @@ module Aggregator =
         | Ok (agg, version) ->
             ld.Process aggId traceId "取到聚合。"
             if launch applyEvent aggId agg version traceId deltaType deltaBytes false then
-                let agg, version = Repository.refresh aggId agg version t.GetFrom
+                let agg, version = Repository.refresh aggId agg (version + 1L) t.Get
                 launch applyEvent aggId agg version traceId deltaType deltaBytes true |> ignore
         | Error err -> ld.Fail aggId traceId "取聚合出错：%s" err
     }
