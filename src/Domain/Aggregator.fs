@@ -62,7 +62,7 @@ module Aggregator =
             timer.AutoReset <- true
             timer.Elapsed.Add handler
             async { timer.Start() }
-        let aggType = typeof< ^agg>.FullName
+        let aggType = typeof< ^agg>.DeclaringType.FullName
         if blockSeconds <= 0L || blockSeconds >= 10L then invalidArg "blockSeconds" "超时锁定的秒数应该介于0~10之间。"
         let timeout = blockSeconds * 10000000L
         let ld = DomainLog.logger aggType cfg.LdFunc

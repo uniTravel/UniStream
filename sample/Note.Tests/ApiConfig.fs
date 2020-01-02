@@ -4,8 +4,7 @@ module ApiConfig
 open System
 open UniStream.Infrastructure
 open UniStream.Domain
-open Note.Domain.ActorAgg
-open Note.Domain.NoteAgg
+open Note.Domain
 
 
 let inline applyRaw aggregator = Aggregator.applyRaw aggregator

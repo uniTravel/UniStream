@@ -2,7 +2,7 @@ module Note.Tests
 
 open System
 open Expecto
-open Note.Domain.NoteAgg
+open Note.Domain
 
 let aggId = Guid.NewGuid()
 

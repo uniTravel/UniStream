@@ -1,4 +1,4 @@
-namespace Note.Domain.NoteAgg
+namespace Note.Domain
 
 open UniStream.Domain
 

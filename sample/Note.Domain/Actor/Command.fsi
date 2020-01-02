@@ -1,4 +1,4 @@
-namespace Note.Domain.ActorAgg
+namespace Note.Domain
 
 
 [<RequireQualifiedAccess>]

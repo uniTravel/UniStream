@@ -8,14 +8,14 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="ActorAgg\Aggregate.fsi" />
-    <Compile Include="ActorAgg\Aggregate.fs" />
-    <Compile Include="ActorAgg\Command.fsi" />
-    <Compile Include="ActorAgg\Command.fs" />
-    <Compile Include="NoteAgg\Aggregate.fsi" />
-    <Compile Include="NoteAgg\Aggregate.fs" />
-    <Compile Include="NoteAgg\Command.fsi" />
-    <Compile Include="NoteAgg\Command.fs" />
+    <Compile Include="Actor\Aggregate.fsi" />
+    <Compile Include="Actor\Aggregate.fs" />
+    <Compile Include="Actor\Command.fsi" />
+    <Compile Include="Actor\Command.fs" />
+    <Compile Include="Note\Aggregate.fsi" />
+    <Compile Include="Note\Aggregate.fs" />
+    <Compile Include="Note\Command.fsi" />
+    <Compile Include="Note\Command.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>

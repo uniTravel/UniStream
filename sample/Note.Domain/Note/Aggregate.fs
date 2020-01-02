@@ -1,4 +1,4 @@
-namespace Note.Domain.NoteAgg
+namespace Note.Domain
 
 open UniStream.Domain
 
@@ -33,7 +33,7 @@ module Note =
         | "Note.Domain.NoteAgg.NoteChanged" ->
             let delta = Delta.fromBytes<NoteChanged> deltaBytes
             noteChanged delta t
-        | _ -> failwith ""
+        | d -> failwithf "边际影响类型错误：%s" d
 
     type T with
         static member Empty = Init

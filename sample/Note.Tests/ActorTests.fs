@@ -2,7 +2,7 @@ module Actor.Tests
 
 open System
 open Expecto
-open Note.Domain.ActorAgg
+open Note.Domain
 
 
 [<Tests>]
