@@ -14,12 +14,13 @@ module DomainLog =
         { AggType = aggType; LogFunc = logFunc }
 
     let asBytes log =
-        let array = Array.zeroCreate<byte> <| 16 + log.Message.Length
+        let msgBytes = Encoding.UTF8.GetBytes log.Message
+        let array = Array.zeroCreate<byte> <| 16 + msgBytes.Length
         let span = Span array
         let aId = span.Slice (0, 16)
-        let msg = span.Slice (16, log.Message.Length)
+        let msg = span.Slice (16, msgBytes.Length)
         ((log.AggId.ToByteArray()).AsSpan()).CopyTo aId
-        ((Encoding.UTF8.GetBytes log.Message).AsSpan()).CopyTo msg
+        (Span msgBytes).CopyTo msg
         array
 
     let fromBytes bytes =

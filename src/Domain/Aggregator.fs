@@ -110,7 +110,7 @@ module Aggregator =
     let inline applyCommand t aggId traceId command = async {
         let delta = (^c : (member Value: 'a) command)
         let deltaBytes = Delta.asBytes delta
-        let deltaType = delta.GetType().FullName
+        let deltaType = (^c : (static member DeltaType: string) ())
         do! apply t (^c : (member ApplyEvent: (^agg -> ^agg)) command) aggId traceId deltaType deltaBytes
     }
 

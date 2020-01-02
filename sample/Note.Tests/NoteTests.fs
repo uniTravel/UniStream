@@ -4,21 +4,18 @@ open System
 open Expecto
 open Note.Domain.NoteAgg
 
+let aggId = Guid.NewGuid()
 
 [<Tests>]
 let tests =
-    testList "NoteAgg" [
+    testSequenced <| testList "NoteAgg" [
         testCase "Create Note" <| fun _ ->
-            let aggId = Guid.NewGuid()
             let traceId = Guid.NewGuid()
-            let name = typeof<NoteCreated>.FullName
-            let cb = [||]
-            Async.Start <| applyRaw note aggId traceId name cb CreateNote.create
+            let command = CreateNote.create { Title = "title"; Content = "first content" }
+            Async.RunSynchronously <| applyCommand note aggId traceId command
         testCase "Change Note" <| fun _ ->
-            let aggId = Guid.NewGuid()
             let traceId = Guid.NewGuid()
-            let name = typeof<NoteChanged>.FullName
-            let cb = [||]
-            Async.Start <| applyRaw note aggId traceId name cb ChangeNote.create
+            let command = ChangeNote.create { Content = "changed content" }
+            Async.RunSynchronously <| applyCommand note aggId traceId command
     ]
     |> testLabel "Note App"

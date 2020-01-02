@@ -13,7 +13,7 @@ let conn = Array.zeroCreate 5
     conn.[i].ConnectAsync () |> Async.AwaitTask |> Async.RunSynchronously
 )
 
-[<FTests>]
+[<PTests>]
 let tests =
     testSequenced <| testList "EventStore" [
         let withArgs f () =

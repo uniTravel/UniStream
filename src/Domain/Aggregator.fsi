@@ -100,6 +100,7 @@ module Aggregator =
     /// <param name="command">领域命令。</param>
     val inline applyCommand : T< ^agg> -> Guid -> Guid -> ^c -> Async<unit>
         when ^agg : (member Apply : (string -> byte[] -> ^agg))
+        and ^c : (static member DeltaType: string)
         and ^c : (member Value: 'a)
         and ^c : (member ApplyEvent: (^agg -> ^agg))
 

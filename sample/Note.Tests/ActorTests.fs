@@ -11,8 +11,7 @@ let tests =
         testCase "Create Actor" <| fun _ ->
             let aggId = Guid.NewGuid()
             let traceId = Guid.NewGuid()
-            let name = typeof<ActorCreated>.FullName
-            let cb = [||]
-            Async.Start <| applyRaw actor aggId traceId name cb CreateActor.create
+            let command = CreateActor.create { Name = "actor" }
+            Async.RunSynchronously <| applyCommand actor aggId traceId command
     ]
     |> testLabel "Note App"
