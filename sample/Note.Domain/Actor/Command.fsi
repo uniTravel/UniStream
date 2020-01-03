@@ -1,5 +1,7 @@
 namespace Note.Domain
 
+open Note.Contract
+
 
 [<RequireQualifiedAccess>]
 module CreateActor =
@@ -7,7 +9,7 @@ module CreateActor =
     [<Sealed>]
     type T =
         static member DeltaType : string
-        member Value : ActorCreated
+        member Value : CreateActorCommand
         member ApplyEvent : (Actor.T -> Actor.T)
 
-    val create : (ActorCreated -> T)
+    val create : (CreateActorCommand -> T)

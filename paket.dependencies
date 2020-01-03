@@ -4,6 +4,7 @@ framework auto-detect
 
 nuget FSharp.Core
 nuget FSharp.Quotations.Evaluator
+nuget Grpc.AspNetCore
 nuget Logary
 nuget Hopac
 nuget BenchmarkDotNet

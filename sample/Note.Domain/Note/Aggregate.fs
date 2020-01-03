@@ -1,11 +1,8 @@
 namespace Note.Domain
 
 open UniStream.Domain
+open Note.Contract
 
-
-type NoteCreated = { Title: string; Content: string }
-
-type NoteChanged = { Content: string }
 
 module Note =
 
@@ -13,12 +10,12 @@ module Note =
         | Init
         | Active of {| Title: string; Content: string |}
 
-    let noteCreated delta t =
+    let noteCreated (delta: CreateNoteCommand) t =
         match t with
         | Init -> Active  {| Title = delta.Title; Content = delta.Content |}
         | Active _ -> failwith "只有初始状态才能创建Note。"
 
-    let noteChanged delta t =
+    let noteChanged (delta: ChangeNoteCommand) t =
         match t with
         | Init -> failwith "初始状态不能更改Note。"
         | Active agg ->
@@ -27,11 +24,11 @@ module Note =
 
     let apply t deltaType deltaBytes : T =
         match deltaType with
-        | "Note.Domain.NoteAgg.NoteCreated" ->
-            let delta = Delta.fromBytes<NoteCreated> deltaBytes
+        | "Note.Contract.CreateNoteCommand" ->
+            let delta = Delta.fromBytes<CreateNoteCommand> deltaBytes
             noteCreated delta t
-        | "Note.Domain.NoteAgg.NoteChanged" ->
-            let delta = Delta.fromBytes<NoteChanged> deltaBytes
+        | "Note.Contract.ChangeNoteCommand" ->
+            let delta = Delta.fromBytes<ChangeNoteCommand> deltaBytes
             noteChanged delta t
         | d -> failwithf "边际影响类型错误：%s" d
 

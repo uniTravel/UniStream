@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <AssemblyName>Note.Contract</AssemblyName>
+    <Version>0.0.1</Version>
+  </PropertyGroup>
+  <ItemGroup>
+    <Protobuf Include="Protos\actor.proto" GrpcServices="Server" />
+    <Protobuf Include="Protos\note.proto" GrpcServices="Server" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

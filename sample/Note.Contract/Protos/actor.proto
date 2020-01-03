@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option csharp_namespace = "Note.Contract";
+
+package actor;
+
+service Actor {
+    rpc CreateActor (CreateActorCommand) returns (CreateActorReply);
+}
+
+message CreateActorCommand {
+    string name = 1;
+}
+
+message CreateActorReply {
+    string agg_id = 1;
+    string trace_id = 2;
+}

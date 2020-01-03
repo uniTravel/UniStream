@@ -3,11 +3,8 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <AssemblyName>Note.Domain</AssemblyName>
     <Version>0.0.1</Version>
-    <Authors>Eric</Authors>
-    <Company>UniCloud</Company>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Actor\Aggregate.fsi" />
     <Compile Include="Actor\Aggregate.fs" />
     <Compile Include="Actor\Command.fsi" />
@@ -20,6 +17,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Domain\Domain.fsproj" />
+    <ProjectReference Include="..\Note.Contract\Note.Contract.csproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

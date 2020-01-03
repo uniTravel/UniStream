@@ -1,8 +1,7 @@
 namespace Note.Domain
 
 open UniStream.Domain
-
-type ActorCreated = { Name: string }
+open Note.Contract
 
 module Actor =
 
@@ -10,18 +9,18 @@ module Actor =
         | Init
         | Active of {| Name: string |}
 
-    let actorCreated delta t =
+    let actorCreated (delta: CreateActorCommand) t =
         match t with
         | Init -> Active  {| Name = delta.Name |}
         | Active _ -> failwith "只有初始状态才能创建Note。"
 
     let apply t deltaType deltaBytes : T =
         match deltaType with
-        | "Note.Domain.ActorAgg.ActorCreated" ->
-            let delta = Delta.fromBytes<ActorCreated> deltaBytes
+        | "Note.Contract.CreateActorCommand" ->
+            let delta = Delta.fromBytes<CreateActorCommand> deltaBytes
             actorCreated delta t
         | d -> failwithf "边际影响类型错误：%s" d
 
     type T with
         static member Empty = Init
-        member this.Apply : (string -> byte[] -> T) = failwith ""
+        member this.Apply  = apply this
