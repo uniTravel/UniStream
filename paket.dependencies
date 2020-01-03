@@ -12,3 +12,6 @@ nuget Expecto
 nuget Expecto.FsCheck
 nuget Expecto.Hopac
 nuget EventStore.Client
+
+nuget UniStream.Domain
+nuget UniStream.Infrastructure
