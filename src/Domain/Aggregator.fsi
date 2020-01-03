@@ -90,7 +90,6 @@ module Aggregator =
         when ^agg : (member Apply : (string -> byte[] -> ^agg))
 
     /// <summary>应用命令
-    /// <para>面向流程管理器传入的命令。</para>
     /// </summary>
     /// <typeparam name="^agg">聚合的类型。</typeparam>
     /// <typeparam name="^c">领域命令类型。</typeparam>
@@ -105,7 +104,6 @@ module Aggregator =
         and ^c : (member ApplyEvent: (^agg -> ^agg))
 
     /// <summary>应用命令
-    /// <para>面向网络传入、数组格式的原始命令。</para>
     /// </summary>
     /// <typeparam name="^agg">聚合的类型。</typeparam>
     /// <typeparam name="^d">边际影响类型。</typeparam>
