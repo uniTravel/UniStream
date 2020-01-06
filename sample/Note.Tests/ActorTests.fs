@@ -1,17 +1,16 @@
 module Actor.Tests
 
-open System
 open Expecto
-open Note.Domain
+open Note.Contract
 
 
 [<Tests>]
 let tests =
     testList "ActorAgg" [
         testCase "Create Actor" <| fun _ ->
-            let aggId = Guid.NewGuid()
-            let traceId = Guid.NewGuid()
-            let command = CreateActor.create { Name = "actor" }
-            Async.RunSynchronously <| applyCommand actor aggId traceId command
+            let command = CreateActorCommand()
+            command.Name <- "actor"
+            let reply = app.CreateActor command |> Async.AwaitTask |> Async.RunSynchronously
+            printfn "%s" reply.AggId
     ]
     |> testLabel "Note App"

@@ -1,21 +1,22 @@
 module Note.Tests
 
-open System
 open Expecto
-open Note.Domain
+open Note.Contract
 
-let aggId = Guid.NewGuid()
 
 [<Tests>]
 let tests =
     testSequenced <| testList "NoteAgg" [
-        testCase "Create Note" <| fun _ ->
-            let traceId = Guid.NewGuid()
-            let command = CreateNote.create { Title = "title"; Content = "first content" }
-            Async.RunSynchronously <| applyCommand note aggId traceId command
-        testCase "Change Note" <| fun _ ->
-            let traceId = Guid.NewGuid()
-            let command = ChangeNote.create { Content = "changed content" }
-            Async.RunSynchronously <| applyCommand note aggId traceId command
+        testCase "Create & Change Note" <| fun _ ->
+            let command = CreateNoteCommand()
+            command.Title <- "title"
+            command.Content <- "initial content"
+            let reply = app.CreateNote command |> Async.AwaitTask |> Async.RunSynchronously
+            printfn "%s-%s" reply.AggId reply.TraceId
+            let command = ChangeNoteCommand()
+            command.AggId <- reply.AggId
+            command.Content <- "changed content"
+            let reply = app.ChangeNote command |> Async.AwaitTask |> Async.RunSynchronously
+            printfn "%s" reply.TraceId
     ]
     |> testLabel "Note App"

@@ -1,3 +1,5 @@
 FSharp.Core
 Expecto
 EventStore.Client
+UniStream.Domain
+UniStream.Infrastructure

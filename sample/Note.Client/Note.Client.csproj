@@ -1,12 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <AssemblyName>Note.Contract</AssemblyName>
-    <Version>0.0.1</Version>
   </PropertyGroup>
   <ItemGroup>
-    <Protobuf Include="Protos\actor.proto" GrpcServices="Server" />
-    <Protobuf Include="Protos\note.proto" GrpcServices="Server" />
+    <Protobuf Include="..\Note.Contract\Protos\actor.proto" GrpcServices="Client" />
+    <Protobuf Include="..\Note.Contract\Protos\note.proto" GrpcServices="Client" />
     <None Include="paket.references" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
