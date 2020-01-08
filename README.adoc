@@ -16,7 +16,10 @@
 
 == 环境
 目标框架::
-* .NET Core 3.0
+* .NET Core 3.1
 开发语言::
 * F#
-
+IDE::
+* Visual Studio Code
+第三方依赖::
+* https://eventstore.org/[Event Store]：目前提供的流存储实现。

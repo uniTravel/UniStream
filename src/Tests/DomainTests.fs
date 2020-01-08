@@ -3,7 +3,7 @@ module Domain.Tests
 open Expecto
 
 
-[<FTests>]
+[<PTests>]
 let tests =
     testList "Domain" [
         testCase "MetaLog" <| fun _ ->

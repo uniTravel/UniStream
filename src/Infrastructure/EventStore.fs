@@ -1,6 +1,7 @@
 namespace UniStream.Infrastructure
 
 open System
+open System.Threading.Tasks
 open EventStore.ClientAPI
 
 
@@ -10,6 +11,11 @@ module Helper =
         let conn = EventStoreConnection.Create uri
         conn.ConnectAsync() |> Async.AwaitTask |> Async.RunSynchronously
         conn
+
+    let connectSubscription (client: IEventStoreConnection) (streamName: string) (groupName: string) (f: Guid -> string -> byte[] -> Async<unit>) =
+        client.ConnectToPersistentSubscription (streamName, groupName, (fun sub e ->
+            f e.Event.EventId e.Event.EventType e.Event.Data |> Async.StartAsTask :> Task
+        )) |> ignore
 
 
 module DomainEvent =
@@ -33,6 +39,30 @@ module DomainEvent =
         let version = version - 1L
         let eventData = EventData (traceId, deltaType, true, delta, [||])
         client.AppendToStreamAsync (streamName, version, eventData) |> Async.AwaitTask |> Async.RunSynchronously |> ignore
+
+    let subscribeToStream (Client client) deltaType (f: Guid -> string -> byte[] -> Async<unit>) =
+        let streamName = sprintf "$et-%s" deltaType
+        client.SubscribeToStreamAsync (streamName, true, (fun sub e ->
+            f e.Event.EventId e.Event.EventType e.Event.Data |> Async.StartAsTask :> Task
+        )) |> ignore
+
+    let connectSubscription (Client client) deltaType groupName f =
+        let streamName = sprintf "$et-%s" deltaType
+        Helper.connectSubscription client streamName groupName f
+
+
+module DomainCommand =
+
+    type T = Client of IEventStoreConnection
+
+    let create uri = Helper.Connect uri |> Client
+
+    let write (Client client) deltaType traceId aggId delta =
+        let eventData = EventData (traceId, aggId, true, delta, [||])
+        client.AppendToStreamAsync (deltaType, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.RunSynchronously |> ignore
+
+    let connectSubscription (Client client) deltaType groupName f =
+        Helper.connectSubscription client deltaType groupName f
 
 
 module DomainLog =

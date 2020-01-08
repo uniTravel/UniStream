@@ -4,54 +4,81 @@ open System
 open System.Text
 open Microsoft.FSharp.Core.Operators
 open Expecto
-open EventStore.ClientAPI
+open UniStream.Infrastructure
 
-let uri = Uri "tcp://admin:changeit@localhost:1113"
-let conn = Array.zeroCreate 5
-[ 0 .. 4 ] |> List.iter (fun i ->
-    conn.[i] <- EventStoreConnection.Create uri
-    conn.[i].ConnectAsync () |> Async.AwaitTask |> Async.RunSynchronously
-)
+let uriAdmin = Uri "tcp://admin:changeit@localhost:4011"
+let uriOps = Uri "tcp://ops:changeit@localhost:4011"
+let admin = DomainEvent.create uriAdmin
+let ops = DomainEvent.create uriOps
+let handler sub eventId eventType data = async {
+    printfn "%s：%A，%s" sub eventId eventType
+}
+let aggType = "Note"
 
-[<PTests>]
-let tests =
-    testSequenced <| testList "EventStore" [
+
+[<Tests>]
+let adminTests =
+    let aggId = Guid.NewGuid()
+    testSequenced <| testList "EventStore Admin" [
         let withArgs f () =
-            let streamName = "newStream"
-            go "EventStore" |> f streamName
+            let writer = DomainEvent.write admin
+            go "EventStore Admin" |> f writer
         yield! testFixture withArgs [
-            "写入流，一个连接", fun streamName finish ->
-                let ds =
-                    seq { 1 .. 50000 }
-                    |> Seq.map (fun i ->
-                        let meta = sprintf "%d" i
-                        EventData (Guid.NewGuid (), "te", false, Encoding.UTF8.GetBytes "some data", Encoding.UTF8.GetBytes meta)
-                    )
-                conn.[0].AppendToStreamAsync (streamName, int64 ExpectedVersion.Any, ds) |> Async.AwaitTask
-                |> Async.RunSynchronously
-                |> ignore
+            "客户端订阅", fun writer finish ->
+                DomainEvent.subscribeToStream admin "NoteChanged" <| handler "单点订阅Admin"
                 finish 1
-            "写入流，五个连接并发", fun streamName finish ->
-                [ 0 .. 4 ]
-                |> List.map (fun j ->
-                    let ds =
-                        seq { 1 .. 10000 }
-                        |> Seq.map (fun i ->
-                            let meta = sprintf "%d" (j * 10 + i)
-                            EventData (Guid.NewGuid (), "te", false, Encoding.UTF8.GetBytes "some data", Encoding.UTF8.GetBytes meta)
-                        )
-                    conn.[j].AppendToStreamAsync (streamName, int64 ExpectedVersion.Any, ds) |> Async.AwaitTask
-                )
-                |> Async.Parallel
-                |> Async.RunSynchronously
-                |> ignore
+            "连接到服务端订阅", fun writer finish ->
+                DomainEvent.connectSubscription admin "NoteChanged" "Group" <| handler "群组订阅"
                 finish 2
-            "顺序读", fun streamName finish ->
-                let rs = (conn.[0].ReadStreamEventsForwardAsync(streamName, 0L, 4 * 1024, true)).Result
+            "创建Note", fun writer finish ->
+                let traceId = Guid.NewGuid()
+                let deltaType = "NoteCreated"
+                let delta = Encoding.UTF8.GetBytes "Initial Note"
+                writer aggType aggId 0L traceId deltaType delta
                 finish 3
-            "反向读", fun streamName finish ->
-                let rs = (conn.[0].ReadStreamEventsBackwardAsync(streamName, int64 StreamPosition.End, 4 * 1024, true)).Result
+            "更改Note", fun writer finish ->
+                let traceId = Guid.NewGuid()
+                let deltaType = "NoteChanged"
+                let delta = Encoding.UTF8.GetBytes "Changed Note"
+                writer aggType aggId 1L traceId deltaType delta
                 finish 4
+            "等待事件处理程序完成", fun writer finish ->
+                Threading.Thread.Sleep 100
+                finish 0
         ]
     ]
-    |> testLabel "UniStream.Domain"
+    |> testLabel "UniStream.Infrastructure"
+
+
+[<Tests>]
+let opsTests =
+    let aggId = Guid.NewGuid()
+    testSequenced <| testList "EventStore Ops" [
+        let withArgs f () =
+            let writer = DomainEvent.write ops
+            go "EventStore Ops" |> f writer
+        yield! testFixture withArgs [
+            "客户端订阅", fun writer finish ->
+                DomainEvent.subscribeToStream ops "NoteChanged" <| handler "单点订阅Ops"
+                finish 1
+            "连接到服务端订阅", fun writer finish ->
+                DomainEvent.connectSubscription ops "NoteChanged" "Group" <| handler "群组订阅"
+                finish 2
+            "创建Note", fun writer finish ->
+                let traceId = Guid.NewGuid()
+                let deltaType = "NoteCreated"
+                let delta = Encoding.UTF8.GetBytes "Initial Note"
+                writer aggType aggId 0L traceId deltaType delta
+                finish 3
+            "更改Note", fun writer finish ->
+                let traceId = Guid.NewGuid()
+                let deltaType = "NoteChanged"
+                let delta = Encoding.UTF8.GetBytes "Changed Note"
+                writer aggType aggId 1L traceId deltaType delta
+                finish 4
+            "等待事件处理程序完成", fun writer finish ->
+                Threading.Thread.Sleep 100
+                finish 0
+        ]
+    ]
+    |> testLabel "UniStream.Infrastructure"
