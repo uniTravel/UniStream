@@ -569,6 +569,6 @@ NUGET
       System.Xml.XmlDocument (>= 4.3)
     UniStream.Domain (0.2)
       FSharp.Core (>= 4.7) - restriction: || (== netcoreapp3.1) (&& (== netstandard2.1) (>= netcoreapp3.1))
-    UniStream.Infrastructure (0.2)
+    UniStream.Infrastructure (0.2.1)
       EventStore.Client (>= 5.0.5)
       FSharp.Core (>= 4.7)
