@@ -24,10 +24,10 @@ module Note =
 
     let apply t deltaType deltaBytes : T =
         match deltaType with
-        | "Note.Contract.CreateNoteCommand" ->
+        | "Note.Contract.CreateNote" ->
             let delta = Delta.fromBytes<CreateNote> deltaBytes
             noteCreated delta t
-        | "Note.Contract.ChangeNoteCommand" ->
+        | "Note.Contract.ChangeNote" ->
             let delta = Delta.fromBytes<ChangeNote> deltaBytes
             noteChanged delta t
         | d -> failwithf "边际影响类型错误：%s" d

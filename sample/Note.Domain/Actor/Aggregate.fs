@@ -16,7 +16,7 @@ module Actor =
 
     let apply t deltaType deltaBytes : T =
         match deltaType with
-        | "Note.Contract.CreateActorCommand" ->
+        | "Note.Contract.CreateActor" ->
             let delta = Delta.fromBytes<CreateActor> deltaBytes
             actorCreated delta t
         | d -> failwithf "边际影响类型错误：%s" d
