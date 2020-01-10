@@ -9,7 +9,7 @@ module CreateActor =
     [<Sealed>]
     type T =
         static member DeltaType : string
-        member Value : CreateActorCommand
+        member Value : CreateActor
         member ApplyEvent : (Actor.T -> Actor.T)
 
-    val create : (CreateActorCommand -> T)
+    val create : (CreateActor -> T)

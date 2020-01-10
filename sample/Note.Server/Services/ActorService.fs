@@ -7,5 +7,5 @@ open Note.Application
 type ActorService (app: AppService) =
     inherit Actor.ActorBase()
 
-    override _.CreateActor (request, context) =
+    override _.CreateActorCommand (request, context) =
         app.CreateActor request

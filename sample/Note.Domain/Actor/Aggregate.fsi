@@ -16,7 +16,7 @@ module Actor =
     /// </summary>
     /// <param name="delta">边际影响。</param>
     /// <param name="t">当前Actor聚合。</param>
-    val internal actorCreated : CreateActorCommand -> T -> T
+    val internal actorCreated : CreateActor -> T -> T
 
     type T with
 

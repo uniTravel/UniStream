@@ -114,7 +114,7 @@ module Aggregator =
         do! apply t (^c : (member ApplyEvent: (^agg -> ^agg)) command) aggId traceId deltaType deltaBytes
     }
 
-    let inline applyRaw t aggId traceId deltaType deltaBytes commandCreator = async {
+    let inline applyDeltaBytes t aggId traceId deltaType deltaBytes commandCreator = async {
         let command = commandCreator <| Delta.fromBytes deltaBytes
         let trueType = (^c : (member Value: 'a) command).GetType().FullName
         if deltaType <> trueType then invalidArg "deltaType" <| sprintf "边际影响类型应为%s。" trueType

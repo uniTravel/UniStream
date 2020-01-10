@@ -9,10 +9,10 @@ module CreateNote =
     [<Sealed>]
     type T =
         static member DeltaType : string
-        member Value : CreateNoteCommand
+        member Value : CreateNote
         member ApplyEvent : (Note.T -> Note.T)
 
-    val create : (CreateNoteCommand -> T)
+    val create : (CreateNote -> T)
 
 
 [<RequireQualifiedAccess>]
@@ -21,7 +21,7 @@ module ChangeNote =
     [<Sealed>]
     type T =
         static member DeltaType : string
-        member Value : ChangeNoteCommand
+        member Value : ChangeNote
         member ApplyEvent : (Note.T -> Note.T)
 
-    val create : (ChangeNoteCommand -> T)
+    val create : (ChangeNote -> T)

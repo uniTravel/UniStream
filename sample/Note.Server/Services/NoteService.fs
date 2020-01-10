@@ -7,8 +7,8 @@ open Note.Application
 type NoteService (app: AppService) =
     inherit Note.NoteBase()
 
-    override _.CreateNote (request, context) =
+    override _.CreateNoteCommand (request, context) =
         app.CreateNote request
 
-    override _.ChangeNote (request, context) =
+    override _.ChangeNoteCommand (request, context) =
         app.ChangeNote request

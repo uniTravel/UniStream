@@ -10,12 +10,12 @@ module Note =
         | Init
         | Active of {| Title: string; Content: string |}
 
-    let noteCreated (delta: CreateNoteCommand) t =
+    let noteCreated (delta: CreateNote) t =
         match t with
         | Init -> Active  {| Title = delta.Title; Content = delta.Content |}
         | Active _ -> failwith "只有初始状态才能创建Note。"
 
-    let noteChanged (delta: ChangeNoteCommand) t =
+    let noteChanged (delta: ChangeNote) t =
         match t with
         | Init -> failwith "初始状态不能更改Note。"
         | Active agg ->
@@ -25,10 +25,10 @@ module Note =
     let apply t deltaType deltaBytes : T =
         match deltaType with
         | "Note.Contract.CreateNoteCommand" ->
-            let delta = Delta.fromBytes<CreateNoteCommand> deltaBytes
+            let delta = Delta.fromBytes<CreateNote> deltaBytes
             noteCreated delta t
         | "Note.Contract.ChangeNoteCommand" ->
-            let delta = Delta.fromBytes<ChangeNoteCommand> deltaBytes
+            let delta = Delta.fromBytes<ChangeNote> deltaBytes
             noteChanged delta t
         | d -> failwithf "边际影响类型错误：%s" d
 

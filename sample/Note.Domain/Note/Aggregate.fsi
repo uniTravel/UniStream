@@ -16,13 +16,13 @@ module Note =
     /// </summary>
     /// <param name="delta">边际影响。</param>
     /// <param name="t">当前Actor聚合。</param>
-    val internal noteCreated : CreateNoteCommand -> T -> T
+    val internal noteCreated : CreateNote -> T -> T
 
     /// <summary>改变Note
     /// </summary>
     /// <param name="delta">边际影响。</param>
     /// <param name="t">当前Actor聚合。</param>
-    val internal noteChanged : ChangeNoteCommand -> T -> T
+    val internal noteChanged : ChangeNote -> T -> T
 
     type T with
 

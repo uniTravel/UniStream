@@ -103,7 +103,7 @@ module Aggregator =
         and ^c : (member Value: 'a)
         and ^c : (member ApplyEvent: (^agg -> ^agg))
 
-    /// <summary>应用命令
+    /// <summary>应用边际影响的UTF8字节数组
     /// </summary>
     /// <typeparam name="^agg">聚合的类型。</typeparam>
     /// <typeparam name="^d">边际影响类型。</typeparam>
@@ -114,7 +114,7 @@ module Aggregator =
     /// <param name="deltaType">边际影响类型。</param>
     /// <param name="deltaBytes">边际影响的UTF8字节数组。</param>
     /// <param name="commandCreator">创建命令的函数。</param>
-    val inline applyRaw : T< ^agg> -> Guid -> Guid -> string -> byte[] -> (^d -> ^c) -> Async<unit>
+    val inline applyDeltaBytes : T< ^agg> -> Guid -> Guid -> string -> byte[] -> (^d -> ^c) -> Async<unit>
         when ^agg : (member Apply : (string -> byte[] -> ^agg))
         and ^c : (member Value: 'a)
         and ^c : (member ApplyEvent: (^agg -> ^agg))

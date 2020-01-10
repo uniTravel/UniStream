@@ -8,7 +8,7 @@ open Note.Contract
 let tests =
     testList "ActorAgg" [
         testCase "Create Actor" <| fun _ ->
-            let command = CreateActorCommand()
+            let command = CreateActor()
             command.Name <- "actor"
             let reply = app.CreateActor command |> Async.AwaitTask |> Async.RunSynchronously
             printfn "%s" reply.AggId

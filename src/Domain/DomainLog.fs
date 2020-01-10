@@ -1,7 +1,7 @@
 namespace UniStream.Domain
 
 open System
-open System.Text
+open System.Text.Json
 
 
 module DomainLog =
@@ -13,21 +13,12 @@ module DomainLog =
     let logger aggType logFunc =
         { AggType = aggType; LogFunc = logFunc }
 
-    let asBytes log =
-        let msgBytes = Encoding.UTF8.GetBytes log.Message
-        let array = Array.zeroCreate<byte> <| 16 + msgBytes.Length
-        let span = Span array
-        let aId = span.Slice (0, 16)
-        let msg = span.Slice (16, msgBytes.Length)
-        ((log.AggId.ToByteArray()).AsSpan()).CopyTo aId
-        (Span msgBytes).CopyTo msg
-        array
+    let asBytes (log: T) =
+        JsonSerializer.SerializeToUtf8Bytes log
 
     let fromBytes bytes =
         let span = ReadOnlySpan bytes
-        let aId = Guid (span.Slice (0, 16))
-        let msg = Encoding.UTF8.GetString (span.Slice (16, bytes.Length - 16))
-        { AggId = aId; Message = msg }
+        JsonSerializer.Deserialize<T> span
 
     let log logger status aggId traceId format =
         let doAfter s =

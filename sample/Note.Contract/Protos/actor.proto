@@ -5,10 +5,10 @@ option csharp_namespace = "Note.Contract";
 package actor;
 
 service Actor {
-    rpc CreateActor (CreateActorCommand) returns (CreateActorReply);
+    rpc CreateActorCommand (CreateActor) returns (CreateActorReply);
 }
 
-message CreateActorCommand {
+message CreateActor {
     string name = 1;
 }
 

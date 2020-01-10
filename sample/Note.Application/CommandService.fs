@@ -29,7 +29,7 @@ module CommandService =
         return reply
     }
 
-    let changeNote note (delta: ChangeNoteCommand) = async {
+    let changeNote note (delta: ChangeNote) = async {
         let aggId = Guid delta.AggId
         let traceId = Guid.NewGuid()
         let command = ChangeNote.create delta

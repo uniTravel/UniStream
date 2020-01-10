@@ -9,7 +9,7 @@ module Actor =
         | Init
         | Active of {| Name: string |}
 
-    let actorCreated (delta: CreateActorCommand) t =
+    let actorCreated (delta: CreateActor) t =
         match t with
         | Init -> Active  {| Name = delta.Name |}
         | Active _ -> failwith "只有初始状态才能创建Note。"
@@ -17,7 +17,7 @@ module Actor =
     let apply t deltaType deltaBytes : T =
         match deltaType with
         | "Note.Contract.CreateActorCommand" ->
-            let delta = Delta.fromBytes<CreateActorCommand> deltaBytes
+            let delta = Delta.fromBytes<CreateActor> deltaBytes
             actorCreated delta t
         | d -> failwithf "边际影响类型错误：%s" d
 

@@ -21,14 +21,14 @@ type AppService =
     /// <summary>创建Actor
     /// </summary>
     /// <param name="delta">传入的边际影响。</param>
-    member CreateActor : CreateActorCommand -> Task<CreateActorReply>
+    member CreateActor : CreateActor -> Task<CreateActorReply>
 
     /// <summary>创建Note
     /// </summary>
     /// <param name="delta">传入的边际影响。</param>
-    member CreateNote : CreateNoteCommand -> Task<CreateNoteReply>
+    member CreateNote : CreateNote -> Task<CreateNoteReply>
 
     /// <summary>改变Note
     /// </summary>
     /// <param name="delta">传入的边际影响。</param>
-    member ChangeNote : ChangeNoteCommand -> Task<ChangeNoteReply>
+    member ChangeNote : ChangeNote -> Task<ChangeNoteReply>
