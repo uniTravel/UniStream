@@ -22,7 +22,7 @@ module Note =
             let agg' = {| agg with Content = delta.Content |}
             Active agg'
 
-    let apply t deltaType deltaBytes : T =
+    let apply t deltaType deltaBytes =
         match deltaType with
         | "Note.Contract.CreateNote" ->
             let delta = Delta.fromBytes<CreateNote> deltaBytes

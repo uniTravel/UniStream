@@ -14,7 +14,7 @@ module Actor =
         | Init -> Active  {| Name = delta.Name |}
         | Active _ -> failwith "只有初始状态才能创建Note。"
 
-    let apply t deltaType deltaBytes : T =
+    let apply t deltaType deltaBytes =
         match deltaType with
         | "Note.Contract.CreateActor" ->
             let delta = Delta.fromBytes<CreateActor> deltaBytes
