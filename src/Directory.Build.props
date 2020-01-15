@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <MasterVersion>0.2.1</MasterVersion>
-    <InfraVersion>0.2.1</InfraVersion>
+    <MasterVersion>0.2.2</MasterVersion>
+    <InfraVersion>0.2.2</InfraVersion>
   </PropertyGroup>
 </Project>
