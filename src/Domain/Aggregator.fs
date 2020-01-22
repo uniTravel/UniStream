@@ -77,7 +77,7 @@ module Aggregator =
         let { DomainLog = ld; DiagnoseLog = lg; EsFunc = esFunc; Agent = agent; Get = get } = t
         let launch apply aggId agg version traceId refreshed =
             try
-                let agg', events = apply agg
+                let events, agg' = apply agg
                 ld.Process aggId traceId "应用命令成功。"
                 try
                     let version = esFunc aggId (version + 1L) events
@@ -107,5 +107,5 @@ module Aggregator =
     }
 
     let inline executeCommand t aggId traceId command = async {
-        do! execute t (^c : (member Apply: (^agg -> ^agg * (string * byte[])[])) command) aggId traceId
+        do! execute t (^c : (member Apply: (^agg -> (string * byte[])[] * ^agg)) command) aggId traceId
     }
