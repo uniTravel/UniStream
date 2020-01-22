@@ -23,7 +23,7 @@ module Aggregator =
     /// <param name="LgFunc">诊断日志流存储函数。</param>
     type StoreConfig =
         { Get: string -> Guid -> int64 -> (Guid * string * byte[])[] * int64
-          EsFunc: string -> Guid -> int64 -> Guid -> string -> byte[] -> unit
+          EsFunc: string -> Guid -> int64 -> (string * byte[])[] -> int64
           LdFunc: string -> Guid -> string -> byte[] -> unit
           LgFunc: string -> byte[] -> unit }
 
@@ -43,7 +43,7 @@ module Aggregator =
           DomainLog: DomainLog.Logger
           DiagnoseLog: DiagnoseLog.Logger
           Get: Guid -> int64 -> (Guid * string * byte[])[] * int64
-          EsFunc: Guid -> int64 -> Guid -> string -> byte[] -> unit
+          EsFunc: Guid -> int64 -> (string * byte[])[] -> int64
           Agent: MailboxProcessor<Accessor<'agg>> }
 
     /// <summary>创建存储配置
@@ -54,7 +54,7 @@ module Aggregator =
     /// <param name="lgFunc">诊断日志流存储函数。</param>
     val config :
         (string -> Guid -> int64 -> (Guid * string * byte[])[] * int64) ->
-        (string -> Guid -> int64 -> Guid -> string -> byte[] -> unit) ->
+        (string -> Guid -> int64 -> (string * byte[])[] -> int64) ->
         (string -> Guid -> string -> byte[] -> unit) ->
         (string -> byte[] -> unit) -> StoreConfig
 
@@ -65,7 +65,7 @@ module Aggregator =
     /// <param name="timeout">聚合的超时Ticks约束。</param>
     val inline agent : DiagnoseLog.Logger -> (Guid -> int64 -> (Guid * string * byte[])[] * int64) -> int64 -> MailboxProcessor<Accessor< ^agg>>
         when ^agg : (static member Empty : ^agg)
-        and ^agg : (member Apply : (string -> byte[] -> ^agg))
+        and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
 
     /// <summary>创建聚合器
     /// </summary>
@@ -74,22 +74,20 @@ module Aggregator =
     /// <param name="blockSeconds">挂起超过设定的秒数，阻塞聚合请求。</param>
     val inline create : StoreConfig -> int64 -> T< ^agg >
         when ^agg : (static member Empty : ^agg)
-        and ^agg : (member Apply : (string -> byte[] -> ^agg))
+        and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
 
-    /// <summary>应用命令
-    /// <para>应用命令的内部实现。</para>
+    /// <summary>执行命令
+    /// <para>执行命令的内部实现。</para>
     /// </summary>
     /// <typeparam name="^agg">聚合的类型。</typeparam>
     /// <param name="t">聚合器。</param>
-    /// <param name="applyEvent">应用事件于聚合的函数。</param>
+    /// <param name="apply">应用命令的函数。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="traceId">跟踪ID。</param>
-    /// <param name="deltaType">边际影响类型。</param>
-    /// <param name="deltaBytes">边际影响的UTF8字节数组。</param>
-    val inline apply : T< ^agg> -> (^agg -> ^agg) -> Guid -> Guid -> string -> byte[] -> Async<unit>
-        when ^agg : (member Apply : (string -> byte[] -> ^agg))
+    val inline execute : T< ^agg> -> (^agg -> ^agg * (string * byte[])[]) -> Guid -> Guid -> Async<unit>
+        when ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
 
-    /// <summary>应用命令
+    /// <summary>执行命令
     /// </summary>
     /// <typeparam name="^agg">聚合的类型。</typeparam>
     /// <typeparam name="^c">领域命令类型。</typeparam>
@@ -97,24 +95,6 @@ module Aggregator =
     /// <param name="aggId">聚合ID。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="command">领域命令。</param>
-    val inline applyCommand : T< ^agg> -> Guid -> Guid -> ^c -> Async<unit>
-        when ^agg : (member Apply : (string -> byte[] -> ^agg))
-        and ^c : (static member DeltaType: string)
-        and ^c : (member Value: 'a)
-        and ^c : (member ApplyEvent: (^agg -> ^agg))
-
-    /// <summary>应用边际影响的UTF8字节数组
-    /// </summary>
-    /// <typeparam name="^agg">聚合的类型。</typeparam>
-    /// <typeparam name="^d">边际影响类型。</typeparam>
-    /// <typeparam name="^c">领域命令类型。</typeparam>
-    /// <param name="t">聚合器。</param>
-    /// <param name="aggId">聚合ID。</param>
-    /// <param name="traceId">跟踪ID。</param>
-    /// <param name="deltaType">边际影响类型。</param>
-    /// <param name="deltaBytes">边际影响的UTF8字节数组。</param>
-    /// <param name="commandCreator">创建命令的函数。</param>
-    val inline applyDeltaBytes : T< ^agg> -> Guid -> Guid -> string -> byte[] -> (^d -> ^c) -> Async<unit>
-        when ^agg : (member Apply : (string -> byte[] -> ^agg))
-        and ^c : (member Value: 'a)
-        and ^c : (member ApplyEvent: (^agg -> ^agg))
+    val inline executeCommand : T< ^agg> -> Guid -> Guid -> ^c -> Async<unit>
+        when ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
+        and ^c : (member Apply: (^agg -> ^agg * (string * byte[])[]))

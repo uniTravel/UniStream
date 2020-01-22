@@ -26,7 +26,7 @@ module DomainEvent =
     /// <param name="aggType">聚合类型。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="version">起始事件版本。</param>
-    /// <returns>同一聚合ID下、从某个版本开始的领域事件的有序集合。</returns>
+    /// <returns>同一聚合ID下、从某个版本开始的领域事件的有序集合与当前版本号。</returns>
     val get : T -> string -> Guid -> int64 -> ((Guid * string * byte[])[] * int64)
 
     /// <summary>写入领域事件
@@ -36,10 +36,9 @@ module DomainEvent =
     /// <param name="aggType">聚合类型。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="version">事件版本。</param>
-    /// <param name="traceId">跟踪ID。</param>
-    /// <param name="deltaType">边际影响类型。</param>
-    /// <param name="delta">边际影响。</param>
-    val write : T -> string -> Guid -> int64 -> Guid -> string -> byte[] -> unit
+    /// <param name="eData">领域事件数据。</param>
+    /// <returns>当前版本号。</returns>
+    val write : T -> string -> Guid -> int64 -> (string * byte[])[] -> int64
 
     /// <summary>领域事件流客户端订阅
     /// <para>订阅实例在客户端，适用于单节点订阅。</para>

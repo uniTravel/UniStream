@@ -31,16 +31,14 @@ let adminTests =
                 DomainEvent.connectSubscription admin "NoteChanged" "Group" <| handler "群组订阅"
                 finish 2
             "创建Note", fun writer finish ->
-                let traceId = Guid.NewGuid()
-                let deltaType = "NoteCreated"
-                let delta = Encoding.UTF8.GetBytes "Initial Note"
-                writer aggType aggId 0L traceId deltaType delta
+                let evType = "NoteCreated"
+                let evData = Encoding.UTF8.GetBytes "Initial Note"
+                let version = writer aggType aggId 0L [| (evType, evData) |]
                 finish 3
             "更改Note", fun writer finish ->
-                let traceId = Guid.NewGuid()
-                let deltaType = "NoteChanged"
-                let delta = Encoding.UTF8.GetBytes "Changed Note"
-                writer aggType aggId 1L traceId deltaType delta
+                let evType = "NoteChanged"
+                let evData = Encoding.UTF8.GetBytes "Changed Note"
+                let version = writer aggType aggId 1L [| (evType, evData) |]
                 finish 4
             "等待事件处理程序完成", fun writer finish ->
                 Threading.Thread.Sleep 100
@@ -65,16 +63,14 @@ let opsTests =
                 DomainEvent.connectSubscription ops "NoteChanged" "Group" <| handler "群组订阅"
                 finish 2
             "创建Note", fun writer finish ->
-                let traceId = Guid.NewGuid()
-                let deltaType = "NoteCreated"
-                let delta = Encoding.UTF8.GetBytes "Initial Note"
-                writer aggType aggId 0L traceId deltaType delta
+                let evType = "NoteCreated"
+                let evData = Encoding.UTF8.GetBytes "Initial Note"
+                let version = writer aggType aggId 0L [| (evType, evData) |]
                 finish 3
             "更改Note", fun writer finish ->
-                let traceId = Guid.NewGuid()
-                let deltaType = "NoteChanged"
-                let delta = Encoding.UTF8.GetBytes "Changed Note"
-                writer aggType aggId 1L traceId deltaType delta
+                let evType = "NoteChanged"
+                let evData = Encoding.UTF8.GetBytes "Changed Note"
+                let version = writer aggType aggId 1L [| (evType, evData) |]
                 finish 4
             "等待事件处理程序完成", fun writer finish ->
                 Threading.Thread.Sleep 100

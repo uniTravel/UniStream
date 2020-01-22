@@ -15,7 +15,6 @@ type LogLevel =
 
 module DiagnoseLog =
 
-    [<CLIMutable>]
     type T = { Level: LogLevel; Message: string; StackTrack: string option }
 
     type Logger = { Name: string; LogFunc: string -> byte[] -> unit }

@@ -12,7 +12,7 @@ module Aggregator =
 
     type StoreConfig =
         { Get: string -> Guid -> int64 -> (Guid * string * byte[])[] * int64
-          EsFunc: string -> Guid -> int64 -> Guid -> string -> byte[] -> unit
+          EsFunc: string -> Guid -> int64 -> (string * byte[])[] -> int64
           LdFunc: string -> Guid -> string -> byte[] -> unit
           LgFunc: string -> byte[] -> unit }
 
@@ -22,13 +22,13 @@ module Aggregator =
           DomainLog: DomainLog.Logger
           DiagnoseLog: DiagnoseLog.Logger
           Get: Guid -> int64 -> (Guid * string * byte[])[] * int64
-          EsFunc: Guid -> int64 -> Guid -> string -> byte[] -> unit
+          EsFunc: Guid -> int64 -> (string * byte[])[] -> int64
           Agent: MailboxProcessor<Accessor<'agg>> }
 
     let config get esFunc ldFunc lgFunc =
         { Get = get; EsFunc = esFunc; LdFunc = ldFunc; LgFunc = lgFunc }
 
-    let inline agent< ^agg when ^agg : (static member Empty : ^agg) and ^agg : (member Apply : (string -> byte[] -> ^agg))> (lg: DiagnoseLog.Logger) get timeout =
+    let inline agent< ^agg when ^agg : (static member Empty : ^agg) and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> (lg: DiagnoseLog.Logger) get timeout =
         MailboxProcessor<Accessor< ^agg>>.Start <| fun inbox ->
             let rec loop repo = async {
                 match! inbox.Receive() with
@@ -73,15 +73,14 @@ module Aggregator =
         Async.Start <| createTimer 15000.0 (fun _ -> agent.Post <| Scavenge 150000000L)
         { AggType = aggType; Timeout = timeout; DomainLog = ld; DiagnoseLog = lg; Get = get; EsFunc = esFunc; Agent = agent }
 
-    let inline apply t applyEvent aggId traceId deltaType deltaBytes = async {
+    let inline execute t apply aggId traceId = async {
         let { DomainLog = ld; DiagnoseLog = lg; EsFunc = esFunc; Agent = agent; Get = get } = t
-        let launch applyEvent aggId agg version traceId deltaType deltaBytes refreshed =
+        let launch apply aggId agg version traceId refreshed =
             try
-                let agg' = applyEvent agg
-                ld.Process aggId traceId "执行命令成功。"
-                let version = version + 1L
+                let agg', events = apply agg
+                ld.Process aggId traceId "应用命令成功。"
                 try
-                    esFunc aggId version traceId deltaType deltaBytes
+                    let version = esFunc aggId (version + 1L) events
                     ld.Success aggId traceId "保存事件成功。"
                     agent.Post <| Put (aggId, agg', version)
                     false
@@ -93,30 +92,20 @@ module Aggregator =
                         agent.Post <| Put (aggId, agg, version)
                         false
             with ex ->
-                ld.Fail aggId traceId "执行命令出错：%s。" ex.Message
-                lg.Error ex.StackTrace "执行命令出错：%s。" ex.Message
+                ld.Fail aggId traceId "应用命令出错：%s。" ex.Message
+                lg.Error ex.StackTrace "应用命令出错：%s。" ex.Message
                 agent.Post <| Put (aggId, agg, version)
                 false
         ld.Process aggId traceId "开始。"
         match! agent.PostAndAsyncReply (fun channel -> Take (aggId, channel)) with
         | Ok (agg, version) ->
             ld.Process aggId traceId "取到聚合。"
-            if launch applyEvent aggId agg version traceId deltaType deltaBytes false then
+            if launch apply aggId agg version traceId false then
                 let agg, version = Repository.refresh aggId agg (version + 1L) t.Get
-                launch applyEvent aggId agg version traceId deltaType deltaBytes true |> ignore
+                launch apply aggId agg version traceId true |> ignore
         | Error err -> ld.Fail aggId traceId "取聚合出错：%s" err
     }
 
-    let inline applyCommand t aggId traceId command = async {
-        let delta = (^c : (member Value: 'a) command)
-        let deltaBytes = Delta.asBytes delta
-        let deltaType = (^c : (static member DeltaType: string) ())
-        do! apply t (^c : (member ApplyEvent: (^agg -> ^agg)) command) aggId traceId deltaType deltaBytes
-    }
-
-    let inline applyDeltaBytes t aggId traceId deltaType deltaBytes commandCreator = async {
-        let command = commandCreator <| Delta.fromBytes deltaBytes
-        let trueType = (^c : (member Value: 'a) command).GetType().FullName
-        if deltaType <> trueType then invalidArg "deltaType" <| sprintf "边际影响类型应为%s。" trueType
-        do! apply t (^c : (member ApplyEvent: (^agg -> ^agg)) command) aggId traceId deltaType deltaBytes
+    let inline executeCommand t aggId traceId command = async {
+        do! execute t (^c : (member Apply: (^agg -> ^agg * (string * byte[])[])) command) aggId traceId
     }

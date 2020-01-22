@@ -2,6 +2,7 @@ namespace UniStream.Domain
 
 
 /// <summary>边际影响模块
+/// <para>边际影响包括领域命令值与领域事件值。</para>
 /// </summary>
 [<RequireQualifiedAccess>]
 module Delta =

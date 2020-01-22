@@ -10,6 +10,7 @@ module DomainLog =
 
     /// <summary>领域日志
     /// </summary>
+    [<CLIMutable>]
     type internal T
 
     /// <summary>领域日志记录器

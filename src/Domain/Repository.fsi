@@ -48,7 +48,7 @@ module Repository =
     /// <param name="get">从某个版本开始获取聚合事件的函数。</param>
     /// <returns>刷新后的聚合及相应的聚合版本。</returns>
     val inline refresh< ^agg> : Guid -> ^agg -> int64 -> (Guid -> int64 -> (Guid * string * byte[])[] * int64) -> (^agg * int64)
-        when ^agg : (member Apply : (string -> byte[] -> ^agg))
+        when ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
 
     /// <summary>取出一个聚合
     /// </summary>
@@ -58,7 +58,7 @@ module Repository =
     /// <param name="channel">返回聚合的通道。</param>
     val inline take : T< ^agg> -> Guid -> AsyncReplyChannel<Result< ^agg * int64, string>> -> T< ^agg>
         when ^agg : (static member Empty : ^agg)
-        and ^agg : (member Apply : (string -> byte[] -> ^agg))
+        and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
 
     /// <summary>放回聚合
     /// </summary>

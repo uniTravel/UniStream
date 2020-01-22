@@ -15,14 +15,3 @@ module Command =
     /// <param name="delta">边际影响。</param>
     /// <returns>领域命令。</returns>
     val create : ('d -> bool) -> ('d -> 'c) -> 'd -> 'c
-
-    /// <summary>应用函数
-    /// <para>应用以领域命令作为参数的函数，返回相应结果。</para>
-    /// </summary>
-    /// <typeparam name="'d">边际影响类型。</typeparam>
-    /// <typeparam name="^c">领域命令类型。</typeparam>
-    /// <param name="f">待应用的函数。</param>e
-    /// <param name="command">领域命令。</param>
-    /// <returns>应用函数返回的结果。</returns>
-    val inline private apply : ('d -> 'a) -> ^c -> 'a
-        when ^c : (member Value: 'd)

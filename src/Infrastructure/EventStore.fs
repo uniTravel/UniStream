@@ -34,11 +34,12 @@ module DomainEvent =
         let events, version = read [||] version
         events |> Array.map (fun e -> (e.Event.EventId, e.Event.EventType, e.Event.Data)), version
 
-    let write (Client client) aggType (aggId: Guid) version traceId deltaType delta =
+    let write (Client client) aggType (aggId: Guid) version eData =
         let streamName = sprintf "%s-%O" aggType aggId
         let version = version - 1L
-        let eventData = EventData (traceId, deltaType, true, delta, [||])
-        client.AppendToStreamAsync (streamName, version, eventData) |> Async.AwaitTask |> Async.RunSynchronously |> ignore
+        let eventData = eData |> Array.map (fun (evType, evData) -> EventData (Guid.NewGuid(), evType, true, evData, [||]))
+        let result = client.AppendToStreamAsync (streamName, version, eventData) |> Async.AwaitTask |> Async.RunSynchronously
+        result.NextExpectedVersion
 
     let subscribeToStream (Client client) deltaType (f: Guid -> string -> byte[] -> Async<unit>) =
         let streamName = sprintf "$et-%s" deltaType

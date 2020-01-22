@@ -19,6 +19,7 @@ module DiagnoseLog =
 
     /// <summary>诊断日志
     /// </summary>
+    [<CLIMutable>]
     type T
 
     /// <summary>诊断日志记录器

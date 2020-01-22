@@ -27,8 +27,8 @@ module Repository =
         | _ ->
             let agg =
                 Array.fold (fun agg elem ->
-                    let (_, deltaType, deltaBytes) = elem
-                    (^agg : (member Apply : (string -> byte[] -> ^agg)) agg) deltaType deltaBytes
+                    let (_, evType, evBytes) = elem
+                    (^agg : (member ApplyEvent : (string -> byte[] -> ^agg)) agg) evType evBytes
                 ) agg events
             agg, version
 
@@ -58,8 +58,8 @@ module Repository =
             | _ ->
                 let agg =
                     Array.fold (fun agg elem ->
-                        let (_, deltaType, deltaBytes) = elem
-                        (^agg : (member Apply : (string -> byte[] -> ^agg)) agg) deltaType deltaBytes
+                        let (_, evType, evBytes) = elem
+                        (^agg : (member ApplyEvent : (string -> byte[] -> ^agg)) agg) evType evBytes
                     ) init events
                 channel.Reply <| Ok (agg, version)
             { repo with Map = map }
