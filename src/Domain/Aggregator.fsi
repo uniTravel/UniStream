@@ -64,7 +64,7 @@ module Aggregator =
     /// <param name="get">从某个版本开始获取聚合事件的函数。</param>
     /// <param name="timeout">聚合的超时Ticks约束。</param>
     val inline agent : DiagnoseLog.Logger -> (Guid -> int64 -> (Guid * string * byte[])[] * int64) -> int64 -> MailboxProcessor<Accessor< ^agg>>
-        when ^agg : (static member Empty : ^agg)
+        when ^agg : (static member Initial : ^agg)
         and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
 
     /// <summary>创建聚合器
@@ -73,7 +73,7 @@ module Aggregator =
     /// <param name="cfg">存储配置。</param>
     /// <param name="blockSeconds">挂起超过设定的秒数，阻塞聚合请求。</param>
     val inline create : StoreConfig -> int64 -> T< ^agg >
-        when ^agg : (static member Empty : ^agg)
+        when ^agg : (static member Initial : ^agg)
         and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
 
     /// <summary>执行命令

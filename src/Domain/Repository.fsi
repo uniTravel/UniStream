@@ -57,7 +57,7 @@ module Repository =
     /// <param name="aggId">聚合ID。</param>
     /// <param name="channel">返回聚合的通道。</param>
     val inline take : T< ^agg> -> Guid -> AsyncReplyChannel<Result< ^agg * int64, string>> -> T< ^agg>
-        when ^agg : (static member Empty : ^agg)
+        when ^agg : (static member Initial : ^agg)
         and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
 
     /// <summary>放回聚合

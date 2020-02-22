@@ -51,7 +51,7 @@ module Repository =
             repo
         else
             let (events, version) = repo.Get aggId 0L
-            let init = (^agg : (static member Empty : ^agg) ())
+            let init = (^agg : (static member Initial : ^agg) ())
             let map = repo.Map.Add (aggId, (new Queue<int64 * AsyncReplyChannel<Result< ^agg * int64, string>>>(), ref Empty))
             match events with
             | [||] -> channel.Reply <| Ok (init, -1L)

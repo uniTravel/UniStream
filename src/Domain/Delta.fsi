@@ -13,7 +13,7 @@ module Delta =
     /// <typeparam name="'d">边际影响类型。</typeparam>
     /// <param name="delta">边际影响。</param>
     /// <returns>边际影响的UTF8字节数组。</returns>
-    val inline internal asBytes : 'd -> byte[]
+    val inline asBytes : 'd -> byte[]
 
     /// <summary>UTF8字节数组反序列化成边际影响
     /// <para>边际影响采用UTF8格式的Json序列化。</para>

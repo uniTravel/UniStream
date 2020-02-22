@@ -28,7 +28,7 @@ module Aggregator =
     let config get esFunc ldFunc lgFunc =
         { Get = get; EsFunc = esFunc; LdFunc = ldFunc; LgFunc = lgFunc }
 
-    let inline agent< ^agg when ^agg : (static member Empty : ^agg) and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> (lg: DiagnoseLog.Logger) get timeout =
+    let inline agent< ^agg when ^agg : (static member Initial : ^agg) and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> (lg: DiagnoseLog.Logger) get timeout =
         MailboxProcessor<Accessor< ^agg>>.Start <| fun inbox ->
             let rec loop repo = async {
                 match! inbox.Receive() with
