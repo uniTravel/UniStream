@@ -11,7 +11,7 @@ module CommandService =
         let aggId = Guid.NewGuid()
         let traceId = Guid.NewGuid()
         let command = CreateActor.create delta
-        do! Aggregator.applyCommand actor aggId traceId command
+        do! Aggregator.executeCommand actor aggId traceId command
         let reply = CreateActorReply()
         reply.AggId <- aggId.ToString()
         reply.TraceId <- traceId.ToString()
@@ -22,7 +22,7 @@ module CommandService =
         let aggId = Guid.NewGuid()
         let traceId = Guid.NewGuid()
         let command = CreateNote.create delta
-        do! Aggregator.applyCommand note aggId traceId command
+        do! Aggregator.executeCommand note aggId traceId command
         let reply = CreateNoteReply()
         reply.AggId <- aggId.ToString()
         reply.TraceId <- traceId.ToString()
@@ -33,7 +33,7 @@ module CommandService =
         let aggId = Guid delta.AggId
         let traceId = Guid.NewGuid()
         let command = ChangeNote.create delta
-        do! Aggregator.applyCommand note aggId traceId command
+        do! Aggregator.executeCommand note aggId traceId command
         let reply = ChangeNoteReply()
         reply.TraceId <- traceId.ToString()
         return reply

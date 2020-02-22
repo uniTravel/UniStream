@@ -8,8 +8,7 @@ module CreateActor =
 
     [<Sealed>]
     type T =
-        static member DeltaType : string
         member Value : CreateActor
-        member ApplyEvent : (Actor.T -> Actor.T)
+        member Apply : (Actor.T -> (string * byte[])[] * Actor.T)
 
     val create : (CreateActor -> T)

@@ -5,17 +5,18 @@
     <Version>0.0.1</Version>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Actor\Aggregate.fsi" />
-    <Compile Include="Actor\Aggregate.fs" />
-    <Compile Include="Actor\Command.fsi" />
-    <Compile Include="Actor\Command.fs" />
-    <Compile Include="Note\Aggregate.fsi" />
-    <Compile Include="Note\Aggregate.fs" />
-    <Compile Include="Note\Command.fsi" />
-    <Compile Include="Note\Command.fs" />
+    <Compile Include="ActorAgg\Actor.fsi" />
+    <Compile Include="ActorAgg\Actor.fs" />
+    <Compile Include="ActorAgg\Command.fsi" />
+    <Compile Include="ActorAgg\Command.fs" />
+    <Compile Include="NoteAgg\Note.fsi" />
+    <Compile Include="NoteAgg\Note.fs" />
+    <Compile Include="NoteAgg\Command.fsi" />
+    <Compile Include="NoteAgg\Command.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Domain\Domain.fsproj" />
     <ProjectReference Include="..\Note.Contract\Note.Contract.csproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

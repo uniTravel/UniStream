@@ -8,9 +8,8 @@ module CreateNote =
 
     [<Sealed>]
     type T =
-        static member DeltaType : string
         member Value : CreateNote
-        member ApplyEvent : (Note.T -> Note.T)
+        member Apply : (Note.T -> (string * byte[])[] * Note.T)
 
     val create : (CreateNote -> T)
 
@@ -20,8 +19,7 @@ module ChangeNote =
 
     [<Sealed>]
     type T =
-        static member DeltaType : string
         member Value : ChangeNote
-        member ApplyEvent : (Note.T -> Note.T)
+        member Apply : (Note.T -> (string * byte[])[] * Note.T)
 
     val create : (ChangeNote -> T)
