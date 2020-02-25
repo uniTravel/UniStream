@@ -8,6 +8,7 @@ module CreateActor =
 
     [<Sealed>]
     type T =
+        static member ValueType : string
         member Value : CreateActor
         member Apply : (Actor.T -> (string * byte[])[] * Actor.T)
 

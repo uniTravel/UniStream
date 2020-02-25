@@ -6,7 +6,7 @@ open Note.Contract
 
 module CreateNote =
     type T = CreateNote of CreateNote with
-        static member DeltaType = typeof<CreateNote>.FullName
+        static member ValueType = typeof<CreateNote>.FullName
         member this.Value = let (CreateNote c) = this in c
         member this.Apply = Note.createNote this.Value
     let isValid _ = true
@@ -14,7 +14,7 @@ module CreateNote =
 
 module ChangeNote =
     type T = ChangeNote of ChangeNote with
-        static member DeltaType = typeof<ChangeNote>.FullName
+        static member ValueType = typeof<ChangeNote>.FullName
         member this.Value = let (ChangeNote c) = this in c
         member this.Apply = Note.changeNote this.Value
     let isValid _ = true

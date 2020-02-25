@@ -7,10 +7,10 @@ open Note.Domain
 
 module CommandService =
 
-    let createActor actor delta = async {
+    let createActor actor cv = async {
         let aggId = Guid.NewGuid()
         let traceId = Guid.NewGuid()
-        let command = CreateActor.create delta
+        let command = CreateActor.create cv
         do! Aggregator.executeCommand actor aggId traceId command
         let reply = CreateActorReply()
         reply.AggId <- aggId.ToString()
@@ -18,10 +18,10 @@ module CommandService =
         return reply
     }
 
-    let createNote note delta = async {
+    let createNote note cv = async {
         let aggId = Guid.NewGuid()
         let traceId = Guid.NewGuid()
-        let command = CreateNote.create delta
+        let command = CreateNote.create cv
         do! Aggregator.executeCommand note aggId traceId command
         let reply = CreateNoteReply()
         reply.AggId <- aggId.ToString()
@@ -29,10 +29,10 @@ module CommandService =
         return reply
     }
 
-    let changeNote note (delta: ChangeNote) = async {
-        let aggId = Guid delta.AggId
+    let changeNote note (cv: ChangeNote) = async {
+        let aggId = Guid cv.AggId
         let traceId = Guid.NewGuid()
-        let command = ChangeNote.create delta
+        let command = ChangeNote.create cv
         do! Aggregator.executeCommand note aggId traceId command
         let reply = ChangeNoteReply()
         reply.TraceId <- traceId.ToString()

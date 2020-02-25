@@ -25,10 +25,6 @@ module DiagnoseLog =
     let asBytes (log: T) =
         JsonSerializer.SerializeToUtf8Bytes log
 
-    let fromBytes bytes =
-        let span = ReadOnlySpan bytes
-        JsonSerializer.Deserialize<T> span
-
     let log lg level format =
         let doAfter s =
             let d = { Level = level; Message = s; StackTrack = None } |> asBytes

@@ -8,6 +8,7 @@ module CreateNote =
 
     [<Sealed>]
     type T =
+        static member ValueType : string
         member Value : CreateNote
         member Apply : (Note.T -> (string * byte[])[] * Note.T)
 
@@ -19,6 +20,7 @@ module ChangeNote =
 
     [<Sealed>]
     type T =
+        static member ValueType : string
         member Value : ChangeNote
         member Apply : (Note.T -> (string * byte[])[] * Note.T)
 

@@ -41,14 +41,14 @@ module DomainEvent =
         let result = client.AppendToStreamAsync (streamName, version, eventData) |> Async.AwaitTask |> Async.RunSynchronously
         result.NextExpectedVersion
 
-    let subscribeToStream (Client client) deltaType (f: Guid -> string -> byte[] -> Async<unit>) =
-        let streamName = sprintf "$et-%s" deltaType
+    let subscribeToStream (Client client) evType (f: Guid -> string -> byte[] -> Async<unit>) =
+        let streamName = sprintf "$et-%s" evType
         client.SubscribeToStreamAsync (streamName, true, (fun sub e ->
             f e.Event.EventId e.Event.EventType e.Event.Data |> Async.StartAsTask :> Task
         )) |> ignore
 
-    let connectSubscription (Client client) deltaType groupName f =
-        let streamName = sprintf "$et-%s" deltaType
+    let connectSubscription (Client client) evType groupName f =
+        let streamName = sprintf "$et-%s" evType
         Helper.connectSubscription client streamName groupName f
 
 
@@ -58,12 +58,12 @@ module DomainCommand =
 
     let create uri = Helper.Connect uri |> Client
 
-    let write (Client client) deltaType traceId aggId delta =
-        let eventData = EventData (traceId, aggId, true, delta, [||])
-        client.AppendToStreamAsync (deltaType, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.RunSynchronously |> ignore
+    let write (Client client) cvType traceId aggId cData =
+        let eventData = EventData (traceId, aggId, true, cData, [||])
+        client.AppendToStreamAsync (cvType, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.RunSynchronously |> ignore
 
-    let connectSubscription (Client client) deltaType groupName f =
-        Helper.connectSubscription client deltaType groupName f
+    let connectSubscription (Client client) cvType groupName f =
+        Helper.connectSubscription client cvType groupName f
 
 
 module DomainLog =
@@ -72,9 +72,9 @@ module DomainLog =
 
     let create uri = Helper.Connect uri |> Client
 
-    let write (Client client) (aggType: string) traceId status dLog =
+    let write (Client client) (cvType: string) traceId status dLog =
         let eventData = EventData (traceId, status, false, dLog, [||])
-        client.AppendToStreamAsync (aggType, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.RunSynchronously |> ignore
+        client.AppendToStreamAsync (cvType, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.RunSynchronously |> ignore
 
 
 module DiagnoseLog =

@@ -14,17 +14,17 @@ module internal CommandService =
     /// <summary>创建Actor
     /// </summary>
     /// <param name="actor">Actor聚合器。</param>
-    /// <param name="delta">边际影响。</param>
+    /// <param name="cv">领域命令值类型。</param>
     val createActor : Aggregator.T<Actor.T> -> CreateActor -> Async<CreateActorReply>
 
     /// <summary>创建Note
     /// </summary>
     /// <param name="note">Note聚合器。</param>
-    /// <param name="delta">边际影响。</param>
+    /// <param name="cv">领域命令值类型。</param>
     val createNote : Aggregator.T<Note.T> -> CreateNote -> Async<CreateNoteReply>
 
     /// <summary>改变Note
     /// </summary>
     /// <param name="note">Note聚合器。</param>
-    /// <param name="delta">边际影响。</param>
+    /// <param name="cv">领域命令值类型。</param>
     val changeNote : Aggregator.T<Note.T> -> ChangeNote -> Async<ChangeNoteReply>

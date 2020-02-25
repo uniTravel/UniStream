@@ -10,6 +10,8 @@ type ActorCreated = { Name: string }
 
 module Actor =
 
+    let actorCreated = typeof<ActorCreated>.FullName
+
     type Value =
         { Name: string }
 
@@ -24,10 +26,10 @@ module Actor =
 
     let apply t evType evBytes =
         match evType with
-        | "Note.Domain.ActorCreated" ->
+        | ev when ev = actorCreated ->
             let ev = Delta.fromBytes<ActorCreated> evBytes
             applyActorCreated t ev |> Active
-        | _ -> failwithf "领域事件类型错误：%s" evType
+        | _ -> failwithf "领域事件值类型错误：%s" evType
 
     type T with
         static member Initial = Init
@@ -36,4 +38,4 @@ module Actor =
     let createActor (cv: CreateActor) t =
         let ev : ActorCreated = { Name = cv.Name }
         let value = applyActorCreated t ev
-        [| typeof<ActorCreated>.FullName, Delta.asBytes ev |], Active value
+        [| actorCreated, Delta.asBytes ev |], Active value

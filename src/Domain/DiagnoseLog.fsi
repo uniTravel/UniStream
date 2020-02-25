@@ -39,13 +39,6 @@ module DiagnoseLog =
     /// <returns>诊断日志数据的字节数组。</returns>
     val private asBytes : T -> byte[]
 
-    /// <summary>转成诊断日志数据
-    /// <para>诊断日志数据采用UTF8格式的Json反序列化。</para>
-    /// </summary>
-    /// <param name="bytes">诊断日志数据的字节数组。</param>
-    /// <returns>诊断日志数据。</returns>
-    val private fromBytes : byte[] -> T
-
     type Logger with
 
         /// <summary>记录Trace级别的诊断日志

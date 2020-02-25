@@ -21,11 +21,11 @@ type AppService (es: Uri, ld: Uri, lg: Uri) =
     let actor = Aggregator.create<Actor.T> cfg 3L
     let note = Aggregator.create<Note.T> cfg 3L
 
-    member _.CreateActor delta =
-        Async.StartAsTask <| CommandService.createActor actor delta
+    member _.CreateActor cv =
+        Async.StartAsTask <| CommandService.createActor actor cv
 
-    member _.CreateNote delta =
-        Async.StartAsTask <| CommandService.createNote note delta
+    member _.CreateNote cv =
+        Async.StartAsTask <| CommandService.createNote note cv
 
-    member _.ChangeNote delta =
-        Async.StartAsTask <| CommandService.changeNote note delta
+    member _.ChangeNote cv =
+        Async.StartAsTask <| CommandService.changeNote note cv

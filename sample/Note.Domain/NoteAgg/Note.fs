@@ -13,6 +13,9 @@ type NoteChanged = { Content: string }
 
 module Note =
 
+    let noteCreated = typeof<NoteCreated>.FullName
+    let noteChanged = typeof<NoteChanged>.FullName
+
     type Value =
         { Title: string; Content: string }
 
@@ -30,12 +33,12 @@ module Note =
         | Active v -> { v with Content = ev.Content }
         | _ -> failwith "只有Active状态才能改变Note。"
 
-    let apply (t: T) (evType: string) (evBytes: byte[]) : T =
+    let apply t evType evBytes =
         match evType with
-        | "Note.Domain.NoteCreated" ->
+        | ev when ev = noteCreated ->
             let ev = Delta.fromBytes<NoteCreated> evBytes
             applyNoteCreated t ev |> Active
-        | "Note.Domain.NoteChanged" ->
+        | ev when ev = noteChanged ->
             let ev = Delta.fromBytes<NoteChanged> evBytes
             applyNoteChanged t ev |> Active
         | _ -> failwithf "领域事件类型错误：%s" evType
@@ -47,9 +50,9 @@ module Note =
     let createNote (cv: CreateNote) t =
         let ev : NoteCreated = { Title = cv.Title; Content = cv.Content }
         let value = applyNoteCreated t ev
-        [| typeof<NoteCreated>.FullName, Delta.asBytes ev |], Active value
+        [| noteCreated, Delta.asBytes ev |], Active value
 
-    let changeNote (cv: ChangeNote) (t: T) : (string * byte[])[] * T =
+    let changeNote (cv: ChangeNote) t =
         let ev : NoteChanged = { Content = cv.Content }
         let value = applyNoteChanged t ev
-        [| typeof<NoteChanged>.FullName, Delta.asBytes ev |], Active value
+        [| noteChanged, Delta.asBytes ev |], Active value

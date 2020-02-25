@@ -44,7 +44,7 @@ module DomainEvent =
     /// <para>订阅实例在客户端，适用于单节点订阅。</para>
     /// </summary>
     /// <param name="client">领域事件访问者。</param>
-    /// <param name="deltaType">边际影响类型。</param>
+    /// <param name="evType">领域事件值类型。</param>
     /// <param name="f">事件处理函数。</param>
     val subscribeToStream : T -> string -> (Guid -> string -> byte[] -> Async<unit>) -> unit
 
@@ -52,7 +52,7 @@ module DomainEvent =
     /// <para>订阅实例在服务端，支持多节点的消费群组连接，用以并行消费。</para>
     /// </summary>
     /// <param name="client">领域事件访问者。</param>
-    /// <param name="deltaType">边际影响类型。</param>
+    /// <param name="evType">领域事件值类型。</param>
     /// <param name="groupName">消费群组名称。</param>
     /// <param name="f">事件处理函数。</param>
     val connectSubscription : T -> string -> string -> (Guid -> string -> byte[] -> Async<unit>) -> unit
@@ -74,21 +74,21 @@ module DomainCommand =
     val create : Uri -> T
 
     /// <summary>写入领域命令
-    /// <para>1、边际影响类型全名作为Stream名称。</para>
+    /// <para>1、领域命令值类型全名作为Stream名称。</para>
     /// <para>2、聚合ID作为事件类型。</para>
     /// </summary>
     /// <param name="client">领域命令访问者。</param>
-    /// <param name="deltaType">边际影响类型。</param>
+    /// <param name="cvType">领域命令值类型。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="aggId">聚合ID。</param>
-    /// <param name="delta">边际影响。</param>
+    /// <param name="cData">领域命令数据。</param>
     val write : T -> string -> Guid -> string -> byte[] -> unit
 
     /// <summary>连接到领域命令流服务端订阅
     /// <para>订阅实例在服务端，支持多节点的消费群组连接，用以并行消费。</para>
     /// </summary>
     /// <param name="client">领域命令访问者。</param>
-    /// <param name="deltaType">边际影响类型。</param>
+    /// <param name="cvType">领域命令值类型。</param>
     /// <param name="groupName">消费群组名称。</param>
     /// <param name="f">命令处理函数。</param>
     val connectSubscription : T -> string -> string -> (Guid -> string -> byte[] -> Async<unit>) -> unit
@@ -110,10 +110,10 @@ module DomainLog =
     val create : Uri -> T
 
     /// <summary>写入领域日志
-    /// <para>聚合类型全名作为Stream名称。</para>
+    /// <para>领域命令值类型全名作为Stream名称。</para>
     /// </summary>
     /// <param name="client">领域日志访问者。</param>
-    /// <param name="aggType">聚合类型。</param>
+    /// <param name="cvType">领域命令值类型。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="status">业务状态。</param>
     /// <param name="dLog">领域日志数据。</param>
