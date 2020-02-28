@@ -1,6 +1,11 @@
 namespace Note.Domain
 
-open Note.Contract
+
+[<CLIMutable>]
+type NoteCreated = { Title: string; Content: string }
+
+[<CLIMutable>]
+type NoteChanged = { Content: string }
 
 
 /// <summary>Note聚合模块
@@ -28,12 +33,12 @@ module Note =
 
     /// <summary>创建Note
     /// </summary>
-    /// <param name="cv">领域命令值。</param>
+    /// <param name="ev">领域事件值。</param>
     /// <param name="t">当前聚合。</param>
-    val internal createNote : CreateNote -> T -> ((string * byte[])[] * T)
+    val internal createNote : NoteCreated -> T -> ((string * byte[])[] * T)
 
     /// <summary>改变Note
     /// </summary>
-    /// <param name="cv">领域命令值。</param>
+    /// <param name="ev">领域事件值。</param>
     /// <param name="t">当前聚合。</param>
-    val internal changeNote : ChangeNote -> T -> ((string * byte[])[] * T)
+    val internal changeNote : NoteChanged -> T -> ((string * byte[])[] * T)

@@ -1,5 +1,6 @@
 module Note.Tests
 
+open System.Threading
 open Expecto
 open Note.Contract
 
@@ -12,7 +13,7 @@ let tests =
             command.Title <- "title"
             command.Content <- "initial content"
             let reply = app.CreateNote command |> Async.AwaitTask |> Async.RunSynchronously
-            printfn "%s-%s" reply.AggId reply.TraceId
+            printfn "%s=%s" reply.AggId reply.TraceId
             let command = ChangeNote()
             command.AggId <- reply.AggId
             command.Content <- "changed content"

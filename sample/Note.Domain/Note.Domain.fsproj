@@ -5,14 +5,14 @@
     <Version>0.0.1</Version>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="ActorAgg\Actor.fsi" />
-    <Compile Include="ActorAgg\Actor.fs" />
-    <Compile Include="ActorAgg\Command.fsi" />
-    <Compile Include="ActorAgg\Command.fs" />
-    <Compile Include="NoteAgg\Note.fsi" />
-    <Compile Include="NoteAgg\Note.fs" />
-    <Compile Include="NoteAgg\Command.fsi" />
-    <Compile Include="NoteAgg\Command.fs" />
+    <Compile Include="Actor\Actor.fsi" />
+    <Compile Include="Actor\Actor.fs" />
+    <Compile Include="Actor\Command.fsi" />
+    <Compile Include="Actor\Command.fs" />
+    <Compile Include="Note\Note.fsi" />
+    <Compile Include="Note\Note.fs" />
+    <Compile Include="Note\Command.fsi" />
+    <Compile Include="Note\Command.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>

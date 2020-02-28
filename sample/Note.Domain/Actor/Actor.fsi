@@ -1,6 +1,8 @@
 namespace Note.Domain
 
-open Note.Contract
+
+[<CLIMutable>]
+type ActorCreated = { Name: string }
 
 
 /// <summary>Actor聚合模块
@@ -28,6 +30,6 @@ module Actor =
 
     /// <summary>创建Actor
     /// </summary>
-    /// <param name="cv">领域命令值。</param>
+    /// <param name="ev">领域事件值。</param>
     /// <param name="t">当前聚合。</param>
-    val internal createActor : CreateActor -> T -> ((string * byte[])[] * T)
+    val internal createActor : ActorCreated -> T -> ((string * byte[])[] * T)

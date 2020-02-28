@@ -1,10 +1,8 @@
 namespace Note.Domain
 
 open UniStream.Domain
-open Note.Contract
 
 
-[<CLIMutable>]
 type ActorCreated = { Name: string }
 
 
@@ -28,14 +26,12 @@ module Actor =
         match evType with
         | ev when ev = actorCreated ->
             let ev = Delta.fromBytes<ActorCreated> evBytes
-            applyActorCreated t ev |> Active
+            Active <| applyActorCreated t ev
         | _ -> failwithf "领域事件值类型错误：%s" evType
 
     type T with
         static member Initial = Init
         member this.ApplyEvent  = apply this
 
-    let createActor (cv: CreateActor) t =
-        let ev : ActorCreated = { Name = cv.Name }
-        let value = applyActorCreated t ev
-        [| actorCreated, Delta.asBytes ev |], Active value
+    let createActor ev t =
+        [| actorCreated, Delta.asBytes ev |], Active <| applyActorCreated t ev

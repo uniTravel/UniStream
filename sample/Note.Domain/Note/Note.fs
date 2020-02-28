@@ -1,13 +1,10 @@
 namespace Note.Domain
 
 open UniStream.Domain
-open Note.Contract
 
 
-[<CLIMutable>]
 type NoteCreated = { Title: string; Content: string }
 
-[<CLIMutable>]
 type NoteChanged = { Content: string }
 
 
@@ -47,12 +44,8 @@ module Note =
         static member Initial = Init
         member this.ApplyEvent = apply this
 
-    let createNote (cv: CreateNote) t =
-        let ev : NoteCreated = { Title = cv.Title; Content = cv.Content }
-        let value = applyNoteCreated t ev
-        [| noteCreated, Delta.asBytes ev |], Active value
+    let createNote ev t =
+        [| noteCreated, Delta.asBytes ev |], Active <| applyNoteCreated t ev
 
-    let changeNote (cv: ChangeNote) t =
-        let ev : NoteChanged = { Content = cv.Content }
-        let value = applyNoteChanged t ev
-        [| noteChanged, Delta.asBytes ev |], Active value
+    let changeNote ev t =
+        [| noteChanged, Delta.asBytes ev |], Active <| applyNoteChanged t ev
