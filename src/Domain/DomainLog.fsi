@@ -8,11 +8,6 @@ open System
 [<RequireQualifiedAccess>]
 module DomainLog =
 
-    /// <summary>领域日志
-    /// </summary>
-    [<CLIMutable>]
-    type internal T
-
     /// <summary>领域日志记录器
     /// </summary>
     type Logger
@@ -21,14 +16,7 @@ module DomainLog =
     /// </summary>
     /// <param name="aggType">领域类型全名。</param>
     /// <param name="logFunc">领域日志流存储函数。</param>
-    val logger : string -> (string -> Guid -> string -> byte[] -> unit) -> Logger
-
-    /// <summary>转成字节数组
-    /// <para>领域日志数据采用二进制序列化。</para>
-    /// </summary>
-    /// <param name="log">领域日志数据。</param>
-    /// <returns>领域日志数据的字节数组。</returns>
-    val private asBytes : T -> byte[]
+    val logger : string -> (string -> string -> byte[] -> unit) -> Logger
 
     type Logger with
 

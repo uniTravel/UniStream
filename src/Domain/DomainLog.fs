@@ -6,20 +6,16 @@ open System.Text.Json
 
 module DomainLog =
 
-    type T = { AggType: string; AggId: Guid; Message: string }
-
-    type Logger = { AggType: string; LogFunc: string -> Guid -> string -> byte[] -> unit }
+    type Logger = { AggType: string; LogFunc: string -> string -> byte[] -> unit }
 
     let logger aggType logFunc =
         { AggType = aggType; LogFunc = logFunc }
 
-    let asBytes (log: T) =
-        JsonSerializer.SerializeToUtf8Bytes log
-
-    let log logger cvType status aggId traceId format =
-        let doAfter s =
-            let d = { AggType = logger.AggType; AggId = aggId; Message = s } |> asBytes
-            logger.LogFunc cvType traceId status d
+    let log logger cvType status (aggId: Guid) (traceId: Guid) format =
+        let doAfter (s: string) =
+            {| AggType = logger.AggType; AggId = aggId; TraceId = traceId; Message = s |}
+            |> JsonSerializer.SerializeToUtf8Bytes
+            |> logger.LogFunc cvType status
         Printf.ksprintf doAfter format
 
     type Logger with

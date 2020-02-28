@@ -1,6 +1,5 @@
 namespace UniStream.Domain
 
-open System
 open System.Text.Json
 
 
@@ -15,32 +14,22 @@ type LogLevel =
 
 module DiagnoseLog =
 
-    type T = { Level: LogLevel; Message: string; StackTrack: string option }
-
     type Logger = { Name: string; LogFunc: string -> byte[] -> unit }
 
     let logger name logFunc =
         { Name = name; LogFunc = logFunc }
 
-    let asBytes (log: T) =
-        JsonSerializer.SerializeToUtf8Bytes log
-
-    let log lg level format =
-        let doAfter s =
-            let d = { Level = level; Message = s; StackTrack = None } |> asBytes
-            lg.LogFunc lg.Name d
-        Printf.ksprintf doAfter format
-
-    let logWithStack lg level stack format =
-        let doAfter s =
-            let d = { Level = level; Message = s; StackTrack = Some stack } |> asBytes
-            lg.LogFunc lg.Name d
+    let log lg level format (stack: string option) =
+        let doAfter (s: string) =
+            {| Level = level; Message = s; StackTrack = stack |}
+            |> JsonSerializer.SerializeToUtf8Bytes
+            |> lg.LogFunc lg.Name
         Printf.ksprintf doAfter format
 
     type Logger with
-        member this.Trace format = log this LogLevel.Trace format
-        member this.Debug format = log this LogLevel.Debug format
-        member this.Info format = log this LogLevel.Info format
-        member this.Warn format = log this LogLevel.Warn format
-        member this.Error stack format = logWithStack this LogLevel.Error stack format
-        member this.Critical stack format = logWithStack this LogLevel.Critical stack format
+        member this.Trace format = log this LogLevel.Trace format None
+        member this.Debug format = log this LogLevel.Debug format None
+        member this.Info format = log this LogLevel.Info format None
+        member this.Warn format = log this LogLevel.Warn format None
+        member this.Error stack format = log this LogLevel.Error format <| Some stack
+        member this.Critical stack format = log this LogLevel.Critical format <| Some stack

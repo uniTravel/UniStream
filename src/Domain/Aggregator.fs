@@ -13,7 +13,7 @@ module Aggregator =
     type StoreConfig =
         { Get: string -> Guid -> int64 -> (Guid * string * byte[])[] * int64
           EsFunc: string -> Guid -> int64 -> (string * byte[])[] -> int64
-          LdFunc: string -> Guid -> string -> byte[] -> unit
+          LdFunc: string -> string -> byte[] -> unit
           LgFunc: string -> byte[] -> unit }
 
     type T<'agg> =

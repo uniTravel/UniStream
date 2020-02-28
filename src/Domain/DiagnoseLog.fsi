@@ -17,11 +17,6 @@ type internal LogLevel =
 [<RequireQualifiedAccess>]
 module DiagnoseLog =
 
-    /// <summary>诊断日志
-    /// </summary>
-    [<CLIMutable>]
-    type T
-
     /// <summary>诊断日志记录器
     /// </summary>
     type Logger
@@ -31,13 +26,6 @@ module DiagnoseLog =
     /// <param name="name">日志名称。</param>
     /// <param name="logFunc">诊断日志流存储函数。</param>
     val logger : string -> (string -> byte[] -> unit) -> Logger
-
-    /// <summary>转成字节数组
-    /// <para>诊断日志数据采用UTF8格式的Json序列化。</para>
-    /// </summary>
-    /// <param name="log">诊断日志数据。</param>
-    /// <returns>诊断日志数据的字节数组。</returns>
-    val private asBytes : T -> byte[]
 
     type Logger with
 

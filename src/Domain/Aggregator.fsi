@@ -24,7 +24,7 @@ module Aggregator =
     type StoreConfig =
         { Get: string -> Guid -> int64 -> (Guid * string * byte[])[] * int64
           EsFunc: string -> Guid -> int64 -> (string * byte[])[] -> int64
-          LdFunc: string -> Guid -> string -> byte[] -> unit
+          LdFunc: string -> string -> byte[] -> unit
           LgFunc: string -> byte[] -> unit }
 
     /// <summary>聚合器
@@ -55,7 +55,7 @@ module Aggregator =
     val config :
         (string -> Guid -> int64 -> (Guid * string * byte[])[] * int64) ->
         (string -> Guid -> int64 -> (string * byte[])[] -> int64) ->
-        (string -> Guid -> string -> byte[] -> unit) ->
+        (string -> string -> byte[] -> unit) ->
         (string -> byte[] -> unit) -> StoreConfig
 
     /// <summary>创建聚合仓储访问代理

@@ -114,10 +114,9 @@ module DomainLog =
     /// </summary>
     /// <param name="client">领域日志访问者。</param>
     /// <param name="cvType">领域命令值类型。</param>
-    /// <param name="traceId">跟踪ID。</param>
     /// <param name="status">业务状态。</param>
     /// <param name="dLog">领域日志数据。</param>
-    val write : T -> string -> Guid -> string -> byte[] -> unit
+    val write : T -> string -> string -> byte[] -> unit
 
 
 /// <summary>诊断日志访问者模块

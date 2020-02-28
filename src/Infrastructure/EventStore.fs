@@ -72,8 +72,8 @@ module DomainLog =
 
     let create uri = Helper.Connect uri |> Client
 
-    let write (Client client) (cvType: string) traceId status dLog =
-        let eventData = EventData (traceId, status, false, dLog, [||])
+    let write (Client client) cvType status dLog =
+        let eventData = EventData (Guid.NewGuid(), status, true, dLog, [||])
         client.AppendToStreamAsync (cvType, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.RunSynchronously |> ignore
 
 
@@ -86,5 +86,5 @@ module DiagnoseLog =
     let create uri stream = { Client = Helper.Connect uri; StreamName = stream }
 
     let write { Client = client; StreamName = stream } aggType gLog =
-        let eventData = EventData (Guid.NewGuid(), aggType, false, gLog, [||])
+        let eventData = EventData (Guid.NewGuid(), aggType, true, gLog, [||])
         client.AppendToStreamAsync (stream, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.RunSynchronously |> ignore
