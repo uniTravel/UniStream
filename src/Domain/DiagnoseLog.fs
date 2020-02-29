@@ -19,7 +19,7 @@ module DiagnoseLog =
     let logger name logFunc =
         { Name = name; LogFunc = logFunc }
 
-    let log lg level format (stack: string option) =
+    let log lg level format (stack: string) =
         let doAfter (s: string) =
             {| Level = level; Message = s; StackTrack = stack |}
             |> JsonSerializer.SerializeToUtf8Bytes
@@ -27,9 +27,9 @@ module DiagnoseLog =
         Printf.ksprintf doAfter format
 
     type Logger with
-        member this.Trace format = log this LogLevel.Trace format None
-        member this.Debug format = log this LogLevel.Debug format None
-        member this.Info format = log this LogLevel.Info format None
-        member this.Warn format = log this LogLevel.Warn format None
-        member this.Error stack format = log this LogLevel.Error format <| Some stack
-        member this.Critical stack format = log this LogLevel.Critical format <| Some stack
+        member this.Trace format = log this LogLevel.Trace format null
+        member this.Debug format = log this LogLevel.Debug format null
+        member this.Info format = log this LogLevel.Info format null
+        member this.Warn format = log this LogLevel.Warn format null
+        member this.Error stack format = log this LogLevel.Error format stack
+        member this.Critical stack format = log this LogLevel.Critical format stack

@@ -20,3 +20,9 @@ services:
         ports:
             - "9013:2113"
             - "4013:1113"
+    cs:
+        container_name: cs
+        image: eventstore/eventstore
+        ports:
+            - "9016:2113"
+            - "4016:1113"
