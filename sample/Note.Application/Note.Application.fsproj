@@ -14,7 +14,6 @@
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Infrastructure\Infrastructure.fsproj" />
     <ProjectReference Include="..\Note.Domain\Note.Domain.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

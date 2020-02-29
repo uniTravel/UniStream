@@ -1,6 +1,5 @@
 module Note.Tests
 
-open System.Threading
 open Expecto
 open Note.Contract
 
