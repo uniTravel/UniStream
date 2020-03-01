@@ -74,7 +74,7 @@ module DomainLog =
 
     let write (Client client) cvType status dLog =
         let eventData = EventData (Guid.NewGuid(), status, true, dLog, [||])
-        client.AppendToStreamAsync (cvType, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.RunSynchronously |> ignore
+        client.AppendToStreamAsync (cvType, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.Ignore |> ignore
 
 
 module DiagnoseLog =
@@ -87,4 +87,4 @@ module DiagnoseLog =
 
     let write { Client = client; StreamName = stream } aggType gLog =
         let eventData = EventData (Guid.NewGuid(), aggType, true, gLog, [||])
-        client.AppendToStreamAsync (stream, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.RunSynchronously |> ignore
+        client.AppendToStreamAsync (stream, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.Ignore |> ignore
