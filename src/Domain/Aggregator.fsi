@@ -85,8 +85,9 @@ module Aggregator =
     /// <param name="cvType">领域命令值类型。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="traceId">跟踪ID。</param>
-    val inline execute : T< ^agg> -> (^agg -> (string * byte[])[] * ^agg) -> string -> Guid -> Guid -> Async<unit>
+    val inline execute : T< ^agg> -> (^agg -> (string * byte[])[] * ^agg) -> string -> Guid -> Guid -> Async< ^v>
         when ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
+        and ^agg : (member Value : ^v)
 
     /// <summary>执行命令
     /// </summary>
@@ -96,7 +97,8 @@ module Aggregator =
     /// <param name="aggId">聚合ID。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="command">领域命令。</param>
-    val inline executeCommand : T< ^agg> -> Guid -> Guid -> ^c -> Async<unit>
+    val inline executeCommand : T< ^agg> -> Guid -> Guid -> ^c -> Async< ^v>
         when ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
+        and ^agg : (member Value : ^v)
         and ^c : (static member ValueType : string)
         and ^c : (member Apply: (^agg -> (string * byte[])[] * ^agg))

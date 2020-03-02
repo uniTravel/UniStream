@@ -3,19 +3,16 @@ namespace Note.Domain
 open UniStream.Domain
 
 
-type ActorCreated = { Name: string }
-
+type Actor =
+    { Name: string }
 
 module Actor =
 
     let actorCreated = typeof<ActorCreated>.FullName
 
-    type Value =
-        { Name: string }
-
     type T =
         | Init
-        | Active of Value
+        | Active of Actor
 
     let applyActorCreated t (ev: ActorCreated) =
         match t with
@@ -31,7 +28,11 @@ module Actor =
 
     type T with
         static member Initial = Init
-        member this.ApplyEvent  = apply this
+        member this.ApplyEvent = apply this
+        member this.Value =
+            match this with
+            | Active v -> v
+            | Init -> failwith "初始状态，尚未赋值。"
 
     let createActor ev t =
         [| actorCreated, Delta.asBytes ev |], Active <| applyActorCreated t ev

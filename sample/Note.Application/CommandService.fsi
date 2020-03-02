@@ -1,8 +1,9 @@
 namespace Note.Application
 
+
+open System
 open UniStream.Domain
-open Note.Contract
-open Note.Domain
+open Note
 
 
 /// <summary>命令服务模块
@@ -14,17 +15,23 @@ module internal CommandService =
     /// <summary>创建Actor
     /// </summary>
     /// <param name="actor">Actor聚合器。</param>
-    /// <param name="cv">领域命令值类型。</param>
-    val createActor : Aggregator.T<Actor.T> -> CreateActor -> Async<CreateActorReply>
+    /// <param name="aggId">聚合ID。</param>
+    /// <param name="traceId">跟踪ID。</param>
+    /// <param name="cv">领域命令值。</param>
+    /// <returns>聚合值。</returns>
+    val createActor : Aggregator.T<Domain.Actor.T> -> Guid -> Guid -> Contract.CreateActor -> Async<Domain.Actor>
 
     /// <summary>创建Note
     /// </summary>
     /// <param name="note">Note聚合器。</param>
-    /// <param name="cv">领域命令值类型。</param>
-    val createNote : Aggregator.T<Note.T> -> CreateNote -> Async<CreateNoteReply>
+    /// <param name="aggId">聚合ID。</param>
+    /// <param name="traceId">跟踪ID。</param>
+    /// <param name="cv">领域命令值。</param>
+    val createNote : Aggregator.T<Domain.Note.T> -> Guid -> Guid -> Contract.CreateNote -> Async<Domain.Note>
 
     /// <summary>改变Note
     /// </summary>
     /// <param name="note">Note聚合器。</param>
-    /// <param name="cv">领域命令值类型。</param>
-    val changeNote : Aggregator.T<Note.T> -> ChangeNote -> Async<ChangeNoteReply>
+    /// <param name="traceId">跟踪ID。</param>
+    /// <param name="cv">领域命令值。</param>
+    val changeNote : Aggregator.T<Domain.Note.T> -> Guid -> Contract.ChangeNote -> Async<Domain.Note>

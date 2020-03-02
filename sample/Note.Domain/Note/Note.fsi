@@ -1,21 +1,16 @@
 namespace Note.Domain
 
 
-[<CLIMutable>]
-type NoteCreated = { Title: string; Content: string }
-
-[<CLIMutable>]
-type NoteChanged = { Content: string }
+/// <summary>聚合值类型
+/// </summary>
+type Note =
+    { Title: string; Content: string }
 
 
 /// <summary>Note聚合模块
 /// </summary>
 [<RequireQualifiedAccess>]
 module Note =
-
-    /// <summary>聚合值
-    /// </summary>
-    type private Value
 
     /// <summary>聚合类型
     /// </summary>
@@ -30,6 +25,10 @@ module Note =
         /// <para>根据领域事件类型，由事件流重建聚合。</para>
         /// </summary>
         member ApplyEvent : (string -> byte[] -> T)
+
+        /// <summary>聚合值
+        /// </summary>
+        member Value : Note
 
     /// <summary>创建Note
     /// </summary>

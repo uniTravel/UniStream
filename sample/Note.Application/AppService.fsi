@@ -1,8 +1,7 @@
 namespace Note.Application
 
 open System
-open System.Threading.Tasks
-open Note.Contract
+open Note
 
 
 /// <summary>应用服务类
@@ -20,15 +19,20 @@ type AppService =
 
     /// <summary>创建Actor
     /// </summary>
+    /// <param name="aggId">聚合ID。</param>
+    /// <param name="traceId">跟踪ID。</param>
     /// <param name="cv">传入的领域命令值。</param>
-    member CreateActor : CreateActor -> Task<CreateActorReply>
+    member CreateActor : Guid -> Guid -> Contract.CreateActor -> Async<Domain.Actor>
 
     /// <summary>创建Note
     /// </summary>
+    /// <param name="aggId">聚合ID。</param>
+    /// <param name="traceId">跟踪ID。</param>
     /// <param name="cv">传入的领域命令值。</param>
-    member CreateNote : CreateNote -> Task<CreateNoteReply>
+    member CreateNote : Guid -> Guid -> Contract.CreateNote -> Async<Domain.Note>
 
     /// <summary>改变Note
     /// </summary>
+    /// <param name="traceId">跟踪ID。</param>
     /// <param name="cv">传入的领域命令值。</param>
-    member ChangeNote : ChangeNote -> Task<ChangeNoteReply>
+    member ChangeNote : Guid -> Contract.ChangeNote -> Async<Domain.Note>

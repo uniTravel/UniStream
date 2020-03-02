@@ -5,10 +5,14 @@
     <Version>0.0.1</Version>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Actor\Event.fsi" />
+    <Compile Include="Actor\Event.fs" />
     <Compile Include="Actor\Actor.fsi" />
     <Compile Include="Actor\Actor.fs" />
     <Compile Include="Actor\Command.fsi" />
     <Compile Include="Actor\Command.fs" />
+    <Compile Include="Note\Event.fsi" />
+    <Compile Include="Note\Event.fs" />
     <Compile Include="Note\Note.fsi" />
     <Compile Include="Note\Note.fs" />
     <Compile Include="Note\Command.fsi" />
@@ -16,6 +20,7 @@
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Domain\Domain.fsproj" />
     <ProjectReference Include="..\Note.Contract\Note.Contract.csproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

@@ -75,7 +75,7 @@ module Aggregator =
 
     let inline execute t apply cvType aggId traceId = async {
         let { DomainLog = ld; DiagnoseLog = lg; EsFunc = esFunc; Agent = agent; Get = get } = t
-        let launch apply aggId agg version traceId refreshed =
+        let rec launch apply aggId agg version traceId refreshed =
             try
                 let events, agg' = apply agg
                 ld.Process cvType aggId traceId "应用命令成功。"
@@ -83,31 +83,34 @@ module Aggregator =
                     let version = esFunc aggId (version + 1L) events
                     ld.Success cvType aggId traceId "保存事件成功。"
                     agent.Post <| Put (aggId, agg', version)
-                    false
+                    (^agg : (member Value: ^v) agg')
                 with ex ->
                     lg.Error ex.StackTrace "保存事件失败：%s。" ex.Message
-                    if not refreshed then true
+                    if not refreshed then
+                        ld.Process cvType aggId traceId "刷新聚合。"
+                        let agg, version = Repository.refresh aggId agg (version + 1L) t.Get
+                        launch apply aggId agg version traceId true
                     else
                         ld.Fail cvType aggId traceId "保存事件失败：%s" ex.Message
                         agent.Post <| Put (aggId, agg, version)
-                        false
+                        failwith "保存事件失败。"
             with ex ->
                 ld.Fail cvType aggId traceId "应用命令出错：%s。" ex.Message
                 lg.Error ex.StackTrace "应用命令出错：%s。" ex.Message
                 agent.Post <| Put (aggId, agg, version)
-                false
+                failwith "应用命令出错。"
         ld.Process cvType aggId traceId "开始。"
         match! agent.PostAndAsyncReply (fun channel -> Take (aggId, channel)) with
         | Ok (agg, version) ->
             ld.Process cvType aggId traceId "取到聚合。"
-            if launch apply aggId agg version traceId false then
-                let agg, version = Repository.refresh aggId agg (version + 1L) t.Get
-                launch apply aggId agg version traceId true |> ignore
-        | Error err -> ld.Fail cvType aggId traceId "取聚合出错：%s" err
+            return launch apply aggId agg version traceId false
+        | Error err ->
+            ld.Fail cvType aggId traceId "取聚合出错：%s" err
+            return failwith "取聚合出错。"
     }
 
     let inline executeCommand t aggId traceId command = async {
         let cvType = (^c : (static member ValueType : string) ())
         let apply = (^c : (member Apply: (^agg -> (string * byte[])[] * ^agg)) command)
-        do! execute t apply cvType aggId traceId
+        return! execute t apply cvType aggId traceId
     }

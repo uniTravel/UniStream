@@ -3,9 +3,8 @@ namespace Note.Domain
 open UniStream.Domain
 
 
-type NoteCreated = { Title: string; Content: string }
-
-type NoteChanged = { Content: string }
+type Note =
+    { Title: string; Content: string }
 
 
 module Note =
@@ -13,12 +12,9 @@ module Note =
     let noteCreated = typeof<NoteCreated>.FullName
     let noteChanged = typeof<NoteChanged>.FullName
 
-    type Value =
-        { Title: string; Content: string }
-
     type T =
         | Init
-        | Active of Value
+        | Active of Note
 
     let applyNoteCreated t (ev: NoteCreated) =
         match t with
@@ -43,6 +39,10 @@ module Note =
     type T with
         static member Initial = Init
         member this.ApplyEvent = apply this
+        member this.Value =
+            match this with
+            | Active v -> v
+            | Init -> failwith "初始状态，尚未赋值。"
 
     let createNote ev t =
         [| noteCreated, Delta.asBytes ev |], Active <| applyNoteCreated t ev
