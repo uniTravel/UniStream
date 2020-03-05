@@ -3,16 +3,16 @@ namespace Note.Domain
 open UniStream.Domain
 
 
-type Actor =
-    { Name: string }
-
 module Actor =
+
+    type Value =
+        { Name: string }
 
     let actorCreated = typeof<ActorCreated>.FullName
 
     type T =
         | Init
-        | Active of Actor
+        | Active of Value
 
     let applyActorCreated t (ev: ActorCreated) =
         match t with
@@ -28,6 +28,7 @@ module Actor =
 
     type T with
         static member Initial = Init
+        static member AggMode = Immutable
         member this.ApplyEvent = apply this
         member this.Value =
             match this with

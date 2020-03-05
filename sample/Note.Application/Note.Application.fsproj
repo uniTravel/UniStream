@@ -1,9 +1,16 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
     <AssemblyName>Note.Application</AssemblyName>
-    <Version>0.0.1</Version>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Infrastructure\Infrastructure.fsproj">
+      <Name>Infrastructure.fsproj</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Note.Domain\Note.Domain.fsproj">
+      <Name>Note.Domain.fsproj</Name>
+    </ProjectReference>
+  </ItemGroup>
   <ItemGroup>
     <Compile Include="CommandService.fsi" />
     <Compile Include="CommandService.fs" />
@@ -12,10 +19,6 @@
     <Compile Include="AppService.fsi" />
     <Compile Include="AppService.fs" />
     <None Include="paket.references" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\Infrastructure\Infrastructure.fsproj" />
-    <ProjectReference Include="..\Note.Domain\Note.Domain.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

@@ -1,16 +1,17 @@
 namespace Note.Domain
 
-
-/// <summary>聚合值类型
-/// </summary>
-type Note =
-    { Title: string; Content: string }
+open UniStream.Domain
 
 
 /// <summary>Note聚合模块
 /// </summary>
 [<RequireQualifiedAccess>]
 module Note =
+
+    /// <summary>聚合值类型
+    /// </summary>
+    type Value =
+        { Title: string; Content: string }
 
     /// <summary>聚合类型
     /// </summary>
@@ -21,6 +22,10 @@ module Note =
         /// </summary>
         static member Initial : T
 
+        /// <summary>聚合模式
+        /// </summary>
+        static member AggMode : AggMode
+
         /// <summary>应用领域事件
         /// <para>根据领域事件类型，由事件流重建聚合。</para>
         /// </summary>
@@ -28,7 +33,7 @@ module Note =
 
         /// <summary>聚合值
         /// </summary>
-        member Value : Note
+        member Value : Value
 
     /// <summary>创建Note
     /// </summary>

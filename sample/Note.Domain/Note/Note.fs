@@ -3,18 +3,17 @@ namespace Note.Domain
 open UniStream.Domain
 
 
-type Note =
-    { Title: string; Content: string }
-
-
 module Note =
+
+    type Value =
+        { Title: string; Content: string }
 
     let noteCreated = typeof<NoteCreated>.FullName
     let noteChanged = typeof<NoteChanged>.FullName
 
     type T =
         | Init
-        | Active of Note
+        | Active of Value
 
     let applyNoteCreated t (ev: NoteCreated) =
         match t with
@@ -38,6 +37,7 @@ module Note =
 
     type T with
         static member Initial = Init
+        static member AggMode = Mutable
         member this.ApplyEvent = apply this
         member this.Value =
             match this with

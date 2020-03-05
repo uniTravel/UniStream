@@ -18,8 +18,8 @@ type AppService (es: Uri, ld: Uri, lg: Uri) =
     let lgFunc = DiagnoseLog.write c3
     let cfg = Aggregator.config get esFunc ldFunc lgFunc
 
-    let actor = Aggregator.create<Actor.T> cfg 3L
-    let note = Aggregator.create<Note.T> cfg 3L
+    let actor = Aggregator.create<Actor.T> cfg 3L General
+    let note = Aggregator.create<Note.T> cfg 3L <| Snapshot 1000L
 
     member _.CreateActor aggId traceId cv =
         CommandService.createActor actor aggId traceId cv
