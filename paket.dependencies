@@ -1,6 +1,5 @@
-source https://api.nuget.org/v3/index.json
-
 framework auto-detect
+source https://api.nuget.org/v3/index.json
 
 nuget FSharp.Core
 nuget FSharp.Quotations.Evaluator
@@ -12,3 +11,19 @@ nuget Expecto
 nuget Expecto.FsCheck
 nuget Expecto.Hopac
 nuget EventStore.Client
+
+group Build
+    source https://api.nuget.org/v3/index.json
+
+    nuget Fake.Core.Target
+    nuget Fake.Core.Process
+    nuget Fake.DotNet.Cli
+    nuget Fake.Core.ReleaseNotes
+    nuget Fake.DotNet.AssemblyInfoFile
+    nuget Fake.DotNet.Paket
+    nuget Fake.Tools.Git
+    nuget Fake.Core.Environment
+    nuget Fake.Core.UserInput
+    nuget Fake.IO.FileSystem
+    nuget Fake.DotNet.MsBuild
+    nuget Fake.Api.GitHub

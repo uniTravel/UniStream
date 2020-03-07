@@ -2,9 +2,6 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.1</TargetFrameworks>
     <AssemblyName>UniStream.Infrastructure</AssemblyName>
-    <Version>$(InfraVersion)</Version>
-    <Authors>Eric</Authors>
-    <Company>UniCloud</Company>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="WrappedString.fsi" />

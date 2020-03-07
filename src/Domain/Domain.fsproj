@@ -2,9 +2,6 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <AssemblyName>UniStream.Domain</AssemblyName>
-    <Version>$(MasterVersion)</Version>
-    <Authors>Eric</Authors>
-    <Company>UniCloud</Company>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="DomainLog.fsi" />

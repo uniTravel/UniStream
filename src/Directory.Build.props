@@ -1,6 +1,5 @@
 <Project>
   <PropertyGroup>
-    <MasterVersion>0.3.0</MasterVersion>
-    <InfraVersion>0.2.6</InfraVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 </Project>
