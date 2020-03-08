@@ -1,0 +1,13 @@
+type file
+id UniStream
+owners UniCloud
+authors Eric
+description lightweight framework for CQRS
+files
+    src/Domain/bin/Release
+    !src/Domain/bin/**/*.pdb
+    src/Infrastructure/bin/Release
+    !src/Infrastructure/bin/**/*.pdb
+dependencies
+    FSharp.Core >= LOCKEDVERSION
+    EventStore.Client >= LOCKEDVERSION

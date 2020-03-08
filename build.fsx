@@ -13,6 +13,7 @@ Target.initEnvironment ()
 let root = __SOURCE_DIRECTORY__
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 let packageDir = root </> "out"
+let release = ReleaseNotes.load "RELEASE_NOTES.adoc"
 
 
 Target.create "Clean" (fun _ ->
@@ -29,14 +30,13 @@ Target.create "Build" (fun _ ->
 )
 
 Target.create "Pack" (fun _ ->
-    Environment.setEnvironVar "Authors" "Eric"
-    !! "src/Domain"
-    ++ "src/Infrastructure"
-    |> Seq.iter (fun dir ->
-        let release = ReleaseNotes.load (dir </> "RELEASE_NOTES.adoc")
-        Environment.setEnvironVar "Version" release.NugetVersion
-        Environment.setEnvironVar "PackageReleaseNotes" (release.Notes |> String.toLines)
-        DotNet.pack (fun p -> { p with OutputPath = Some packageDir }) dir
+    Paket.pack (fun p ->
+        { p with
+            BuildConfig = "Release"
+            OutputPath = packageDir
+            Version = release.NugetVersion
+            ReleaseNotes = String.concat "\n" release.Notes
+            MinimumFromLockFile = false }
     )
 )
 
@@ -48,6 +48,7 @@ Target.create "Default" ignore
 Target.create "Release" ignore
 
 "Clean"
+    ==> "Build"
     ==> "Pack"
     ==> "Default"
 
