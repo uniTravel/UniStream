@@ -5,9 +5,11 @@ authors Eric
 description lightweight framework for CQRS
 files
     src/Domain/bin/Release
-    !src/Domain/bin/**/*.pdb
     src/Infrastructure/bin/Release
-    !src/Infrastructure/bin/**/*.pdb
+    !src/Domain/**/*.json
+    !src/Domain/**/*.pdb
+    !src/Infrastructure/**/*.json
+    !src/Infrastructure/**/*.pdb
 dependencies
     FSharp.Core >= LOCKEDVERSION
     EventStore.Client >= LOCKEDVERSION

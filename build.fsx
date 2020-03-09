@@ -32,7 +32,6 @@ Target.create "Build" (fun _ ->
 Target.create "Pack" (fun _ ->
     Paket.pack (fun p ->
         { p with
-            BuildConfig = "Release"
             OutputPath = packageDir
             Version = release.NugetVersion
             ReleaseNotes = String.concat "\n" release.Notes
