@@ -9,6 +9,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Fixtures.fs" />
     <Compile Include="ApiConfig.fs" />
     <Compile Include="ActorTests.fs" />
     <Compile Include="NoteTests.fs" />

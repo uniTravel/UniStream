@@ -1,7 +1,8 @@
 namespace Note.Domain
 
-open Note.Contract
 
+[<CLIMutable>]
+type CreateNote = { Title: string; Content: string }
 
 [<RequireQualifiedAccess>]
 module CreateNote =
@@ -13,6 +14,9 @@ module CreateNote =
 
     val create : (CreateNote -> T)
 
+
+[<CLIMutable>]
+type ChangeNote = { Content: string }
 
 [<RequireQualifiedAccess>]
 module ChangeNote =

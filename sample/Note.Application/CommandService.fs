@@ -1,9 +1,8 @@
 namespace Note.Application
 
-open System
 open UniStream.Domain
-open Note.Contract
 open Note.Domain
+
 
 module CommandService =
 
@@ -17,8 +16,7 @@ module CommandService =
         return! Aggregator.executeCommand note aggId traceId command
     }
 
-    let changeNote note traceId (cv: ChangeNote) = async {
-        let aggId = Guid cv.AggId
+    let changeNote note aggId traceId cv = async {
         let command = ChangeNote.create cv
         return! Aggregator.executeCommand note aggId traceId command
     }

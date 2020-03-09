@@ -6,6 +6,9 @@
     <ProjectReference Include="..\Note.Application\Note.Application.fsproj">
       <Name>Note.Application.fsproj</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Note.Contract\Note.Contract.csproj">
+      <Name>Note.Contract.csproj</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Services/ActorService.fs" />

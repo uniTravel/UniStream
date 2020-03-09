@@ -1,9 +1,7 @@
 namespace Note.Application
 
-
 open System
 open UniStream.Domain
-open Note.Contract
 open Note.Domain
 
 
@@ -33,6 +31,7 @@ module internal CommandService =
     /// <summary>改变Note
     /// </summary>
     /// <param name="note">Note聚合器。</param>
+    /// <param name="aggId">聚合ID。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="cv">领域命令值。</param>
-    val changeNote : Aggregator.T<Note.T> -> Guid -> ChangeNote -> Async<Note.Value>
+    val changeNote : Aggregator.T<Note.T> -> Guid -> Guid -> ChangeNote -> Async<Note.Value>

@@ -8,21 +8,22 @@ open Note.Application
 type NoteService (app: AppService) =
     inherit Note.NoteBase()
 
-    override _.CreateNoteCommand (request, context) =
+    override _.CreateNote (request, context) =
         Async.StartAsTask <| async {
             let aggId = Guid.NewGuid()
             let traceId = Guid.NewGuid()
-            let! note = app.CreateNote aggId traceId request
+            let! note = app.CreateNote aggId traceId { Title = request.Title; Content = request.Content }
             let reply = CreateNoteReply()
             reply.AggId <- aggId.ToString()
             reply.TraceId <- traceId.ToString()
             return reply
         }
 
-    override _.ChangeNoteCommand (request, context) =
+    override _.ChangeNote (request, context) =
         Async.StartAsTask <| async {
+            let aggId = Guid request.AggId
             let traceId = Guid.NewGuid()
-            let! note = app.ChangeNote traceId request
+            let! note = app.ChangeNote aggId traceId { Content = request.Content}
             let reply = ChangeNoteReply()
             reply.TraceId <- traceId.ToString()
             return reply

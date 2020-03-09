@@ -27,5 +27,5 @@ type AppService (es: Uri, ld: Uri, lg: Uri) =
     member _.CreateNote aggId traceId cv =
         CommandService.createNote note aggId traceId cv
 
-    member _.ChangeNote traceId cv =
-        CommandService.changeNote note traceId cv
+    member _.ChangeNote aggId traceId cv =
+        CommandService.changeNote note aggId traceId cv

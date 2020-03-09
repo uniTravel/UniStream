@@ -5,11 +5,11 @@ option csharp_namespace = "Note.Contract";
 package note;
 
 service Note {
-    rpc CreateNoteCommand (CreateNote) returns (CreateNoteReply);
-    rpc ChangeNoteCommand (ChangeNote) returns (ChangeNoteReply);
+    rpc CreateNote (CreateNoteRequest) returns (CreateNoteReply);
+    rpc ChangeNote (ChangeNoteRequest) returns (ChangeNoteReply);
 }
 
-message CreateNote {
+message CreateNoteRequest {
     string title = 1;
     string content = 2;
 }
@@ -19,7 +19,7 @@ message CreateNoteReply {
     string trace_id = 2;
 }
 
-message ChangeNote {
+message ChangeNoteRequest {
     string agg_id = 1;
     string content = 2;
 }

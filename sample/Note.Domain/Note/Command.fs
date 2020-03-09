@@ -1,8 +1,9 @@
 namespace Note.Domain
 
 open UniStream.Domain
-open Note.Contract
 
+
+type CreateNote = { Title: string; Content: string }
 
 module CreateNote =
     type T = CreateNote of CreateNote with
@@ -12,6 +13,9 @@ module CreateNote =
             Note.createNote { Title = cv.Title; Content = cv.Content }
     let isValid _ = true
     let create = Command.create isValid CreateNote
+
+
+type ChangeNote = { Content: string }
 
 module ChangeNote =
     type T = ChangeNote of ChangeNote with

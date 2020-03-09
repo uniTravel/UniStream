@@ -1,7 +1,9 @@
 namespace Note.Domain
 
 open UniStream.Domain
-open Note.Contract
+
+
+type CreateActor = { Name: string }
 
 
 module CreateActor =

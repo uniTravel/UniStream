@@ -2,18 +2,28 @@ module Actor.Tests
 
 open System
 open Expecto
-open Note.Contract
+open Note.Domain
 
 
 [<Tests>]
 let tests =
     let aggId = Guid.NewGuid()
-    testList "ActorAgg" [
-        testCase "Create Actor" <| fun _ ->
-            let traceId = Guid.NewGuid()
-            let command = CreateActor()
-            command.Name <- "actor"
-            let reply = app.CreateActor aggId traceId command |> Async.RunSynchronously
-            Expect.equal reply.Name command.Name "返回值错误。"
+    testSequenced <| testList "ActorAgg" [
+        let withArgs f () =
+            go "ActorAgg" |> f
+        yield! testFixture withArgs [
+            "创建Actor", fun finish ->
+                let traceId = Guid.NewGuid()
+                let command : CreateActor = { Name = "actor" }
+                let reply = app.CreateActor aggId traceId command |> Async.RunSynchronously
+                Expect.equal reply.Name command.Name "返回值错误。"
+                finish 1
+            "重复创建Actor", fun finish ->
+                let traceId = Guid.NewGuid()
+                let command : CreateActor = { Name = "actor" }
+                let f = fun _ -> app.CreateActor aggId traceId command |> Async.RunSynchronously |> ignore
+                Expect.throwsC f (fun ex -> printfn "%s" ex.Message)
+                finish 2
+        ]
     ]
     |> testLabel "Note App"

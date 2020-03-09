@@ -1,6 +1,8 @@
 namespace Note.Domain
 
-open Note.Contract
+
+[<CLIMutable>]
+type CreateActor = { Name: string }
 
 
 [<RequireQualifiedAccess>]
