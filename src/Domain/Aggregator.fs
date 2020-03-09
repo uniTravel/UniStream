@@ -58,18 +58,18 @@ module Aggregator =
                         let newRepo = put repo aggId agg version
                         return! loop newRepo
                     with ex ->
-                        lg.Error ex.StackTrace "放回聚合失败：%s" ex.Message
+                        lg.Error ex.StackTrace "Put aggregate failed: %s" ex.Message
                         return! loop repo
                 | Refresh interval ->
                     try
                         let newRepo = Repository.refresh lg repo interval
                         return! loop newRepo
                     with ex ->
-                        lg.Error ex.StackTrace "刷新聚合缓存出错：%s" ex.Message
+                        lg.Error ex.StackTrace "Refresh aggregate cache failed: %s" ex.Message
                         return! loop repo
                 | Scavenge interval ->
                     try Repository.scavenge lg interval
-                    with ex -> lg.Error ex.StackTrace "清扫聚合快照出错：%s" ex.Message
+                    with ex -> lg.Error ex.StackTrace "Scavenge aggregate snapshot failed: %s" ex.Message
                     return! loop repo
             }
             loop <| Repository.empty lg get timeout
@@ -82,7 +82,7 @@ module Aggregator =
             async { timer.Start() }
         let aggType = typeof< ^agg>.DeclaringType.FullName
         let aggMode = (^agg : (static member AggMode : AggMode)())
-        if blockSeconds <= 0L || blockSeconds >= 10L then invalidArg "blockSeconds" "超时锁定的秒数应该介于0~10之间。"
+        if blockSeconds <= 0L || blockSeconds >= 10L then invalidArg "blockSeconds" "Block timeout must between 0~10 seconds."
         let timeout = blockSeconds * 10000000L
         let ld = DomainLog.logger aggType cfg.LdFunc
         let lg = DiagnoseLog.logger aggType cfg.LgFunc
@@ -105,41 +105,47 @@ module Aggregator =
         let rec launch apply aggId agg version traceId refreshed isMutable =
             try
                 let events, agg' = apply agg
-                ld.Process cvType aggId traceId "应用命令成功。"
+                ld.Process cvType aggId traceId "Apply command success."
                 try
                     let version = esFunc aggId (version + 1L) events
-                    ld.Success cvType aggId traceId "保存事件成功。"
+                    ld.Success cvType aggId traceId "Save events success."
                     if isMutable then agent.Post <| Put (aggId, agg', version)
-                    (^agg : (member Value: ^v) agg')
+                    Ok (^agg : (member Value: ^v) agg')
                 with ex ->
-                    lg.Error ex.StackTrace "保存事件失败：%s。" ex.Message
+                    lg.Error ex.StackTrace "Save events failed: %s" ex.Message
                     if not refreshed then
-                        ld.Process cvType aggId traceId "刷新聚合。"
+                        ld.Process cvType aggId traceId "Sync aggregate."
                         let agg, version = Repository.sync lg aggId agg (version + 1L) t.Get
                         launch apply aggId agg version traceId true isMutable
                     else
-                        ld.Fail cvType aggId traceId "保存事件失败：%s" ex.Message
+                        ld.Fail cvType aggId traceId "Save events failed."
                         if isMutable then agent.Post <| Put (aggId, agg, version)
-                        failwith "保存事件失败。"
+                        Error "Save events failed."
             with ex ->
-                ld.Fail cvType aggId traceId "应用命令出错：%s。" ex.Message
-                lg.Error ex.StackTrace "应用命令出错：%s。" ex.Message
+                ld.Fail cvType aggId traceId "Apply command failed."
+                lg.Error ex.StackTrace "Apply command failed: %s" ex.Message
                 if isMutable then agent.Post <| Put (aggId, agg, version)
-                failwith "应用命令出错。"
-        ld.Process cvType aggId traceId "开始。"
+                Error "Apply command failed."
+        ld.Process cvType aggId traceId "Start execute command."
         match aggMode with
         | Mutable ->
             match! agent.PostAndAsyncReply (fun channel -> Take (aggId, channel)) with
             | Ok (agg, version) ->
-                ld.Process cvType aggId traceId "取到聚合。"
-                return launch apply aggId agg version traceId false true
+                ld.Process cvType aggId traceId "Take aggregate."
+                let result = launch apply aggId agg version traceId false true
+                match result with
+                | Ok agg -> return agg
+                | Error s -> return failwith s
             | Error err ->
-                ld.Fail cvType aggId traceId "取聚合出错：%s" err
-                return failwith "取聚合出错。"
+                ld.Fail cvType aggId traceId "Take aggregate failed: %s" err
+                return failwith "Take aggregate failed."
         | Immutable ->
             let init = (^agg : (static member Initial : ^agg) ())
-            ld.Process cvType aggId traceId "初始化不可变聚合。"
-            return launch apply aggId init -1L traceId true false
+            ld.Process cvType aggId traceId "Initialize immutable aggregate."
+            let result = launch apply aggId init -1L traceId true false
+            match result with
+            | Ok agg -> return agg
+            | Error s -> return failwith s
     }
 
     let inline executeCommand t aggId traceId command = async {

@@ -20,13 +20,13 @@ module Repository =
     let snapshot<'agg> : Map<Guid, 'agg * int64 * int64 * int64 ref> ref = ref Map.empty
 
     let empty (lg: DiagnoseLog.Logger) get timeout =
-        lg.Trace "初始化空聚合仓储。"
+        lg.Trace "Initialize aggregate repository."
         { Get = get; Timeout = timeout; Cache = Map.empty }
 
     let inline sync (lg: DiagnoseLog.Logger) aggId agg version (get: Guid -> int64 -> (Guid * string * byte[])[] * int64) =
-        lg.Trace "开始同步聚合%A，起始版本%d。" aggId version
+        lg.Trace "Begin sync aggregate %A, start version is %d." aggId version
         let (events, version) = get aggId version
-        lg.Trace "获取%d条数据，当前版本%d。" events.Length version
+        lg.Trace "Get %d data, current version is %d." events.Length version
         match events with
         | [||] -> agg, version
         | _ ->
@@ -39,7 +39,7 @@ module Repository =
 
     let fromCache (lg: DiagnoseLog.Logger) (repo: T<'agg>) aggId (channel: AsyncReplyChannel<Result<'agg * int64, string>>) =
         let (queue, state) = repo.Cache.[aggId]
-        lg.Trace "本地缓存取得聚合%A。" aggId
+        lg.Trace "Get aggregate [%A] from cache." aggId
         match !state with
         | Available (agg, version, _) ->
             state := Empty
@@ -52,13 +52,13 @@ module Repository =
             let now = DateTime.Now.Ticks
             queue.Enqueue (now, channel)
             if now - ticks > repo.Timeout then state := Blocked now
-        | Blocked _ -> failwithf "聚合%A，状态为Blocked。" aggId
+        | Blocked _ -> failwithf "Status of aggregate [%A] is 'Blocked'." aggId
         repo
 
     let inline fromStore (lg: DiagnoseLog.Logger) repo aggId agg version (channel: AsyncReplyChannel<Result< ^agg * int64, string>>) =
-        lg.Trace "开始从流存储获取聚合%A，起始版本%d。" aggId version
+        lg.Trace "Begin get aggregate [%A] from stream store, start version is %d." aggId version
         let (events, version) = repo.Get aggId version
-        lg.Trace "获取%d条数据，当前版本%d。" events.Length version
+        lg.Trace "Get %d data, current version is %d." events.Length version
         let cache = repo.Cache.Add (aggId, (new Queue<int64 * AsyncReplyChannel<Result< ^agg * int64, string>>>(), ref Empty))
         match events with
         | [||] -> channel.Reply <| Ok (agg, version - 1L)
@@ -72,7 +72,7 @@ module Repository =
         { repo with Cache = cache }
 
     let put (lg: DiagnoseLog.Logger) repo aggId agg version =
-        lg.Trace "聚合放回仓储：%A" aggId
+        lg.Trace "Put aggregate [%A] back to repository." aggId
         let (queue, state) = repo.Cache.[aggId]
         match !state with
         | Empty -> state := Available (agg, version, DateTime.Now.Ticks)
@@ -85,11 +85,11 @@ module Repository =
             let (t, channel) = queue.Dequeue()
             if DateTime.Now.Ticks - t < repo.Timeout then state := Pending t
             channel.Reply <| Ok (agg, version)
-        | Available _ -> failwithf "聚合%A，状态为Available。" aggId
+        | Available _ -> failwithf "Status of aggregate [%A] is 'Available'." aggId
         repo
 
     let refresh (lg: DiagnoseLog.Logger) (repo: T<'agg>) interval =
-        lg.Trace "刷新聚合缓存。"
+        lg.Trace "Refresh aggregate cache."
         let now = DateTime.Now.Ticks
         let cache =
             Map.filter (fun _ (queue: Queue<int64 * AsyncReplyChannel<Result< ^agg * int64, string>>>, state) ->
@@ -100,7 +100,7 @@ module Repository =
                         seq { 1 .. queue.Count }
                         |> Seq.iter (fun _ ->
                             let (_, channel) = queue.Dequeue()
-                            channel.Reply <| Error "处于Blocked状态超时。"
+                            channel.Reply <| Error "'Blocked' status timeout. "
                         )
                         false
                     else true
@@ -109,7 +109,7 @@ module Repository =
         { repo with Cache = cache }
 
     let scavenge (lg: DiagnoseLog.Logger) interval =
-        lg.Trace "清扫聚合快照。"
+        lg.Trace "Scavenge aggregate snapshot."
         let now = DateTime.Now.Ticks
         snapshot :=
             Map.filter (fun _ (_, _, _, ticks) ->
@@ -142,9 +142,9 @@ module Repository =
                 let step = step + threshold
                 ticks := DateTime.Now.Ticks
                 snapshot := (!snapshot) |> Map.remove aggId |> Map.add aggId (agg, version, step, ticks)
-                lg.Trace "生成快照：%A，版本%d，台阶%d" aggId version step
+                lg.Trace "Build snapshot: aggregate [%A], version %d, step %d." aggId version step
         elif version > threshold then
             let step = version / threshold * threshold
             snapshot := (!snapshot).Add (aggId, (agg, version, step, ref DateTime.Now.Ticks))
-            lg.Trace "生成快照：%A，版本%d，台阶%d" aggId version step
+            lg.Trace "Build snapshot: aggregate [%A], version %d, step %d." aggId version step
         put lg repo aggId agg version
