@@ -24,8 +24,8 @@ module Aggregator =
     /// <summary>聚合仓储访问类型
     /// </summary>
     type Accessor<'agg> =
-        | Take of Guid * AsyncReplyChannel<Result<'agg * int64, string>>
-        | Put of Guid * 'agg * int64
+        | Take of string * AsyncReplyChannel<Result<'agg * int64, string>>
+        | Put of string * 'agg * int64
         | Refresh of int64
         | Scavenge of int64
 
@@ -36,8 +36,8 @@ module Aggregator =
     /// <param name="LdFunc">领域日志流存储函数。</param>
     /// <param name="LgFunc">诊断日志流存储函数。</param>
     type StoreConfig =
-        { Get: string -> Guid -> int64 -> (Guid * string * byte[])[] * int64
-          EsFunc: string -> Guid -> int64 -> (string * byte[])[] -> int64
+        { Get: string -> string -> int64 -> (Guid * string * byte[])[] * int64
+          EsFunc: string -> string -> int64 -> (string * byte[])[] -> int64
           LdFunc: string -> string -> byte[] -> unit
           LgFunc: string -> byte[] -> unit }
 
@@ -56,8 +56,8 @@ module Aggregator =
           Timeout: int64
           DomainLog: DomainLog.Logger
           DiagnoseLog: DiagnoseLog.Logger
-          Get: Guid -> int64 -> (Guid * string * byte[])[] * int64
-          EsFunc: Guid -> int64 -> (string * byte[])[] -> int64
+          Get: string -> int64 -> (Guid * string * byte[])[] * int64
+          EsFunc: string -> int64 -> (string * byte[])[] -> int64
           Agent: MailboxProcessor<Accessor<'agg>> }
 
     /// <summary>创建存储配置
@@ -67,8 +67,8 @@ module Aggregator =
     /// <param name="ldFunc">领域日志流存储函数。</param>
     /// <param name="lgFunc">诊断日志流存储函数。</param>
     val config :
-        (string -> Guid -> int64 -> (Guid * string * byte[])[] * int64) ->
-        (string -> Guid -> int64 -> (string * byte[])[] -> int64) ->
+        (string -> string -> int64 -> (Guid * string * byte[])[] * int64) ->
+        (string -> string -> int64 -> (string * byte[])[] -> int64) ->
         (string -> string -> byte[] -> unit) ->
         (string -> byte[] -> unit) -> StoreConfig
 
@@ -78,7 +78,7 @@ module Aggregator =
     /// <param name="get">从某个版本开始获取聚合事件的函数。</param>
     /// <param name="timeout">聚合的超时Ticks约束。</param>
     /// <param name="repoMode">仓储模式。</param>
-    val inline agent : DiagnoseLog.Logger -> (Guid -> int64 -> (Guid * string * byte[])[] * int64) -> int64 -> RepoMode -> MailboxProcessor<Accessor< ^agg>>
+    val inline agent : DiagnoseLog.Logger -> (string -> int64 -> (Guid * string * byte[])[] * int64) -> int64 -> RepoMode -> MailboxProcessor<Accessor< ^agg>>
         when ^agg : (static member Initial : ^agg)
         and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
 
@@ -103,7 +103,7 @@ module Aggregator =
     /// <param name="cvType">领域命令值类型。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="traceId">跟踪ID。</param>
-    val inline execute : T< ^agg> -> AggMode -> (^agg -> (string * byte[])[] * ^agg) -> string -> Guid -> Guid -> Async< ^v>
+    val inline execute : T< ^agg> -> AggMode -> (^agg -> (string * byte[])[] * ^agg) -> string -> string -> string -> Async< ^v>
         when ^agg : (static member Initial : ^agg)
         and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
         and ^agg : (member Value : ^v)
@@ -116,7 +116,7 @@ module Aggregator =
     /// <param name="aggId">聚合ID。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="command">领域命令。</param>
-    val inline executeCommand : T< ^agg> -> Guid -> Guid -> ^c -> Async< ^v>
+    val inline executeCommand : T< ^agg> -> string -> string -> ^c -> Async< ^v>
         when ^agg : (static member Initial : ^agg)
         and ^agg : (static member AggMode : AggMode)
         and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))

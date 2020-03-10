@@ -11,14 +11,14 @@ type RepoMode = General | Snapshot of int64
 module Aggregator =
 
     type Accessor<'agg> =
-        | Take of Guid * AsyncReplyChannel<Result<'agg * int64, string>>
-        | Put of Guid * 'agg * int64
+        | Take of string * AsyncReplyChannel<Result<'agg * int64, string>>
+        | Put of string * 'agg * int64
         | Refresh of int64
         | Scavenge of int64
 
     type StoreConfig =
-        { Get: string -> Guid -> int64 -> (Guid * string * byte[])[] * int64
-          EsFunc: string -> Guid -> int64 -> (string * byte[])[] -> int64
+        { Get: string -> string -> int64 -> (Guid * string * byte[])[] * int64
+          EsFunc: string -> string -> int64 -> (string * byte[])[] -> int64
           LdFunc: string -> string -> byte[] -> unit
           LgFunc: string -> byte[] -> unit }
 
@@ -27,8 +27,8 @@ module Aggregator =
           Timeout: int64
           DomainLog: DomainLog.Logger
           DiagnoseLog: DiagnoseLog.Logger
-          Get: Guid -> int64 -> (Guid * string * byte[])[] * int64
-          EsFunc: Guid -> int64 -> (string * byte[])[] -> int64
+          Get: string -> int64 -> (Guid * string * byte[])[] * int64
+          EsFunc: string -> int64 -> (string * byte[])[] -> int64
           Agent: MailboxProcessor<Accessor<'agg>> }
 
     let config get esFunc ldFunc lgFunc =

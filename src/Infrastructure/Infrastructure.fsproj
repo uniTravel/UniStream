@@ -1,12 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1</TargetFrameworks>
     <AssemblyName>UniStream.Infrastructure</AssemblyName>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TargetFrameworks>netstandard2.1</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="WrappedString.fsi" />
-    <Compile Include="WrappedString.fs" />
     <Compile Include="EventStore.fsi" />
     <Compile Include="EventStore.fs" />
     <None Include="paket.references" />

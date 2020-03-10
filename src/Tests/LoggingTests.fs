@@ -20,8 +20,8 @@ type DomainLog = { AggType:string; AggId:Guid; TraceId: Guid; Message: string }
 [<CLIMutable>]
 type DiagnoseLog = { Level: LogLevel; Message: string; StackTrack: string }
 
-let aggId = Guid.NewGuid()
-let traceId = Guid.NewGuid()
+let aggId = Guid.NewGuid().ToString()
+let traceId = Guid.NewGuid().ToString()
 
 [<PTests>]
 let domainLog =

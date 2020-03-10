@@ -4,6 +4,7 @@ open System
 open System.Text
 open Microsoft.FSharp.Core.Operators
 open Expecto
+open EventStore.ClientAPI
 open UniStream.Infrastructure
 open UniStream.Domain
 
@@ -16,16 +17,21 @@ type LogLevel =
     | Error = 4
     | Critical = 5
 
+let connect (uri: Uri) =
+    let conn = EventStoreConnection.Create uri
+    conn.ConnectAsync() |> Async.AwaitTask |> Async.RunSynchronously
+    conn
+
 let esAdmin = Uri "tcp://admin:changeit@localhost:4011"
 let esOps = Uri "tcp://ops:changeit@localhost:4011"
 let ldAdmin = Uri "tcp://admin:changeit@localhost:4012"
 let lgAdmin = Uri "tcp://admin:changeit@localhost:4013"
 let csAdmin = Uri "tcp://admin:changeit@localhost:4016"
-let admin = DomainEvent.create esAdmin
-let ops = DomainEvent.create esOps
-let ld = DomainLog.create ldAdmin
-let lg = DiagnoseLog.create lgAdmin "NoteApp"
-let cs = DomainCommand.create csAdmin
+let admin = connect esAdmin
+let ops = connect esOps
+let ld = connect ldAdmin
+let lg = connect lgAdmin
+let cs = connect csAdmin
 let handler sub eventId eventType data = async {
     printfn "%s：%A，%s" sub eventId eventType
 }
@@ -37,7 +43,7 @@ let domainEventTests =
     let evt1 = "NoteCreated"
     let evt2 = "NoteChanged"
     let evt3 = "NoteCleaned"
-    let aggId = Guid.NewGuid()
+    let aggId = Guid.NewGuid().ToString()
     testSequenced <| testList "EventStore DomainEvent" [
         let withArgs f () =
             let writer = DomainEvent.write ops
@@ -85,8 +91,8 @@ let domainEventTests =
 [<Tests>]
 let domainLogTests =
     let cvType = "CreateNote"
-    let aggId = Guid.NewGuid()
-    let traceId = Guid.NewGuid()
+    let aggId = Guid.NewGuid().ToString()
+    let traceId = Guid.NewGuid().ToString()
     testSequenced <| testList "EventStore DomainLog" [
         let withArgs f () =
             let writer = DomainLog.write ld
@@ -113,7 +119,7 @@ let domainLogTests =
 let diagnoseLogTests =
     testSequenced <| testList "EventStore DiagnoseLog" [
         let withArgs f () =
-            let writer = DiagnoseLog.write lg
+            let writer = DiagnoseLog.write "NoteApp" lg
             let lg = DiagnoseLog.logger "Note" writer
             go "EventStore DiagnoseLog" |> f lg
         yield! testFixture withArgs [

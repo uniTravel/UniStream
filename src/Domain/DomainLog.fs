@@ -1,6 +1,5 @@
 namespace UniStream.Domain
 
-open System
 open System.Text.Json
 
 
@@ -11,7 +10,7 @@ module DomainLog =
     let logger aggType logFunc =
         { AggType = aggType; LogFunc = logFunc }
 
-    let log logger cvType status (aggId: Guid) (traceId: Guid) format =
+    let log logger cvType status (aggId: string) (traceId: string) format =
         let doAfter (s: string) =
             {| AggType = logger.AggType; AggId = aggId; TraceId = traceId; Message = s |}
             |> JsonSerializer.SerializeToUtf8Bytes

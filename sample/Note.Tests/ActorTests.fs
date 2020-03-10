@@ -7,19 +7,19 @@ open Note.Domain
 
 [<Tests>]
 let tests =
-    let aggId = Guid.NewGuid()
+    let aggId = Guid.NewGuid().ToString()
     testSequenced <| testList "ActorAgg" [
         let withArgs f () =
             go "ActorAgg" |> f
         yield! testFixture withArgs [
             "创建Actor", fun finish ->
-                let traceId = Guid.NewGuid()
+                let traceId = Guid.NewGuid().ToString()
                 let command : CreateActor = { Name = "actor" }
                 let reply = app.CreateActor aggId traceId command |> Async.RunSynchronously
                 Expect.equal reply.Name command.Name "返回值错误。"
                 finish 1
             "重复创建Actor", fun finish ->
-                let traceId = Guid.NewGuid()
+                let traceId = Guid.NewGuid().ToString()
                 let command : CreateActor = { Name = "actor" }
                 let f = fun _ -> app.CreateActor aggId traceId command |> Async.RunSynchronously |> ignore
                 Expect.throwsC f (fun ex -> printfn "%s" ex.Message)

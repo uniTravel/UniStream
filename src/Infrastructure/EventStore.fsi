@@ -1,6 +1,7 @@
 namespace UniStream.Infrastructure
 
 open System
+open EventStore.ClientAPI
 
 
 /// <summary>领域事件访问者模块
@@ -9,53 +10,44 @@ open System
 [<RequireQualifiedAccess>]
 module DomainEvent =
 
-    /// <summary>领域事件访问者
-    /// </summary>
-    type T
-
-    /// <summary>创建领域事件访问者
-    /// </summary>
-    /// <param name="uri">EventStore连接Uri。</param>
-    val create : Uri -> T
-
     /// <summary>从某个版本开始获取聚合事件
     /// <para>1、聚合类型-聚合ID作为Stream名称。</para>
     /// <para>2、如果起始版本为0，则取出全部聚合事件。</para>
     /// </summary>
-    /// <param name="client">领域事件访问者。</param>
+    /// <param name="client">EventStore客户端。</param>
     /// <param name="aggType">聚合类型。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="version">起始事件版本。</param>
     /// <returns>同一聚合ID下、从某个版本开始的领域事件的有序集合与当前版本号。</returns>
-    val get : T -> string -> Guid -> int64 -> ((Guid * string * byte[])[] * int64)
+    val get : IEventStoreConnection -> string -> string -> int64 -> ((Guid * string * byte[])[] * int64)
 
     /// <summary>写入领域事件
     /// <para>聚合类型-聚合ID作为Stream名称。</para>
     /// </summary>
-    /// <param name="client">领域事件访问者。</param>
+    /// <param name="client">EventStore客户端。</param>
     /// <param name="aggType">聚合类型。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="version">事件版本。</param>
     /// <param name="eData">领域事件数据。</param>
     /// <returns>当前版本号。</returns>
-    val write : T -> string -> Guid -> int64 -> (string * byte[])[] -> int64
+    val write : IEventStoreConnection -> string -> string -> int64 -> (string * byte[])[] -> int64
 
     /// <summary>领域事件流客户端订阅
     /// <para>订阅实例在客户端，适用于单节点订阅。</para>
     /// </summary>
-    /// <param name="client">领域事件访问者。</param>
+    /// <param name="client">EventStore客户端。</param>
     /// <param name="evType">领域事件值类型。</param>
     /// <param name="f">事件处理函数。</param>
-    val subscribeToStream : T -> string -> (Guid -> string -> byte[] -> Async<unit>) -> unit
+    val subscribeToStream : IEventStoreConnection -> string -> (Guid -> string -> byte[] -> Async<unit>) -> unit
 
     /// <summary>连接到领域事件流服务端订阅
     /// <para>订阅实例在服务端，支持多节点的消费群组连接，用以并行消费。</para>
     /// </summary>
-    /// <param name="client">领域事件访问者。</param>
+    /// <param name="client">EventStore客户端。</param>
     /// <param name="evType">领域事件值类型。</param>
     /// <param name="groupName">消费群组名称。</param>
     /// <param name="f">事件处理函数。</param>
-    val connectSubscription : T -> string -> string -> (Guid -> string -> byte[] -> Async<unit>) -> unit
+    val connectSubscription : IEventStoreConnection -> string -> string -> (Guid -> string -> byte[] -> Async<unit>) -> unit
 
 
 /// <summary>领域命令访问者模块
@@ -64,34 +56,25 @@ module DomainEvent =
 [<RequireQualifiedAccess>]
 module DomainCommand =
 
-    /// <summary>领域命令访问者
-    /// </summary>
-    type T
-
-    /// <summary>创建领域命令访问者
-    /// </summary>
-    /// <param name="uri">EventStore连接Uri。</param>
-    val create : Uri -> T
-
     /// <summary>写入领域命令
     /// <para>1、领域命令值类型全名作为Stream名称。</para>
     /// <para>2、聚合ID作为事件类型。</para>
     /// </summary>
-    /// <param name="client">领域命令访问者。</param>
+    /// <param name="client">EventStore客户端。</param>
     /// <param name="cvType">领域命令值类型。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="cData">领域命令数据。</param>
-    val write : T -> string -> Guid -> string -> byte[] -> unit
+    val write : IEventStoreConnection -> string -> Guid -> string -> byte[] -> unit
 
     /// <summary>连接到领域命令流服务端订阅
     /// <para>订阅实例在服务端，支持多节点的消费群组连接，用以并行消费。</para>
     /// </summary>
-    /// <param name="client">领域命令访问者。</param>
+    /// <param name="client">EventStore客户端。</param>
     /// <param name="cvType">领域命令值类型。</param>
     /// <param name="groupName">消费群组名称。</param>
     /// <param name="f">命令处理函数。</param>
-    val connectSubscription : T -> string -> string -> (Guid -> string -> byte[] -> Async<unit>) -> unit
+    val connectSubscription : IEventStoreConnection -> string -> string -> (Guid -> string -> byte[] -> Async<unit>) -> unit
 
 
 /// <summary>领域日志访问者模块
@@ -100,23 +83,14 @@ module DomainCommand =
 [<RequireQualifiedAccess>]
 module DomainLog =
 
-    /// <summary>领域日志访问者
-    /// </summary>
-    type T
-
-    /// <summary>创建领域日志访问者
-    /// </summary>
-    /// <param name="uri">EventStore连接Uri。</param>
-    val create : Uri -> T
-
     /// <summary>写入领域日志
     /// <para>领域命令值类型全名作为Stream名称。</para>
     /// </summary>
-    /// <param name="client">领域日志访问者。</param>
+    /// <param name="client">EventStore客户端。</param>
     /// <param name="cvType">领域命令值类型。</param>
     /// <param name="status">业务状态。</param>
     /// <param name="dLog">领域日志数据。</param>
-    val write : T -> string -> string -> byte[] -> unit
+    val write : IEventStoreConnection -> string -> string -> byte[] -> unit
 
 
 /// <summary>诊断日志访问者模块
@@ -125,20 +99,11 @@ module DomainLog =
 [<RequireQualifiedAccess>]
 module DiagnoseLog =
 
-    /// <summary>诊断日志访问者
-    /// </summary>
-    type T
-
-    /// <summary>创建诊断日志访问者
-    /// </summary>
-    /// <param name="uri">EventStore连接Uri。</param>
-    /// <param name="stream">Stream名称。</param>
-    val create : Uri -> string -> T
-
     /// <summary>写入诊断日志
     /// <para>领域上下文作为Stream名称。</para>
     /// </summary>
-    /// <param name="client">诊断日志访问者。</param>
+    /// <param name="stream">Stream名称。</param>
+    /// <param name="client">EventStore客户端。</param>
     /// <param name="aggType">聚合类型。</param>
     /// <param name="gLog">诊断日志数据。</param>
-    val write : T -> string -> byte[] -> unit
+    val write : string -> IEventStoreConnection -> string -> byte[] -> unit
