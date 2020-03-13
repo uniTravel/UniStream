@@ -19,7 +19,7 @@ module DomainEvent =
     /// <param name="aggId">聚合ID。</param>
     /// <param name="version">起始事件版本。</param>
     /// <returns>同一聚合ID下、从某个版本开始的领域事件的有序集合与当前版本号。</returns>
-    val get : IEventStoreConnection -> string -> string -> int64 -> ((Guid * string * byte[])[] * int64)
+    val get : IEventStoreConnection -> string -> Guid -> int64 -> ((Guid * string * byte[])[] * int64)
 
     /// <summary>写入领域事件
     /// <para>聚合类型-聚合ID作为Stream名称。</para>
@@ -31,7 +31,7 @@ module DomainEvent =
     /// <param name="data">领域事件数据。</param>
     /// <param name="metadata">领域事件元数据。</param>
     /// <returns>当前版本号。</returns>
-    val write : IEventStoreConnection -> string -> string -> int64 -> (string * byte[])[] -> byte[] -> int64
+    val write : IEventStoreConnection -> string -> Guid -> int64 -> (string * byte[])[] -> byte[] -> int64
 
     /// <summary>领域事件流客户端订阅
     /// <para>订阅实例在客户端，适用于单节点订阅。</para>
@@ -63,10 +63,10 @@ module DomainCommand =
     /// </summary>
     /// <param name="client">EventStore客户端。</param>
     /// <param name="cvType">领域命令值类型。</param>
-    /// <param name="traceId">跟踪ID。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="data">领域命令数据。</param>
-    val write : IEventStoreConnection -> string -> Guid -> string -> byte[] -> unit
+    /// <param name="metadata">领域事件元数据。</param>
+    val write : IEventStoreConnection -> string -> Guid -> byte[] -> byte[] -> unit
 
     /// <summary>连接到领域命令流服务端订阅
     /// <para>订阅实例在服务端，支持多节点的消费群组连接，用以并行消费。</para>

@@ -15,13 +15,13 @@ type LogLevel =
     | Critical = 5
 
 [<CLIMutable>]
-type DomainLog = { AggType: string; AggId: string; Status: string; Message: string }
+type DomainLog = { AggType: string; AggId: Guid; Status: string; Message: string }
 
 [<CLIMutable>]
 type DiagnoseLog = { Level: LogLevel; Message: string; StackTrack: string }
 
-let aggId = Guid.NewGuid().ToString()
-let traceId = Guid.NewGuid().ToString()
+let aggId = Guid.NewGuid()
+let traceId = Guid.NewGuid()
 
 [<PTests>]
 let domainLog =
@@ -31,7 +31,7 @@ let domainLog =
             let ldFunc user cvType data metadata =
                 let span = ReadOnlySpan data
                 let r = JsonSerializer.Deserialize<DomainLog> span
-                printfn "%s-%s：%s|%s|%s|%s|%s" "NoteApp" user cvType r.AggType r.AggId r.Status r.Message
+                printfn "%s-%s：%s|%s|%A|%s|%s" "NoteApp" user cvType r.AggType r.AggId r.Status r.Message
             let ld = DomainLog.logger "Note" ldFunc
             go "领域日志" |> f ld aggId traceId
         yield! testFixture withArgs [

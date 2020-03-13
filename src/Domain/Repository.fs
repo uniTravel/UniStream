@@ -13,18 +13,18 @@ module Repository =
         | Blocked of int64
 
     type T<'agg> =
-        { Get: string -> int64 -> (Guid * string * byte[])[] * int64
+        { Get: Guid -> int64 -> (Guid * string * byte[])[] * int64
           Timeout: int64
-          Cache: Map<string, Queue<int64 * AsyncReplyChannel<Result<'agg * int64, string>>> * State<'agg> ref> }
+          Cache: Map<Guid, Queue<int64 * AsyncReplyChannel<Result<'agg * int64, string>>> * State<'agg> ref> }
 
-    let snapshot<'agg> : Map<string, 'agg * int64 * int64 * int64 ref> ref = ref Map.empty
+    let snapshot<'agg> : Map<Guid, 'agg * int64 * int64 * int64 ref> ref = ref Map.empty
 
     let empty (lg: DiagnoseLog.Logger) get timeout =
         lg.Trace "Initialize aggregate repository."
         { Get = get; Timeout = timeout; Cache = Map.empty }
 
-    let inline sync (lg: DiagnoseLog.Logger) aggId agg version (get: string -> int64 -> (Guid * string * byte[])[] * int64) =
-        lg.Trace "Begin sync aggregate %s, start version is %d." aggId version
+    let inline sync (lg: DiagnoseLog.Logger) aggId agg version (get: Guid -> int64 -> (Guid * string * byte[])[] * int64) =
+        lg.Trace "Begin sync aggregate %A, start version is %d." aggId version
         let (events, version) = get aggId version
         lg.Trace "Get %d data, current version is %d." events.Length version
         match events with
@@ -39,7 +39,7 @@ module Repository =
 
     let fromCache (lg: DiagnoseLog.Logger) (repo: T<'agg>) aggId (channel: AsyncReplyChannel<Result<'agg * int64, string>>) =
         let (queue, state) = repo.Cache.[aggId]
-        lg.Trace "Get aggregate [%s] from cache." aggId
+        lg.Trace "Get aggregate [%A] from cache." aggId
         match !state with
         | Available (agg, version, _) ->
             state := Empty
@@ -52,11 +52,11 @@ module Repository =
             let now = DateTime.Now.Ticks
             queue.Enqueue (now, channel)
             if now - ticks > repo.Timeout then state := Blocked now
-        | Blocked _ -> failwithf "Status of aggregate [%s] is 'Blocked'." aggId
+        | Blocked _ -> failwithf "Status of aggregate [%A] is 'Blocked'." aggId
         repo
 
     let inline fromStore (lg: DiagnoseLog.Logger) repo aggId agg version (channel: AsyncReplyChannel<Result< ^agg * int64, string>>) =
-        lg.Trace "Begin get aggregate [%s] from stream store, start version is %d." aggId version
+        lg.Trace "Begin get aggregate [%A] from stream store, start version is %d." aggId version
         let (events, version) = repo.Get aggId version
         lg.Trace "Get %d data, current version is %d." events.Length version
         let cache = repo.Cache.Add (aggId, (new Queue<int64 * AsyncReplyChannel<Result< ^agg * int64, string>>>(), ref Empty))
@@ -72,7 +72,7 @@ module Repository =
         { repo with Cache = cache }
 
     let put (lg: DiagnoseLog.Logger) repo aggId agg version =
-        lg.Trace "Put aggregate [%s] back to repository." aggId
+        lg.Trace "Put aggregate [%A] back to repository." aggId
         let (queue, state) = repo.Cache.[aggId]
         match !state with
         | Empty -> state := Available (agg, version, DateTime.Now.Ticks)
@@ -85,7 +85,7 @@ module Repository =
             let (t, channel) = queue.Dequeue()
             if DateTime.Now.Ticks - t < repo.Timeout then state := Pending t
             channel.Reply <| Ok (agg, version)
-        | Available _ -> failwithf "Status of aggregate [%s] is 'Available'." aggId
+        | Available _ -> failwithf "Status of aggregate [%A] is 'Available'." aggId
         repo
 
     let refresh (lg: DiagnoseLog.Logger) (repo: T<'agg>) interval =
@@ -142,9 +142,9 @@ module Repository =
                 let step = step + threshold
                 ticks := DateTime.Now.Ticks
                 snapshot := (!snapshot) |> Map.remove aggId |> Map.add aggId (agg, version, step, ticks)
-                lg.Trace "Build snapshot: aggregate [%s], version %d, step %d." aggId version step
+                lg.Trace "Build snapshot: aggregate [%A], version %d, step %d." aggId version step
         elif version > threshold then
             let step = version / threshold * threshold
             snapshot := (!snapshot).Add (aggId, (agg, version, step, ref DateTime.Now.Ticks))
-            lg.Trace "Build snapshot: aggregate [%s], version %d, step %d." aggId version step
+            lg.Trace "Build snapshot: aggregate [%A], version %d, step %d." aggId version step
         put lg repo aggId agg version

@@ -10,8 +10,8 @@ type NoteService (app: AppService) =
 
     override _.CreateNote (request, context) =
         Async.StartAsTask <| async {
-            let aggId = Guid.NewGuid().ToString()
-            let traceId = Guid.NewGuid().ToString()
+            let aggId = Guid.NewGuid()
+            let traceId = Guid.NewGuid()
             let! note = app.CreateNote "test" aggId traceId { Title = request.Title; Content = request.Content }
             let reply = CreateNoteReply()
             reply.AggId <- aggId.ToString()
@@ -21,8 +21,8 @@ type NoteService (app: AppService) =
 
     override _.ChangeNote (request, context) =
         Async.StartAsTask <| async {
-            let aggId = request.AggId
-            let traceId = Guid.NewGuid().ToString()
+            let aggId = Guid request.AggId
+            let traceId = Guid.NewGuid()
             let! note = app.ChangeNote "test" aggId traceId { Content = request.Content}
             let reply = ChangeNoteReply()
             reply.TraceId <- traceId.ToString()

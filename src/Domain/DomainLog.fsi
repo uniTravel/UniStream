@@ -1,5 +1,7 @@
 namespace UniStream.Domain
 
+open System
+
 
 /// <summary>领域日志模块
 /// </summary>
@@ -25,7 +27,7 @@ module DomainLog =
         /// <param name="aggId">聚合ID。</param>
         /// <param name="traceId">跟踪ID。</param>
         /// <param name="format">字符串格式。</param>
-        member Process : string -> string -> string -> string -> Printf.StringFormat<'a, unit> -> 'a
+        member Process : string -> string -> Guid -> Guid -> Printf.StringFormat<'a, unit> -> 'a
 
         /// <summary>记录Successed状态的领域日志
         /// </summary>
@@ -34,7 +36,7 @@ module DomainLog =
         /// <param name="aggId">聚合ID。</param>
         /// <param name="traceId">跟踪ID。</param>
         /// <param name="format">字符串格式。</param>
-        member Success : string -> string -> string -> string -> Printf.StringFormat<'a, unit> -> 'a
+        member Success : string -> string -> Guid -> Guid -> Printf.StringFormat<'a, unit> -> 'a
 
         /// <summary>记录Failed状态的领域日志
         /// </summary>
@@ -43,4 +45,4 @@ module DomainLog =
         /// <param name="aggId">聚合ID。</param>
         /// <param name="traceId">跟踪ID。</param>
         /// <param name="format">字符串格式。</param>
-        member Fail : string -> string -> string -> string -> Printf.StringFormat<'a, unit> -> 'a
+        member Fail : string -> string -> Guid -> Guid -> Printf.StringFormat<'a, unit> -> 'a

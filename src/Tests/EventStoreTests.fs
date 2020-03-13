@@ -43,8 +43,8 @@ let domainEventTests =
     let evt1 = "NoteCreated"
     let evt2 = "NoteChanged"
     let evt3 = "NoteCleaned"
-    let aggId = Guid.NewGuid().ToString()
-    let traceId = Guid.NewGuid().ToString()
+    let aggId = Guid.NewGuid()
+    let traceId = Guid.NewGuid()
     testSequenced <| testList "EventStore DomainEvent" [
         let withArgs f () =
             let writer = DomainEvent.write ops
@@ -93,8 +93,8 @@ let domainEventTests =
 let domainLogTests =
     let user = "test"
     let cvType = "CreateNote"
-    let aggId = Guid.NewGuid().ToString()
-    let traceId = Guid.NewGuid().ToString()
+    let aggId = Guid.NewGuid()
+    let traceId = Guid.NewGuid()
     testSequenced <| testList "EventStore DomainLog" [
         let withArgs f () =
             let writer = DomainLog.write "NoteApp" ld
@@ -157,15 +157,15 @@ let domainCommandTests =
         yield! testFixture withArgs [
             "命令1", fun writer finish ->
                 let traceId = Guid.NewGuid()
-                let aggId = Guid.NewGuid().ToString()
-                let cData = Encoding.UTF8.GetBytes "Initial Note"
-                writer cvType traceId aggId cData
+                let aggId = Guid.NewGuid()
+                let data = Encoding.UTF8.GetBytes "Initial Note"
+                writer cvType aggId data <| MetaData.correlationId traceId
                 finish 1
             "命令2", fun writer finish ->
                 let traceId = Guid.NewGuid()
                 let aggId = Guid.NewGuid().ToString()
-                let cData = Encoding.UTF8.GetBytes "Change Note"
-                writer cvType traceId aggId cData
+                let data = Encoding.UTF8.GetBytes "Change Note"
+                writer cvType traceId data <| MetaData.correlationId traceId
                 finish 2
         ]
     ]

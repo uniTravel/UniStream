@@ -1,5 +1,7 @@
 namespace UniStream.Domain
 
+open System
+
 
 /// <summary>元数据模块
 /// </summary>
@@ -9,4 +11,4 @@ module MetaData =
     /// <summary>创建关联ID元数据
     /// </summary>
     /// <param name="id">关联ID。</param>
-    val correlationId : string -> byte[]
+    val correlationId : Guid -> byte[]
