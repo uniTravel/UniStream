@@ -6,17 +6,17 @@ open Note.Domain
 
 module CommandService =
 
-    let createActor actor aggId traceId cv = async {
+    let createActor actor user aggId traceId cv = async {
         let command = CreateActor.create cv
-        return! Aggregator.executeCommand actor aggId traceId command
+        return! Aggregator.executeCommand actor user aggId traceId command
     }
 
-    let createNote note aggId traceId cv = async {
+    let createNote note user aggId traceId cv = async {
         let command = CreateNote.create cv
-        return! Aggregator.executeCommand note aggId traceId command
+        return! Aggregator.executeCommand note user aggId traceId command
     }
 
-    let changeNote note aggId traceId cv = async {
+    let changeNote note user aggId traceId cv = async {
         let command = ChangeNote.create cv
-        return! Aggregator.executeCommand note aggId traceId command
+        return! Aggregator.executeCommand note user aggId traceId command
     }

@@ -18,8 +18,8 @@ module Aggregator =
 
     type StoreConfig =
         { Get: string -> string -> int64 -> (Guid * string * byte[])[] * int64
-          EsFunc: string -> string -> int64 -> (string * byte[])[] -> int64
-          LdFunc: string -> string -> byte[] -> unit
+          EsFunc: string -> string -> int64 -> (string * byte[])[] -> byte[] -> int64
+          LdFunc: string -> string -> byte[] -> byte[] -> unit
           LgFunc: string -> byte[] -> unit }
 
     type T<'agg> =
@@ -28,7 +28,7 @@ module Aggregator =
           DomainLog: DomainLog.Logger
           DiagnoseLog: DiagnoseLog.Logger
           Get: string -> int64 -> (Guid * string * byte[])[] * int64
-          EsFunc: string -> int64 -> (string * byte[])[] -> int64
+          EsFunc: string -> int64 -> (string * byte[])[] -> byte[] -> int64
           Agent: MailboxProcessor<Accessor<'agg>> }
 
     let config get esFunc ldFunc lgFunc =
@@ -100,57 +100,57 @@ module Aggregator =
             Async.Start <| createTimer t (fun _ -> agent.Post <| Scavenge interval)
         { AggType = aggType; Timeout = timeout; DomainLog = ld; DiagnoseLog = lg; Get = get; EsFunc = esFunc; Agent = agent }
 
-    let inline execute t aggMode apply cvType aggId traceId = async {
+    let inline execute t aggMode apply user cvType aggId traceId = async {
         let { DomainLog = ld; DiagnoseLog = lg; EsFunc = esFunc; Agent = agent; Get = get } = t
         let rec launch apply aggId agg version traceId refreshed isMutable =
             try
                 let events, agg' = apply agg
-                ld.Process cvType aggId traceId "Apply command success."
+                ld.Process user cvType aggId traceId "Apply command success."
                 try
-                    let version = esFunc aggId (version + 1L) events
-                    ld.Success cvType aggId traceId "Save events success."
+                    let version = esFunc aggId (version + 1L) events <| MetaData.correlationId traceId
+                    ld.Success user cvType aggId traceId "Save events success."
                     if isMutable then agent.Post <| Put (aggId, agg', version)
                     Ok (^agg : (member Value: ^v) agg')
                 with ex ->
                     lg.Error ex.StackTrace "Save events failed: %s" ex.Message
                     if not refreshed then
-                        ld.Process cvType aggId traceId "Sync aggregate."
+                        ld.Process user cvType aggId traceId "Sync aggregate."
                         let agg, version = Repository.sync lg aggId agg (version + 1L) t.Get
                         launch apply aggId agg version traceId true isMutable
                     else
-                        ld.Fail cvType aggId traceId "Save events failed."
+                        ld.Fail user cvType aggId traceId "Save events failed."
                         if isMutable then agent.Post <| Put (aggId, agg, version)
                         Error "Save events failed."
             with ex ->
-                ld.Fail cvType aggId traceId "Apply command failed."
+                ld.Fail user cvType aggId traceId "Apply command failed."
                 lg.Error ex.StackTrace "Apply command failed: %s" ex.Message
                 if isMutable then agent.Post <| Put (aggId, agg, version)
                 Error "Apply command failed."
-        ld.Process cvType aggId traceId "Start execute command."
+        ld.Process user cvType aggId traceId "Start execute command."
         match aggMode with
         | Mutable ->
             match! agent.PostAndAsyncReply (fun channel -> Take (aggId, channel)) with
             | Ok (agg, version) ->
-                ld.Process cvType aggId traceId "Take aggregate."
+                ld.Process user cvType aggId traceId "Take aggregate."
                 let result = launch apply aggId agg version traceId false true
                 match result with
                 | Ok agg -> return agg
                 | Error s -> return failwith s
             | Error err ->
-                ld.Fail cvType aggId traceId "Take aggregate failed: %s" err
+                ld.Fail user cvType aggId traceId "Take aggregate failed: %s" err
                 return failwith "Take aggregate failed."
         | Immutable ->
             let init = (^agg : (static member Initial : ^agg) ())
-            ld.Process cvType aggId traceId "Initialize immutable aggregate."
+            ld.Process user cvType aggId traceId "Initialize immutable aggregate."
             let result = launch apply aggId init -1L traceId true false
             match result with
             | Ok agg -> return agg
             | Error s -> return failwith s
     }
 
-    let inline executeCommand t aggId traceId command = async {
+    let inline executeCommand t (user: string) aggId traceId command = async {
         let cvType = (^c : (static member ValueType : string) ())
         let apply = (^c : (member Apply: (^agg -> (string * byte[])[] * ^agg)) command)
         let aggMode = (^agg : (static member AggMode : AggMode)())
-        return! execute t aggMode apply cvType aggId traceId
+        return! execute t aggMode apply user cvType aggId traceId
     }

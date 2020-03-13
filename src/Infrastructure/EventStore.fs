@@ -25,10 +25,10 @@ module DomainEvent =
         let events, version = read [||] version
         events |> Array.map (fun e -> (e.Event.EventId, e.Event.EventType, e.Event.Data)), version
 
-    let write (client: IEventStoreConnection) aggType aggId version eData =
+    let write (client: IEventStoreConnection) aggType aggId version data metadate =
         let streamName = aggType + "-" + aggId
         let version = version - 1L
-        let eventData = eData |> Array.map (fun (evType, evData) -> EventData (Guid.NewGuid(), evType, true, evData, [||]))
+        let eventData = data |> Array.map (fun (evType, evData) -> EventData (Guid.NewGuid(), evType, true, evData, metadate))
         let result = client.AppendToStreamAsync (streamName, version, eventData) |> Async.AwaitTask |> Async.RunSynchronously
         result.NextExpectedVersion
 
@@ -45,8 +45,8 @@ module DomainEvent =
 
 module DomainCommand =
 
-    let write (client: IEventStoreConnection) cvType traceId aggId cData =
-        let eventData = EventData (traceId, aggId, true, cData, [||])
+    let write (client: IEventStoreConnection) cvType traceId aggId data =
+        let eventData = EventData (traceId, aggId, true, data, [||])
         client.AppendToStreamAsync (cvType, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.RunSynchronously |> ignore
 
     let connectSubscription (client: IEventStoreConnection) cvType groupName f =
@@ -55,13 +55,14 @@ module DomainCommand =
 
 module DomainLog =
 
-    let write (client: IEventStoreConnection) cvType status dLog =
-        let eventData = EventData (Guid.NewGuid(), status, true, dLog, [||])
-        client.AppendToStreamAsync (cvType, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.Ignore |> ignore
+    let write ctx (client: IEventStoreConnection) user cvType data metadata =
+        let streamName = ctx + "-" + user
+        let eventData = EventData (Guid.NewGuid(), cvType, true, data, metadata)
+        client.AppendToStreamAsync (streamName, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.Ignore |> ignore
 
 
 module DiagnoseLog =
 
-    let write stream (client: IEventStoreConnection) aggType gLog =
-        let eventData = EventData (Guid.NewGuid(), aggType, true, gLog, [||])
-        client.AppendToStreamAsync (stream, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.Ignore |> ignore
+    let write ctx (client: IEventStoreConnection) aggType data =
+        let eventData = EventData (Guid.NewGuid(), aggType, true, data, [||])
+        client.AppendToStreamAsync (ctx, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.Ignore |> ignore

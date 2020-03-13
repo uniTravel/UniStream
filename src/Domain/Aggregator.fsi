@@ -37,8 +37,8 @@ module Aggregator =
     /// <param name="LgFunc">诊断日志流存储函数。</param>
     type StoreConfig =
         { Get: string -> string -> int64 -> (Guid * string * byte[])[] * int64
-          EsFunc: string -> string -> int64 -> (string * byte[])[] -> int64
-          LdFunc: string -> string -> byte[] -> unit
+          EsFunc: string -> string -> int64 -> (string * byte[])[] -> byte[] -> int64
+          LdFunc: string -> string -> byte[] -> byte[] -> unit
           LgFunc: string -> byte[] -> unit }
 
     /// <summary>聚合器
@@ -57,7 +57,7 @@ module Aggregator =
           DomainLog: DomainLog.Logger
           DiagnoseLog: DiagnoseLog.Logger
           Get: string -> int64 -> (Guid * string * byte[])[] * int64
-          EsFunc: string -> int64 -> (string * byte[])[] -> int64
+          EsFunc: string -> int64 -> (string * byte[])[] -> byte[] -> int64
           Agent: MailboxProcessor<Accessor<'agg>> }
 
     /// <summary>创建存储配置
@@ -68,8 +68,8 @@ module Aggregator =
     /// <param name="lgFunc">诊断日志流存储函数。</param>
     val config :
         (string -> string -> int64 -> (Guid * string * byte[])[] * int64) ->
-        (string -> string -> int64 -> (string * byte[])[] -> int64) ->
-        (string -> string -> byte[] -> unit) ->
+        (string -> string -> int64 -> (string * byte[])[] -> byte[] -> int64) ->
+        (string -> string -> byte[] -> byte[] -> unit) ->
         (string -> byte[] -> unit) -> StoreConfig
 
     /// <summary>创建聚合仓储访问代理
@@ -100,10 +100,11 @@ module Aggregator =
     /// <param name="t">聚合器。</param>
     /// <param name="aggMode">聚合模式。</param>
     /// <param name="apply">应用命令的函数。</param>
+    /// <param name="user">用户。</param>
     /// <param name="cvType">领域命令值类型。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="traceId">跟踪ID。</param>
-    val inline execute : T< ^agg> -> AggMode -> (^agg -> (string * byte[])[] * ^agg) -> string -> string -> string -> Async< ^v>
+    val inline execute : T< ^agg> -> AggMode -> (^agg -> (string * byte[])[] * ^agg) -> string -> string -> string -> string -> Async< ^v>
         when ^agg : (static member Initial : ^agg)
         and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
         and ^agg : (member Value : ^v)
@@ -113,10 +114,11 @@ module Aggregator =
     /// <typeparam name="^agg">聚合的类型。</typeparam>
     /// <typeparam name="^c">领域命令类型。</typeparam>
     /// <param name="t">聚合器。</param>
+    /// <param name="user">用户。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="command">领域命令。</param>
-    val inline executeCommand : T< ^agg> -> string -> string -> ^c -> Async< ^v>
+    val inline executeCommand : T< ^agg> -> string -> string -> string -> ^c -> Async< ^v>
         when ^agg : (static member Initial : ^agg)
         and ^agg : (static member AggMode : AggMode)
         and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))

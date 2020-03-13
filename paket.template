@@ -7,10 +7,8 @@ description
 files
     src/Domain/bin/Release
     src/Infrastructure/bin/Release
-    !src/Domain/**/*.json
-    !src/Domain/**/*.pdb
-    !src/Infrastructure/**/*.json
-    !src/Infrastructure/**/*.pdb
+    !src/**/*.json
+    !src/**/*.pdb
 dependencies
     FSharp.Core >= LOCKEDVERSION
     EventStore.Client >= LOCKEDVERSION

@@ -28,9 +28,10 @@ module DomainEvent =
     /// <param name="aggType">聚合类型。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="version">事件版本。</param>
-    /// <param name="eData">领域事件数据。</param>
+    /// <param name="data">领域事件数据。</param>
+    /// <param name="metadata">领域事件元数据。</param>
     /// <returns>当前版本号。</returns>
-    val write : IEventStoreConnection -> string -> string -> int64 -> (string * byte[])[] -> int64
+    val write : IEventStoreConnection -> string -> string -> int64 -> (string * byte[])[] -> byte[] -> int64
 
     /// <summary>领域事件流客户端订阅
     /// <para>订阅实例在客户端，适用于单节点订阅。</para>
@@ -64,7 +65,7 @@ module DomainCommand =
     /// <param name="cvType">领域命令值类型。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="aggId">聚合ID。</param>
-    /// <param name="cData">领域命令数据。</param>
+    /// <param name="data">领域命令数据。</param>
     val write : IEventStoreConnection -> string -> Guid -> string -> byte[] -> unit
 
     /// <summary>连接到领域命令流服务端订阅
@@ -84,13 +85,15 @@ module DomainCommand =
 module DomainLog =
 
     /// <summary>写入领域日志
-    /// <para>领域命令值类型全名作为Stream名称。</para>
+    /// <para>领域上下文加用户作为Stream名称。</para>
     /// </summary>
+    /// <param name="ctx">领域上下文。</param>
     /// <param name="client">EventStore客户端。</param>
+    /// <param name="user">用户。</param>
     /// <param name="cvType">领域命令值类型。</param>
-    /// <param name="status">业务状态。</param>
-    /// <param name="dLog">领域日志数据。</param>
-    val write : IEventStoreConnection -> string -> string -> byte[] -> unit
+    /// <param name="data">领域日志数据。</param>
+    /// <param name="metadata">领域日志元数据。</param>
+    val write : string -> IEventStoreConnection -> string -> string -> byte[] -> byte[] -> unit
 
 
 /// <summary>诊断日志访问者模块
@@ -102,8 +105,8 @@ module DiagnoseLog =
     /// <summary>写入诊断日志
     /// <para>领域上下文作为Stream名称。</para>
     /// </summary>
-    /// <param name="stream">Stream名称。</param>
+    /// <param name="ctx">领域上下文。</param>
     /// <param name="client">EventStore客户端。</param>
     /// <param name="aggType">聚合类型。</param>
-    /// <param name="gLog">诊断日志数据。</param>
+    /// <param name="data">诊断日志数据。</param>
     val write : string -> IEventStoreConnection -> string -> byte[] -> unit

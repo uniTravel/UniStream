@@ -19,21 +19,24 @@ type AppService =
 
     /// <summary>创建Actor
     /// </summary>
+    /// <param name="user">用户。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="cv">传入的领域命令值。</param>
-    member CreateActor : string -> string -> CreateActor -> Async<Actor.Value>
+    member CreateActor : string -> string -> string -> CreateActor -> Async<Actor.Value>
 
     /// <summary>创建Note
     /// </summary>
+    /// <param name="user">用户。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="cv">传入的领域命令值。</param>
-    member CreateNote : string -> string -> CreateNote -> Async<Note.Value>
+    member CreateNote : string -> string -> string -> CreateNote -> Async<Note.Value>
 
     /// <summary>改变Note
     /// </summary>
+    /// <param name="user">用户。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="cv">传入的领域命令值。</param>
-    member ChangeNote : string -> string -> ChangeNote -> Async<Note.Value>
+    member ChangeNote : string -> string -> string -> ChangeNote -> Async<Note.Value>

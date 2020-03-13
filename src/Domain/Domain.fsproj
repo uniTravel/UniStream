@@ -1,10 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
     <AssemblyName>UniStream.Domain</AssemblyName>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="MetaData.fsi" />
+    <Compile Include="MetaData.fs" />
     <Compile Include="DomainLog.fsi" />
     <Compile Include="DomainLog.fs" />
     <Compile Include="DiagnoseLog.fsi" />

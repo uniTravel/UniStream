@@ -14,6 +14,8 @@ services:
         ports:
             - "9012:2113"
             - "4012:1113"
+        environment:
+            - EVENTSTORE_START_STANDARD_PROJECTIONS=true
     lg:
         container_name: lg
         image: eventstore/eventstore

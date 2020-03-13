@@ -12,7 +12,7 @@ type ActorService (app: AppService) =
         Async.StartAsTask <| async {
             let aggId = Guid.NewGuid().ToString()
             let traceId = Guid.NewGuid().ToString()
-            let! actor = app.CreateActor aggId traceId { Name = request.Name }
+            let! actor = app.CreateActor "test" aggId traceId { Name = request.Name }
             let reply = CreateActorReply()
             reply.AggId <- aggId.ToString()
             reply.TraceId <- traceId.ToString()

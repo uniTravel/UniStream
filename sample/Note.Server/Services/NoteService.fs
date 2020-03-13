@@ -12,7 +12,7 @@ type NoteService (app: AppService) =
         Async.StartAsTask <| async {
             let aggId = Guid.NewGuid().ToString()
             let traceId = Guid.NewGuid().ToString()
-            let! note = app.CreateNote aggId traceId { Title = request.Title; Content = request.Content }
+            let! note = app.CreateNote "test" aggId traceId { Title = request.Title; Content = request.Content }
             let reply = CreateNoteReply()
             reply.AggId <- aggId.ToString()
             reply.TraceId <- traceId.ToString()
@@ -23,7 +23,7 @@ type NoteService (app: AppService) =
         Async.StartAsTask <| async {
             let aggId = request.AggId
             let traceId = Guid.NewGuid().ToString()
-            let! note = app.ChangeNote aggId traceId { Content = request.Content}
+            let! note = app.ChangeNote "test" aggId traceId { Content = request.Content}
             let reply = ChangeNoteReply()
             reply.TraceId <- traceId.ToString()
             return reply

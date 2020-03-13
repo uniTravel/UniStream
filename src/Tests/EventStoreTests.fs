@@ -44,6 +44,7 @@ let domainEventTests =
     let evt2 = "NoteChanged"
     let evt3 = "NoteCleaned"
     let aggId = Guid.NewGuid().ToString()
+    let traceId = Guid.NewGuid().ToString()
     testSequenced <| testList "EventStore DomainEvent" [
         let withArgs f () =
             let writer = DomainEvent.write ops
@@ -57,18 +58,18 @@ let domainEventTests =
                 finish 2
             "创建Note", fun writer finish ->
                 let d1 = Encoding.UTF8.GetBytes "Initial Note"
-                let version = writer aggType aggId 0L [| (evt1, d1) |]
+                let version = writer aggType aggId 0L [| (evt1, d1) |] <| MetaData.correlationId traceId
                 Expect.equal version 0L "返回版本号错误。"
                 finish 3
             "更改Note", fun writer finish ->
                 let d1 = Encoding.UTF8.GetBytes "Changed Note"
-                let version = writer aggType aggId 1L [| (evt2, d1) |]
+                let version = writer aggType aggId 1L [| (evt2, d1) |] <| MetaData.correlationId traceId
                 Expect.equal version 1L "返回版本号错误。"
                 finish 4
             "清理Note", fun writer finish ->
                 let d1 = Encoding.UTF8.GetBytes "Changed Note"
                 let d2 = Encoding.UTF8.GetBytes "Cleaned Note"
-                let version = writer aggType aggId 2L [| (evt2, d1); (evt3, d2) |]
+                let version = writer aggType aggId 2L [| (evt2, d1); (evt3, d2) |] <| MetaData.correlationId traceId
                 Expect.equal version 3L "返回版本号错误。"
                 finish 5
             "获取全部事件流", fun writer finish ->
@@ -90,26 +91,27 @@ let domainEventTests =
 
 [<Tests>]
 let domainLogTests =
+    let user = "test"
     let cvType = "CreateNote"
     let aggId = Guid.NewGuid().ToString()
     let traceId = Guid.NewGuid().ToString()
     testSequenced <| testList "EventStore DomainLog" [
         let withArgs f () =
-            let writer = DomainLog.write ld
+            let writer = DomainLog.write "NoteApp" ld
             let ld = DomainLog.logger "Note" writer
             go "EventStore DomainLog" |> f ld
         yield! testFixture withArgs [
             "开始", fun ld finish ->
-                ld.Process cvType aggId traceId "开始。"
+                ld.Process user cvType aggId traceId "开始。"
                 finish 1
             "处理中", fun ld finish ->
-                ld.Process cvType aggId traceId "应用命令成功。"
+                ld.Process user cvType aggId traceId "应用命令成功。"
                 finish 2
             "完成", fun ld finish ->
-                ld.Success cvType aggId traceId "成功。"
+                ld.Success user cvType aggId traceId "成功。"
                 finish 3
             "失败", fun ld finish ->
-                ld.Fail cvType aggId traceId "失败。"
+                ld.Fail user cvType aggId traceId "失败。"
                 finish 3
         ]
     ]

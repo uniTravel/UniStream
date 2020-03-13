@@ -5,19 +5,18 @@ open System.Text.Json
 
 module DomainLog =
 
-    type Logger = { AggType: string; LogFunc: string -> string -> byte[] -> unit }
+    type Logger = { AggType: string; LogFunc: string -> string -> byte[] -> byte[] -> unit }
 
     let logger aggType logFunc =
         { AggType = aggType; LogFunc = logFunc }
 
-    let log logger cvType status (aggId: string) (traceId: string) format =
+    let log logger user cvType status (aggId: string) (traceId: string) format =
         let doAfter (s: string) =
-            {| AggType = logger.AggType; AggId = aggId; TraceId = traceId; Message = s |}
-            |> JsonSerializer.SerializeToUtf8Bytes
-            |> logger.LogFunc cvType status
+            let data = {| AggType = logger.AggType; AggId = aggId; Status = status; Message = s |} |> JsonSerializer.SerializeToUtf8Bytes
+            logger.LogFunc user cvType data <| MetaData.correlationId traceId
         Printf.ksprintf doAfter format
 
     type Logger with
-        member this.Process cvType aggId traceId format = log this cvType "process" aggId traceId format
-        member this.Success cvType aggId traceId format = log this cvType "success" aggId traceId format
-        member this.Fail cvType aggId traceId format = log this cvType "fail" aggId traceId format
+        member this.Process user cvType aggId traceId format = log this user cvType "process" aggId traceId format
+        member this.Success user cvType aggId traceId format = log this user cvType "success" aggId traceId format
+        member this.Fail user cvType aggId traceId format = log this user cvType "fail" aggId traceId format

@@ -15,7 +15,7 @@ type LogLevel =
     | Critical = 5
 
 [<CLIMutable>]
-type DomainLog = { AggType:string; AggId:Guid; TraceId: Guid; Message: string }
+type DomainLog = { AggType: string; AggId: string; Status: string; Message: string }
 
 [<CLIMutable>]
 type DiagnoseLog = { Level: LogLevel; Message: string; StackTrack: string }
@@ -25,23 +25,24 @@ let traceId = Guid.NewGuid().ToString()
 
 [<PTests>]
 let domainLog =
+    let user = "test"
     testSequenced <| testList "领域日志" [
         let withArgs f () =
-            let ldFunc cvType status dLog =
-                let span = ReadOnlySpan dLog
+            let ldFunc user cvType data metadata =
+                let span = ReadOnlySpan data
                 let r = JsonSerializer.Deserialize<DomainLog> span
-                printfn "%s-%s：%s|%A|%A|%s" cvType status r.AggType r.AggId r.TraceId r.Message
+                printfn "%s-%s：%s|%s|%s|%s|%s" "NoteApp" user cvType r.AggType r.AggId r.Status r.Message
             let ld = DomainLog.logger "Note" ldFunc
             go "领域日志" |> f ld aggId traceId
         yield! testFixture withArgs [
             "Process", fun ld aggId traceId finish ->
-                ld.Process "CreateNote" aggId traceId "开始"
+                ld.Process user "CreateNote" aggId traceId "开始"
                 finish 1
             "Success", fun ld aggId traceId finish ->
-                ld.Success "CreateNote" aggId traceId "完成"
+                ld.Success user "CreateNote" aggId traceId "完成"
                 finish 2
             "Fail", fun ld aggId traceId finish ->
-                ld.Fail "CreateNote" aggId traceId "错误"
+                ld.Fail user "CreateNote" aggId traceId "错误"
                 finish 3
         ]
     ]
