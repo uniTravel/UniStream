@@ -2,7 +2,6 @@
 #load ".fake/build.fsx/intellisense.fsx"
 open Fake.Core
 open Fake.DotNet
-open Fake.DotNet.NuGet
 open Fake.IO
 open Fake.IO.FileSystemOperators
 open Fake.IO.Globbing.Operators

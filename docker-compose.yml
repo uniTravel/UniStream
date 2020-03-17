@@ -8,6 +8,7 @@ services:
             - "4011:1113"
         environment:
             - EVENTSTORE_START_STANDARD_PROJECTIONS=true
+            - EVENTSTORE_DISABLE_HTTP_CACHING=true
     cs:
         container_name: cs
         image: eventstore/eventstore
@@ -16,6 +17,7 @@ services:
             - "4016:1113"
         environment:
             - EVENTSTORE_START_STANDARD_PROJECTIONS=true
+            - EVENTSTORE_DISABLE_HTTP_CACHING=true
     ld:
         container_name: ld
         image: eventstore/eventstore
@@ -24,9 +26,12 @@ services:
             - "4012:1113"
         environment:
             - EVENTSTORE_START_STANDARD_PROJECTIONS=true
+            - EVENTSTORE_DISABLE_HTTP_CACHING=true
     lg:
         container_name: lg
         image: eventstore/eventstore
         ports:
             - "9013:2113"
             - "4013:1113"
+        environment:
+            - EVENTSTORE_DISABLE_HTTP_CACHING=true

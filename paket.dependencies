@@ -2,17 +2,24 @@ framework auto-detect
 source https://api.nuget.org/v3/index.json
 
 nuget FSharp.Core
-nuget FSharp.Quotations.Evaluator
 nuget Grpc.AspNetCore
 nuget Logary
-nuget Hopac
-nuget BenchmarkDotNet
-nuget Expecto
-nuget Expecto.FsCheck
-nuget Expecto.Hopac
 nuget EventStore.Client
 
+
+group Test
+    framework auto-detect
+    source https://api.nuget.org/v3/index.json
+
+    nuget Expecto
+    nuget Expecto.BenchmarkDotNet
+    nuget Expecto.FsCheck
+    nuget Expecto.Hopac
+    nuget EventStore.Client
+
+
 group Build
+    framework auto-detect
     source https://api.nuget.org/v3/index.json
 
     nuget Fake.Core.Target

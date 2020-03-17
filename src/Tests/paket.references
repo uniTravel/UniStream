@@ -1,4 +1,4 @@
-FSharp.Core
-FSharp.Quotations.Evaluator
-Expecto
-EventStore.Client
+group Test
+    FSharp.Core
+    Expecto
+    EventStore.Client
