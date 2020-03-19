@@ -23,6 +23,3 @@ IDE::
 * Visual Studio Code
 第三方依赖::
 * https://eventstore.org/[Event Store]：目前提供的流存储实现。
-
-== 使用
-* 组件
