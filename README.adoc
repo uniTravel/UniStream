@@ -25,3 +25,4 @@ IDE::
 * https://eventstore.org/[Event Store]：目前提供的流存储实现。
 
 == 使用
+* 组件
