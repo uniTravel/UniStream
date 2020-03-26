@@ -4,7 +4,6 @@ open System
 open EventStore.ClientAPI
 open UniStream.Domain
 open UniStream.Infrastructure
-open Note.Domain
 
 
 [<Sealed>]

@@ -1,7 +1,5 @@
 namespace Note.Domain
 
-open UniStream.Domain
-
 
 /// <summary>Note聚合模块
 /// </summary>
