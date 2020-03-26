@@ -5,14 +5,6 @@ open System.Threading.Tasks
 open EventStore.ClientAPI
 
 
-module Helper =
-
-    let connectSubscription (client: IEventStoreConnection) (streamName: string) (groupName: string) (f: Guid -> string -> byte[] -> Async<unit>) =
-        client.ConnectToPersistentSubscription (streamName, groupName, (fun sub e ->
-            f e.Event.EventId e.Event.EventType e.Event.Data |> Async.StartAsTask :> Task
-        )) |> ignore
-
-
 module DomainEvent =
 
     let get (client: IEventStoreConnection) aggType (aggId: Guid) version =
@@ -32,15 +24,21 @@ module DomainEvent =
         let result = client.AppendToStreamAsync (streamName, version, eventData) |> Async.AwaitTask |> Async.RunSynchronously
         result.NextExpectedVersion
 
-    let subscribeToStream (client: IEventStoreConnection) evType (f: Guid -> string -> byte[] -> Async<unit>) =
-        let streamName = "$et" + evType
+    let subscribeToStream (client: IEventStoreConnection) (streamName: string) (handler: Guid -> string -> int64 -> byte[] -> byte[] -> Async<unit>) =
         client.SubscribeToStreamAsync (streamName, true, (fun sub e ->
-            f e.Event.EventId e.Event.EventType e.Event.Data |> Async.StartAsTask :> Task
+            let s = e.Event.EventStreamId
+            let idx = s.IndexOf '-' + 1
+            let aggId = Guid s.[idx..s.Length]
+            handler aggId e.Event.EventType e.Event.EventNumber e.Event.Data e.Event.Metadata |> Async.StartAsTask :> Task
         )) |> ignore
 
-    let connectSubscription (client: IEventStoreConnection) evType groupName f =
-        let streamName = "$et-" + evType
-        Helper.connectSubscription client streamName groupName f
+    let connectSubscription (client: IEventStoreConnection) (streamName: string) (groupName: string) (handler: Guid -> string -> int64 -> byte[] -> byte[] -> Async<unit>) =
+        client.ConnectToPersistentSubscription (streamName, groupName, (fun sub e ->
+            let s = e.Event.EventStreamId
+            let idx = s.IndexOf '-' + 1
+            let aggId = Guid s.[idx..s.Length]
+            handler aggId e.Event.EventType e.Event.EventNumber e.Event.Data e.Event.Metadata |> Async.StartAsTask :> Task
+        )) |> ignore
 
 
 module DomainCommand =
@@ -49,15 +47,18 @@ module DomainCommand =
         let eventData = EventData (Guid.NewGuid(), aggId.ToString(), true, data, metadata)
         client.AppendToStreamAsync (cvType, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.RunSynchronously |> ignore
 
-    let connectSubscription (client: IEventStoreConnection) cvType groupName f =
-        Helper.connectSubscription client cvType groupName f
+    let connectSubscription (client: IEventStoreConnection) (cvType: string) (groupName: string) (handler: Guid -> byte[] -> byte[] -> Async<unit>) =
+        client.ConnectToPersistentSubscription (cvType, groupName, (fun sub e ->
+            let aggId = Guid e.Event.EventType
+            handler aggId e.Event.Data e.Event.Metadata |> Async.StartAsTask :> Task
+        )) |> ignore
 
 
 module DomainLog =
 
-    let write ctx (client: IEventStoreConnection) user cvType data metadata =
+    let write ctx (client: IEventStoreConnection) user category data metadata =
         let streamName = ctx + "-" + user
-        let eventData = EventData (Guid.NewGuid(), cvType, true, data, metadata)
+        let eventData = EventData (Guid.NewGuid(), category, true, data, metadata)
         client.AppendToStreamAsync (streamName, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.Ignore |> ignore
 
 

@@ -1,4 +1,4 @@
-module Benchmark
+module Base
 
 open BenchmarkDotNet.Running
 

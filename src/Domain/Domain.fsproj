@@ -16,6 +16,8 @@
     <Compile Include="Command.fs" />
     <Compile Include="Repository.fsi" />
     <Compile Include="Repository.fs" />
+    <Compile Include="Config.fsi" />
+    <Compile Include="Config.fs" />
     <Compile Include="Aggregator.fsi" />
     <Compile Include="Aggregator.fs" />
     <None Include="paket.references" />

@@ -37,18 +37,18 @@ module DomainEvent =
     /// <para>订阅实例在客户端，适用于单节点订阅。</para>
     /// </summary>
     /// <param name="client">EventStore客户端。</param>
-    /// <param name="evType">领域事件值类型。</param>
-    /// <param name="f">事件处理函数。</param>
-    val subscribeToStream : IEventStoreConnection -> string -> (Guid -> string -> byte[] -> Async<unit>) -> unit
+    /// <param name="streamName">流名称。</param>
+    /// <param name="handler">事件处理函数。</param>
+    val subscribeToStream : IEventStoreConnection -> string -> (Guid -> string -> int64 -> byte[] -> byte[] -> Async<unit>) -> unit
 
     /// <summary>连接到领域事件流服务端订阅
     /// <para>订阅实例在服务端，支持多节点的消费群组连接，用以并行消费。</para>
     /// </summary>
     /// <param name="client">EventStore客户端。</param>
-    /// <param name="evType">领域事件值类型。</param>
+    /// <param name="streamName">流名称。</param>
     /// <param name="groupName">消费群组名称。</param>
-    /// <param name="f">事件处理函数。</param>
-    val connectSubscription : IEventStoreConnection -> string -> string -> (Guid -> string -> byte[] -> Async<unit>) -> unit
+    /// <param name="handler">事件处理函数。</param>
+    val connectSubscription : IEventStoreConnection -> string -> string -> (Guid -> string -> int64 -> byte[] -> byte[] -> Async<unit>) -> unit
 
 
 /// <summary>领域命令访问者模块
@@ -74,8 +74,8 @@ module DomainCommand =
     /// <param name="client">EventStore客户端。</param>
     /// <param name="cvType">领域命令值类型。</param>
     /// <param name="groupName">消费群组名称。</param>
-    /// <param name="f">命令处理函数。</param>
-    val connectSubscription : IEventStoreConnection -> string -> string -> (Guid -> string -> byte[] -> Async<unit>) -> unit
+    /// <param name="handler">命令处理函数。</param>
+    val connectSubscription : IEventStoreConnection -> string -> string -> (Guid -> byte[] -> byte[] -> Async<unit>) -> unit
 
 
 /// <summary>领域日志访问者模块
@@ -90,7 +90,7 @@ module DomainLog =
     /// <param name="ctx">领域上下文。</param>
     /// <param name="client">EventStore客户端。</param>
     /// <param name="user">用户。</param>
-    /// <param name="cvType">领域命令值类型。</param>
+    /// <param name="category">领域日志类别。</param>
     /// <param name="data">领域日志数据。</param>
     /// <param name="metadata">领域日志元数据。</param>
     val write : string -> IEventStoreConnection -> string -> string -> byte[] -> byte[] -> unit

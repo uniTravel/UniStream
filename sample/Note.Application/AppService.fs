@@ -22,10 +22,9 @@ type AppService (es: Uri, ld: Uri, lg: Uri) =
     let esFunc = DomainEvent.write c1
     let ldFunc = DomainLog.write "NoteApp" c2
     let lgFunc = DiagnoseLog.write "NoteApp" c3
-    let cfg = Aggregator.config get esFunc ldFunc lgFunc
 
-    let actor = Aggregator.create<Actor.T> cfg 3L General
-    let note = Aggregator.create<Note.T> cfg 3L <| Snapshot 1000L
+    let actor = Aggregator.createImmutable <| Config.Immutable (esFunc, ldFunc, lgFunc)
+    let note = Aggregator.createMutable <| Config.Mutable (get, esFunc, ldFunc, lgFunc)
 
     member _.CreateActor user aggId traceId cv =
         CommandService.createActor actor user aggId traceId cv

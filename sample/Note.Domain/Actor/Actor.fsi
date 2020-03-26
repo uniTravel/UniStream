@@ -22,10 +22,6 @@ module Actor =
         /// </summary>
         static member Initial : T
 
-        /// <summary>聚合模式
-        /// </summary>
-        static member AggMode : AggMode
-
         /// <summary>应用领域事件
         /// <para>根据领域事件类型，由事件流重建聚合。</para>
         /// </summary>

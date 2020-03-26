@@ -37,7 +37,6 @@ module Note =
 
     type T with
         static member Initial = Init
-        static member AggMode = Mutable
         member this.ApplyEvent = apply this
         member this.Value =
             match this with

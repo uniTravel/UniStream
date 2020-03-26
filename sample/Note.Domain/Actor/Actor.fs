@@ -28,7 +28,6 @@ module Actor =
 
     type T with
         static member Initial = Init
-        static member AggMode = Immutable
         member this.ApplyEvent = apply this
         member this.Value =
             match this with

@@ -32,8 +32,8 @@ let ops = connect esOps
 let ld = connect ldAdmin
 let lg = connect lgAdmin
 let cs = connect csAdmin
-let handler sub eventId eventType data = async {
-    printfn "%s：%A，%s" sub eventId eventType
+let handler sub aggId eventType version data metadata = async {
+    printfn "%s：%A，%s, %d" sub aggId eventType version
 }
 
 
@@ -51,10 +51,10 @@ let domainEventTests =
             go "EventStore DomainEvent" |> f writer
         yield! testFixture withArgs [
             "客户端订阅", fun writer finish ->
-                DomainEvent.subscribeToStream admin "NoteChanged" <| handler "单点订阅"
+                DomainEvent.subscribeToStream admin "$et-NoteChanged" <| handler "单点订阅"
                 finish 1
             "服务端订阅", fun writer finish ->
-                DomainEvent.connectSubscription admin "NoteChanged" "Group" <| handler "群组订阅"
+                DomainEvent.connectSubscription admin "$et-NoteChanged" "Group" <| handler "群组订阅"
                 finish 2
             "创建Note", fun writer finish ->
                 let d1 = Encoding.UTF8.GetBytes "Initial Note"
