@@ -36,13 +36,13 @@ module Config =
         /// <param name="ldFunc">领域日志流存储函数。</param>
         /// <param name="lgFunc">诊断日志流存储函数。</param>
         new :
-            esFunc: (string -> Guid -> int64 -> (string * byte[])[] -> byte[] -> int64) *
+            esFunc: (string -> Guid -> int64 -> (string * byte[])[] -> byte[] -> Async<int64>) *
             ldFunc: (string -> string -> byte[] -> byte[] -> unit) *
             lgFunc: (string -> byte[] -> unit)  -> Immutable
 
         /// <summary>领域事件流存储函数
         /// </summary>
-        member EsFunc : (string -> Guid -> int64 -> (string * byte[])[] -> byte[] -> int64)
+        member EsFunc : (string -> Guid -> int64 -> (string * byte[])[] -> byte[] -> Async<int64>)
 
         /// <summary>领域日志流存储函数
         /// </summary>
@@ -74,7 +74,7 @@ module Config =
         /// <param name="?block">挂起超过设定的秒数，阻塞聚合请求，缺省为3秒。</param>
         new :
             get: (string -> Guid -> int64 -> (Guid * string * byte[])[] * int64) *
-            esFunc: (string -> Guid -> int64 -> (string * byte[])[] -> byte[] -> int64) *
+            esFunc: (string -> Guid -> int64 -> (string * byte[])[] -> byte[] -> Async<int64>) *
             ldFunc: (string -> string -> byte[] -> byte[] -> unit) *
             lgFunc: (string -> byte[] -> unit) *
             ?cacheMode: bool *
@@ -89,7 +89,7 @@ module Config =
 
         /// <summary>领域事件流存储函数
         /// </summary>
-        member EsFunc : (string -> Guid -> int64 -> (string * byte[])[] -> byte[] -> int64)
+        member EsFunc : (string -> Guid -> int64 -> (string * byte[])[] -> byte[] -> Async<int64>)
 
         /// <summary>领域日志流存储函数
         /// </summary>

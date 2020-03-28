@@ -19,7 +19,7 @@ module Immutable =
         { AggType: string
           DomainLog: DomainLog.Logger
           DiagnoseLog: DiagnoseLog.Logger
-          EsFunc: Guid -> int64 -> (string * byte[])[] -> byte[] -> int64 }
+          EsFunc: Guid -> int64 -> (string * byte[])[] -> byte[] -> Async<int64> }
 
     /// <summary>创建不可变聚合器
     /// </summary>

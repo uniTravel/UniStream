@@ -18,7 +18,7 @@ module Config =
 
     [<Sealed>]
     type Immutable (esFunc, ldFunc, lgFunc) =
-        member _.EsFunc : (string -> Guid -> int64 -> (string * byte[])[] -> byte[] -> int64) = esFunc
+        member _.EsFunc : (string -> Guid -> int64 -> (string * byte[])[] -> byte[] -> Async<int64>) = esFunc
         member _.LdFunc : (string -> string -> byte[] -> byte[] -> unit) = ldFunc
         member _.LgFunc : (string -> byte[] -> unit) = lgFunc
 
@@ -39,7 +39,7 @@ module Config =
             if block <= 0L || block >= 10L then invalidArg "block" "Block timeout must between 0~10 seconds."
 
         member _.Get : (string -> Guid -> int64 -> ((Guid * string * byte[])[] * int64)) = get
-        member _.EsFunc : (string -> Guid -> int64 -> (string * byte[])[] -> byte[] -> int64) = esFunc
+        member _.EsFunc : (string -> Guid -> int64 -> (string * byte[])[] -> byte[] -> Async<int64>) = esFunc
         member _.LdFunc : (string -> string -> byte[] -> byte[] -> unit) = ldFunc
         member _.LgFunc : (string -> byte[] -> unit) = lgFunc
         member _.RepoMode = repoMode

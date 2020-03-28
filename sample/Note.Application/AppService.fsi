@@ -31,7 +31,7 @@ type AppService =
     /// <param name="aggId">聚合ID。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="cv">传入的领域命令值。</param>
-    member CreateNote : string -> Guid -> Guid -> CreateNote -> Async<Note.Value>
+    member CreateNote : string -> Guid -> Guid -> CreateNote -> Async<unit>
 
     /// <summary>改变Note
     /// </summary>
@@ -39,4 +39,4 @@ type AppService =
     /// <param name="aggId">聚合ID。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="cv">传入的领域命令值。</param>
-    member ChangeNote : string -> Guid -> Guid -> ChangeNote -> Async<Note.Value>
+    member ChangeNote : string -> Guid -> Guid -> ChangeNote -> Async<unit>

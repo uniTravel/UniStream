@@ -31,7 +31,7 @@ module DomainEvent =
     /// <param name="data">领域事件数据。</param>
     /// <param name="metadata">领域事件元数据。</param>
     /// <returns>当前版本号。</returns>
-    val write : IEventStoreConnection -> string -> Guid -> int64 -> (string * byte[])[] -> byte[] -> int64
+    val write : IEventStoreConnection -> string -> Guid -> int64 -> (string * byte[])[] -> byte[] -> Async<int64>
 
     /// <summary>领域事件流客户端订阅
     /// <para>订阅实例在客户端，适用于单节点订阅。</para>
@@ -66,7 +66,7 @@ module DomainCommand =
     /// <param name="aggId">聚合ID。</param>
     /// <param name="data">领域命令数据。</param>
     /// <param name="metadata">领域事件元数据。</param>
-    val write : IEventStoreConnection -> string -> Guid -> byte[] -> byte[] -> unit
+    val write : IEventStoreConnection -> string -> Guid -> byte[] -> byte[] -> Async<unit>
 
     /// <summary>连接到领域命令流服务端订阅
     /// <para>订阅实例在服务端，支持多节点的消费群组连接，用以并行消费。</para>

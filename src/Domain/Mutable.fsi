@@ -22,18 +22,8 @@ module Mutable =
           DomainLog: DomainLog.Logger
           DiagnoseLog: DiagnoseLog.Logger
           Get: Guid -> int64 -> (Guid * string * byte[])[] * int64
-          EsFunc: Guid -> int64 -> (string * byte[])[] -> byte[] -> int64
+          EsFunc: Guid -> int64 -> (string * byte[])[] -> byte[] -> Async<int64>
           Agent: MailboxProcessor<Accessor<'agg>> }
-
-    /// <summary>创建聚合仓储访问代理
-    /// </summary>
-    /// <param name="lg">诊断日志记录器。</param>
-    /// <param name="get">从某个版本开始获取聚合事件的函数。</param>
-    /// <param name="repo">仓储模式。</param>
-    /// <param name="blockTicks">聚合超时锁定Ticks约束。</param>
-    val inline agent : DiagnoseLog.Logger -> (Guid -> int64 -> (Guid * string * byte[])[] * int64) -> RepoMode -> int64 -> MailboxProcessor<Accessor< ^agg>>
-        when ^agg : (static member Initial : ^agg)
-        and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
 
     /// <summary>创建可变聚合器
     /// </summary>
@@ -56,6 +46,19 @@ module Mutable =
         when ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
         and ^c : (static member ValueType : string)
         and ^c : (member Apply: (^agg -> (string * byte[])[] * ^agg))
+
+    // /// <summary>批量执行命令
+    // /// </summary>
+    // /// <typeparam name="^agg">聚合的类型。</typeparam>
+    // /// <typeparam name="^c">领域命令类型。</typeparam>
+    // /// <param name="t">聚合器。</param>
+    // /// <param name="user">用户。</param>
+    // /// <param name="aggId">聚合ID。</param>
+    // /// <param name="traceId">跟踪ID。</param>
+    // /// <param name="command">领域命令。</param>
+    // val inline batchApply : T< ^agg> -> string -> Guid -> Guid -> ^c -> Async<unit>
+    //     when ^c : (static member ValueType : string)
+    //     and ^c : (member Apply: (^agg -> (string * byte[])[] * ^agg))
 
     /// <summary>获取可变聚合
     /// </summary>

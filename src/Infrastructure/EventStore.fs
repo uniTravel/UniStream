@@ -17,12 +17,13 @@ module DomainEvent =
         let events, version = read [||] version
         events |> Array.map (fun e -> (e.Event.EventId, e.Event.EventType, e.Event.Data)), version
 
-    let write (client: IEventStoreConnection) aggType (aggId: Guid) version data metadate =
+    let write (client: IEventStoreConnection) aggType (aggId: Guid) version data metadate = async {
         let streamName = aggType + "-" + aggId.ToString()
         let version = version - 1L
         let eventData = data |> Array.map (fun (evType, evData) -> EventData (Guid.NewGuid(), evType, true, evData, metadate))
-        let result = client.AppendToStreamAsync (streamName, version, eventData) |> Async.AwaitTask |> Async.RunSynchronously
-        result.NextExpectedVersion
+        let! result = client.AppendToStreamAsync (streamName, version, eventData) |> Async.AwaitTask
+        return result.NextExpectedVersion
+    }
 
     let subscribeToStream (client: IEventStoreConnection) (streamName: string) (handler: Guid -> string -> int64 -> byte[] -> byte[] -> Async<unit>) =
         client.SubscribeToStreamAsync (streamName, true, (fun sub e ->
@@ -45,7 +46,7 @@ module DomainCommand =
 
     let write (client: IEventStoreConnection) cvType (aggId: Guid) data metadata =
         let eventData = EventData (Guid.NewGuid(), aggId.ToString(), true, data, metadata)
-        client.AppendToStreamAsync (cvType, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.RunSynchronously |> ignore
+        client.AppendToStreamAsync (cvType, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.Ignore
 
     let connectSubscription (client: IEventStoreConnection) (cvType: string) (groupName: string) (handler: Guid -> byte[] -> byte[] -> Async<unit>) =
         client.ConnectToPersistentSubscription (cvType, groupName, (fun sub e ->

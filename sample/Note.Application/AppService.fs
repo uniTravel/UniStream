@@ -22,8 +22,8 @@ type AppService (es: Uri, ld: Uri, lg: Uri) =
     let ldFunc = DomainLog.write "NoteApp" c2
     let lgFunc = DiagnoseLog.write "NoteApp" c3
 
-    let actor = Aggregator.createImmutable <| Config.Immutable (esFunc, ldFunc, lgFunc)
-    let note = Aggregator.createMutable <| Config.Mutable (get, esFunc, ldFunc, lgFunc)
+    let actor = Immutable.create <| Config.Immutable (esFunc, ldFunc, lgFunc)
+    let note = Mutable.create <| Config.Mutable (get, esFunc, ldFunc, lgFunc)
 
     member _.CreateActor user aggId traceId cv =
         CommandService.createActor actor user aggId traceId cv

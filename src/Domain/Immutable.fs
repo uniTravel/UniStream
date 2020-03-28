@@ -9,7 +9,7 @@ module Immutable =
         { AggType: string
           DomainLog: DomainLog.Logger
           DiagnoseLog: DiagnoseLog.Logger
-          EsFunc: Guid -> int64 -> (string * byte[])[] -> byte[] -> int64 }
+          EsFunc: Guid -> int64 -> (string * byte[])[] -> byte[] -> Async<int64> }
 
     let inline create (cfg: Config.Immutable) : T< ^agg> =
         let aggType = typeof< ^agg>.DeclaringType.FullName
@@ -29,7 +29,7 @@ module Immutable =
             let events, agg' = apply init
             ld.Process user cvType aggId traceId "Apply command success."
             try
-                esFunc aggId 0L events <| MetaData.correlationId traceId |> ignore
+                do! esFunc aggId 0L events <| MetaData.correlationId traceId |> Async.Ignore
                 ld.Success user cvType aggId traceId "Save events success."
                 return (^agg : (member Value: ^v) agg')
             with ex ->

@@ -23,16 +23,6 @@ module ObServer =
           Get: Guid -> int64 -> (Guid * string * byte[])[] * int64
           Agent: MailboxProcessor<Accessor<'agg>> }
 
-    /// <summary>创建聚合仓储访问代理
-    /// </summary>
-    /// <param name="lg">诊断日志记录器。</param>
-    /// <param name="get">从某个版本开始获取聚合事件的函数。</param>
-    /// <param name="repo">仓储模式。</param>
-    /// <param name="blockTicks">聚合超时锁定Ticks约束。</param>
-    val inline agent : DiagnoseLog.Logger -> (Guid -> int64 -> (Guid * string * byte[])[] * int64) -> RepoMode -> int64 -> MailboxProcessor<Accessor< ^agg>>
-        when ^agg : (static member Initial : ^agg)
-        and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
-
     /// <summary>更新观察者聚合
     /// </summary>
     /// <typeparam name="^agg">聚合的类型。</typeparam>
