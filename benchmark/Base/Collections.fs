@@ -1,4 +1,4 @@
-module Collections
+namespace Benchmark.Base
 
 open System.Collections.Generic
 open BenchmarkDotNet.Attributes

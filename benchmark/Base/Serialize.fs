@@ -1,10 +1,9 @@
-﻿module Serialize
+﻿namespace Benchmark.Base
 
 open System
 open System.IO
 open BenchmarkDotNet.Attributes
 
-type MetaEvent = { AggregateId: Guid; TraceId: Guid; Version: int }
 
 [<MemoryDiagnoser>]
 type Serialize () =
@@ -17,9 +16,9 @@ type Serialize () =
 
     [<Benchmark>]
     member self.MemoryStream () =
-        [ 1 .. self.count ]
-        |> List.iter (fun i ->
-            let e = { AggregateId = aggId; TraceId = traceId; Version = i }
+        seq { 1 .. self.count }
+        |> Seq.iter (fun i ->
+            let e = {| AggregateId = aggId; TraceId = traceId; Version = i |}
             let array = Array.zeroCreate 36
             use memStream = new MemoryStream (array)
             use writer = new BinaryWriter (memStream)
@@ -30,9 +29,9 @@ type Serialize () =
 
     [<Benchmark>]
     member self.Span () =
-        [ 1 .. self.count ]
-        |> List.iter (fun i ->
-            let e = { AggregateId = aggId; TraceId = traceId; Version = i }
+        seq { 1 .. self.count }
+        |> Seq.iter (fun i ->
+            let e = {| AggregateId = aggId; TraceId = traceId; Version = i |}
             let array = Array.zeroCreate<byte> 36
             let span = Span array
             let a = span.Slice (0, 16)
@@ -45,9 +44,9 @@ type Serialize () =
 
     [<Benchmark>]
     member self.Array () =
-        [ 1 .. self.count ]
-        |> List.iter (fun i ->
-            let e = { AggregateId = aggId; TraceId = traceId; Version = i }
+        seq { 1 .. self.count }
+        |> Seq.iter (fun i ->
+            let e = {| AggregateId = aggId; TraceId = traceId; Version = i |}
             let a = e.AggregateId.ToByteArray ()
             let t = e.TraceId.ToByteArray ()
             let v = BitConverter.GetBytes e.Version
