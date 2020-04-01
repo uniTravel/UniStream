@@ -10,10 +10,9 @@ module CreateNote =
     [<Sealed>]
     type T =
         static member ValueType : string
-        member Apply : (Note.T -> (string * byte[])[] * Note.T)
+        member Apply : (Note.T -> byte[] -> Result<(string * byte[] * byte[]) seq * Note.T, string>)
 
     val create : (CreateNote -> T)
-
 
 [<CLIMutable>]
 type ChangeNote = { Content: string }
@@ -24,6 +23,6 @@ module ChangeNote =
     [<Sealed>]
     type T =
         static member ValueType : string
-        member Apply : (Note.T -> (string * byte[])[] * Note.T)
+        member Apply : (Note.T -> byte[] -> Result<(string * byte[] * byte[]) seq * Note.T, string>)
 
     val create : (ChangeNote -> T)

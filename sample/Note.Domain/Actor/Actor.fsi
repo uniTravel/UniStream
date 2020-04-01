@@ -1,6 +1,10 @@
 namespace Note.Domain
 
 
+[<CLIMutable>]
+type ActorCreated = { Name: string }
+
+
 /// <summary>Actor聚合模块
 /// </summary>
 [<RequireQualifiedAccess>]
@@ -8,8 +12,7 @@ module Actor =
 
     /// <summary>聚合值类型
     /// </summary>
-    type Value =
-        { Name: string }
+    type Value = { Name: string }
 
     /// <summary>聚合类型
     /// </summary>
@@ -32,5 +35,6 @@ module Actor =
     /// <summary>创建Actor
     /// </summary>
     /// <param name="ev">领域事件值。</param>
-    /// <param name="t">当前聚合。</param>
-    val internal createActor : ActorCreated -> T -> ((string * byte[])[] * T)
+    /// <param name="agg">当前聚合。</param>
+    /// <param name="metadata">领域事件元数据。</param>
+    val internal createActor : ActorCreated -> T -> byte[] -> Result<(string * byte[] * byte[]) seq * T, string>

@@ -1,4 +1,4 @@
-namespace Note.Application
+namespace Benchmark.UniStream
 
 open System
 open EventStore.ClientAPI
@@ -22,20 +22,19 @@ type AppService (es: Uri, ld: Uri, lg: Uri) =
     let ldFunc = DomainLog.write "NoteApp" c2
     let lgFunc = DiagnoseLog.write "NoteApp" c3
 
-    let actor = Immutable.create <| Config.Immutable (esFunc, ldFunc, lgFunc)
     let note = Mutable.create <| Config.Mutable (get, esFunc, ldFunc, lgFunc)
 
-    member _.CreateActor user aggId traceId cv =
-        CommandService.createActor actor user aggId traceId cv
-
     member _.CreateNote user aggId traceId cv =
-        CommandService.createNote note user aggId traceId cv
+        let command = CreateNote.create cv
+        Mutable.apply note user aggId traceId command
 
     member _.ChangeNote user aggId traceId cv =
-        CommandService.changeNote note user aggId traceId cv
+        let command = ChangeNote.create cv
+        Mutable.apply note user aggId traceId command
 
     member _.BatchChangeNote user aggId traceId cv =
-        CommandService.batchChangeNote note user aggId traceId cv
+        let command = ChangeNote.create cv
+        Mutable.batchApply note user aggId traceId command
 
     member _.GetNote aggId =
         Mutable.get note aggId

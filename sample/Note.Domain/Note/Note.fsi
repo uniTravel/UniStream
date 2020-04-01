@@ -1,6 +1,12 @@
 namespace Note.Domain
 
 
+[<CLIMutable>]
+type NoteCreated = { Title: string; Content: string }
+
+[<CLIMutable>]
+type NoteChanged = { Content: string }
+
 /// <summary>Note聚合模块
 /// </summary>
 [<RequireQualifiedAccess>]
@@ -32,11 +38,13 @@ module Note =
     /// <summary>创建Note
     /// </summary>
     /// <param name="ev">领域事件值。</param>
-    /// <param name="t">当前聚合。</param>
-    val internal createNote : NoteCreated -> T -> ((string * byte[])[] * T)
+    /// <param name="agg">当前聚合。</param>
+    /// <param name="metadata">领域事件元数据。</param>
+    val internal createNote : NoteCreated -> T -> byte[] -> Result<(string * byte[] * byte[]) seq * T, string>
 
     /// <summary>改变Note
     /// </summary>
     /// <param name="ev">领域事件值。</param>
-    /// <param name="t">当前聚合。</param>
-    val internal changeNote : NoteChanged -> T -> ((string * byte[])[] * T)
+    /// <param name="agg">当前聚合。</param>
+    /// <param name="metadata">领域事件元数据。</param>
+    val internal changeNote : NoteChanged -> T -> byte[] -> Result<(string * byte[] * byte[]) seq * T, string>

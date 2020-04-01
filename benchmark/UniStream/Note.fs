@@ -1,12 +1,15 @@
-namespace Note.Domain
+namespace Benchmark.UniStream
 
 open UniStream.Domain
 
 
+[<CLIMutable>]
 type NoteCreated = { Title: string; Content: string }
 
+[<CLIMutable>]
 type NoteChanged = { Content: string }
 
+[<RequireQualifiedAccess>]
 module Note =
 
     type Value =

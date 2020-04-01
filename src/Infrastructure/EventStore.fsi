@@ -28,10 +28,9 @@ module DomainEvent =
     /// <param name="aggType">聚合类型。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="version">事件版本。</param>
-    /// <param name="data">领域事件数据。</param>
-    /// <param name="metadata">领域事件元数据。</param>
+    /// <param name="eData">事件数据。</param>
     /// <returns>当前版本号。</returns>
-    val write : IEventStoreConnection -> string -> Guid -> int64 -> (string * byte[])[] -> byte[] -> Async<int64>
+    val write : IEventStoreConnection -> string -> Guid -> int64 -> (string * byte[] * byte[]) seq -> Async<int64>
 
     /// <summary>领域事件流客户端订阅
     /// <para>订阅实例在客户端，适用于单节点订阅。</para>

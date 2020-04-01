@@ -10,21 +10,17 @@ module Mutable =
         { AggType: string
           DomainLog: DomainLog.Logger
           DiagnoseLog: DiagnoseLog.Logger
-          Get: Guid -> int64 -> (Guid * string * byte[])[] * int64
-          EsFunc: Guid -> int64 -> (string * byte[])[] -> byte[] -> Async<int64>
-          Agent: MailboxProcessor<Accessor<'agg>> }
+          Get: Get
+          EsFunc: EsFunc
+          RepoAgent: MailboxProcessor<Repo<'agg>>
+          BatAgent: MailboxProcessor<Bat<'agg>> }
 
-    // type Batch<'agg> =
-    //     | Add of string * Guid * Guid * string * ('agg -> (string * byte[])[] * 'agg)
-    //     | Launch of T<'agg>
-    //     | Clean
-
-    let inline agent< ^agg when ^agg : (static member Initial : ^agg) and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> (lg: DiagnoseLog.Logger) get repoMode blockTicks =
+    let inline repoAgent< ^agg when ^agg : (static member Initial : ^agg) and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> (lg: DiagnoseLog.Logger) get repoMode blockTicks =
         let take, put, refresh, scavenge =
             match repoMode with
             | Cache r -> Repository.cTake, Repository.cPut, r * 10000000L, 2L * 60L * 60L * 10000000L
             | Snapshot (r, s, t) -> Repository.sTake, Repository.sPut t, r * 10000000L, s * 60L * 60L * 10000000L
-        MailboxProcessor<Accessor< ^agg>>.Start <| fun inbox ->
+        MailboxProcessor<Repo< ^agg>>.Start <| fun inbox ->
             let rec loop repo = async {
                 match! inbox.Receive() with
                 | Take (aggId, channel) ->
@@ -58,57 +54,80 @@ module Mutable =
             }
             loop <| Repository.empty lg get blockTicks
 
-    // let inline batch< ^agg when ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> =
-    //     MailboxProcessor<Batch< ^agg>>.Start <| fun inbox ->
-    //         let rec loop (map: Map<Guid, Queue<string * Guid * string * (^agg -> (string * byte[])[] * ^agg)> * int64 ref>) = async {
-    //             match! inbox.Receive() with
-    //             | Add (user, aggId, traceId, cvType, apply) ->
-    //                 if map.ContainsKey aggId then
-    //                     let queue, ticks = map.[aggId]
-    //                     queue.Enqueue (user, traceId, cvType, apply)
-    //                     ticks := DateTime.Now.Ticks
-    //                     return! loop map
-    //                 else
-    //                     let queue = new Queue<string * Guid * string * (^agg -> (string * byte[])[] * ^agg)>()
-    //                     queue.Enqueue (user, traceId, cvType, apply)
-    //                     return! loop <| map.Add (aggId, (queue, ref DateTime.Now.Ticks))
-    //             | Launch { DomainLog = ld; DiagnoseLog = lg; EsFunc = esFunc; Agent = agent; Get = get } ->
-    //                 let rec launch apply aggId agg version traceId refreshed = async {
-    //                     try
-    //                         let events, agg' = apply agg
-    //                         try
-    //                             let! version = esFunc aggId (version + 1L) events <| MetaData.correlationId traceId
-    //                             agent.Post <| Put (aggId, agg', version)
-    //                             return None
-    //                         with ex ->
-    //                             lg.Error ex.StackTrace "Save events failed: %s" ex.Message
-    //                             if not refreshed then
-    //                                 let agg, version = Repository.sync lg aggId agg (version + 1L) get
-    //                                 return! launch apply aggId agg version traceId true
-    //                             else
-    //                                 agent.Post <| Put (aggId, agg, version)
-    //                                 return Some "Save events failed."
-    //                     with ex ->
-    //                         lg.Error ex.StackTrace "Apply command failed: %s" ex.Message
-    //                         agent.Post <| Put (aggId, agg, version)
-    //                         return Some "Apply command failed."
-    //                 }
-    //                 // match! agent.PostAndAsyncReply (fun channel -> Take (aggId, channel)) with
-    //                 // | Ok (agg, version) ->
-    //                 //     let! result = launch apply aggId agg version traceId false
-    //                 //     match result with
-    //                 //     | None -> return ()
-    //                 //     | Some err -> return failwith err
-    //                 // | Error err ->
-    //                 //     return failwith "Take aggregate failed."
-
-
-    //                 return! loop map
-    //             | Clean ->
-    //                 return! loop map
-    //         }
-    //         loop Map.empty
-
+    let inline batAgent< ^agg when ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> =
+        MailboxProcessor<Bat< ^agg>>.Start <| fun inbox ->
+            let rec loop (map: Map<Guid, (Guid * (^agg -> byte[] -> Result<(string * byte[] * byte[]) seq * ^agg, string>) * AsyncReplyChannel<string option>) list ref * int64 ref>) = async {
+                match! inbox.Receive() with
+                | Add (aggId, traceId, apply, channel) ->
+                    if map.ContainsKey aggId then
+                        let list, ticks = map.[aggId]
+                        list := (traceId, apply, channel) :: !list
+                        ticks := DateTime.Now.Ticks
+                        return! loop map
+                    else
+                        let list = ref [ (traceId, apply, channel) ]
+                        return! loop <| map.Add (aggId, (list, ref DateTime.Now.Ticks))
+                | Launch ( lg, get, esFunc, agent ) ->
+                    let rec doApply agg batch = seq {
+                        match batch with
+                        | (traceId, apply, channel) :: tail ->
+                            match apply agg <| MetaData.correlationId traceId with
+                            | Ok (events, agg') ->
+                                yield Some events, agg', channel, None
+                                yield! doApply agg' tail
+                            | Error err ->
+                                yield None, agg, channel, Some err
+                                yield! doApply agg tail
+                        | [] -> ()
+                    }
+                    let rec buildEvents result = seq {
+                        match result with
+                        | (e, _, _, _) :: tail ->
+                            match e with
+                            | Some e -> yield! e; yield! buildEvents tail
+                            | None -> yield! buildEvents tail
+                        | [] -> ()
+                    }
+                    let rec launch aggId agg version list refreshed = async {
+                        let result = !list |> List.rev |> doApply agg |> Seq.toList
+                        let events = buildEvents result
+                        let (_, agg', _, _) = List.last result
+                        try
+                            let! version = esFunc aggId (version + 1L) events
+                            agent.Post <| Put (aggId, agg', version)
+                            result |> List.iter (fun (_, _, channel: AsyncReplyChannel<string option>, reply) -> channel.Reply reply)
+                        with ex ->
+                            lg.Error ex.StackTrace "Batch apply, save events failed: %s" ex.Message
+                            if not refreshed then
+                                let agg, version = Repository.sync lg aggId agg (version + 1L) get
+                                do! launch aggId agg version list true
+                            else
+                                agent.Post <| Put (aggId, agg, version)
+                                result |> List.iter (fun (_, _, channel, reply) ->
+                                    match reply with
+                                    | None -> channel.Reply <| Some "Batch apply, save events failed."
+                                    | Some err -> channel.Reply <| Some err
+                                )
+                    }
+                    let m = map |> Map.filter (fun _ (list, _) -> not (!list).IsEmpty)
+                    if not m.IsEmpty then
+                        m |> Map.toSeq |> Seq.map (fun (aggId, (list, _)) -> async {
+                            match! agent.PostAndAsyncReply (fun channel -> Take (aggId, channel)) with
+                            | Ok (agg, version) ->
+                                do! launch aggId agg version list false
+                            | Error err ->
+                                lg.Warn "Batch apply, take aggregate [%A] failed: %s" aggId err
+                                !list |> List.iter (fun (_, _, channel) -> channel.Reply <| Some "Batch apply, take aggregate failed." )
+                            list := List.empty
+                        }) |> Async.Parallel |> Async.RunSynchronously |> ignore
+                    return! loop map
+                | Clean lg ->
+                    lg.Trace "Clean batch apply task list."
+                    let now = DateTime.Now.Ticks
+                    let newMap = map |> Map.filter (fun _ (list, ticks) -> not (!list).IsEmpty || now - !ticks < 18000000000L )
+                    return! loop newMap
+            }
+            loop Map.empty
 
     let inline create (cfg: Config.Mutable) =
         let createTimer interval handler =
@@ -121,31 +140,35 @@ module Mutable =
         let lg = DiagnoseLog.logger aggType cfg.LgFunc
         let get = cfg.Get aggType
         let esFunc = cfg.EsFunc aggType
-        let agent = agent< ^agg> lg get cfg.RepoMode cfg.BlockTicks
+        let repoAgent = repoAgent< ^agg> lg get cfg.RepoMode cfg.BlockTicks
+        let batAgent = batAgent< ^agg>
         match cfg.RepoMode with
         | Cache r ->
             let refresh = float r * 1000.0
-            Async.Start <| createTimer refresh (fun _ -> agent.Post Refresh)
+            Async.Start <| createTimer refresh (fun _ -> repoAgent.Post Refresh)
         | Snapshot (r, s, _) ->
             let refresh = float r * 1000.0
             let scavenge = float s * 60.0 * 60.0 * 1000.0
-            Async.Start <| createTimer refresh (fun _ -> agent.Post Refresh)
-            Async.Start <| createTimer scavenge (fun _ -> agent.Post Scavenge)
-        { AggType = aggType; DomainLog = ld; DiagnoseLog = lg; Get = get; EsFunc = esFunc; Agent = agent }
+            Async.Start <| createTimer refresh (fun _ -> repoAgent.Post Refresh)
+            Async.Start <| createTimer scavenge (fun _ -> repoAgent.Post Scavenge)
+        let aggregator = { AggType = aggType; DomainLog = ld; DiagnoseLog = lg; Get = get; EsFunc = esFunc; RepoAgent = repoAgent; BatAgent = batAgent }
+        Async.Start <| createTimer cfg.Batch (fun _ -> batAgent.Post <| Launch (lg, get, esFunc, repoAgent))
+        Async.Start <| createTimer 1800000.0 (fun _ -> batAgent.Post <| Clean lg)
+        aggregator
 
-    let inline apply t user aggId traceId command = async {
+    let inline apply aggregator user aggId traceId command = async {
         let cvType = (^c : (static member ValueType : string) ())
-        let apply = (^c : (member Apply: (^agg -> (string * byte[])[] * ^agg)) command)
-        let { DomainLog = ld; DiagnoseLog = lg; EsFunc = esFunc; Agent = agent; Get = get } = t
+        let apply = (^c : (member Apply: (^agg -> byte[] -> Result<(string * byte[] * byte[]) seq * ^agg, string>)) command)
+        let { DomainLog = ld; DiagnoseLog = lg; EsFunc = esFunc; Get = get; RepoAgent = repoAgent } = aggregator
         let rec launch apply aggId agg version traceId refreshed = async {
-            try
-                let events, agg' = apply agg
+            match apply agg <| MetaData.correlationId traceId with
+            | Ok (events, agg') ->
                 ld.Process user cvType aggId traceId "Apply command success."
                 try
-                    let! version = esFunc aggId (version + 1L) events <| MetaData.correlationId traceId
-                    ld.Success user cvType aggId traceId "Save events success."
-                    agent.Post <| Put (aggId, agg', version)
-                    return None
+                    let! version = esFunc aggId (version + 1L) events
+                    ld.Success user cvType aggId traceId "Execute command success."
+                    repoAgent.Post <| Put (aggId, agg', version)
+                    return Ok (^agg : (member Value: ^v) agg')
                 with ex ->
                     lg.Error ex.StackTrace "Save events failed: %s" ex.Message
                     if not refreshed then
@@ -154,39 +177,43 @@ module Mutable =
                         return! launch apply aggId agg version traceId true
                     else
                         ld.Fail user cvType aggId traceId "Save events failed."
-                        agent.Post <| Put (aggId, agg, version)
-                        return Some "Save events failed."
-            with ex ->
+                        repoAgent.Post <| Put (aggId, agg, version)
+                        return Error "Save events failed."
+            | Error err ->
                 ld.Fail user cvType aggId traceId "Apply command failed."
-                lg.Error ex.StackTrace "Apply command failed: %s" ex.Message
-                agent.Post <| Put (aggId, agg, version)
-                return Some "Apply command failed."
+                lg.Warn "Apply command failed: %s" err
+                repoAgent.Post <| Put (aggId, agg, version)
+                return Error "Apply command failed."
         }
         ld.Process user cvType aggId traceId "Start execute command."
-        match! agent.PostAndAsyncReply (fun channel -> Take (aggId, channel)) with
+        match! repoAgent.PostAndAsyncReply (fun channel -> Take (aggId, channel)) with
         | Ok (agg, version) ->
             ld.Process user cvType aggId traceId "Take aggregate."
             let! result = launch apply aggId agg version traceId false
             match result with
-            | None -> return ()
-            | Some err -> return failwith err
+            | Ok agg -> return agg
+            | Error err -> return failwith err
         | Error err ->
             ld.Fail user cvType aggId traceId "Take aggregate failed: %s" err
             return failwith "Take aggregate failed."
     }
 
-    // let inline batchApply (t: T< ^agg>) user aggId traceId command = async {
-    //     let cvType = (^c : (static member ValueType : string) ())
-    //     let apply = (^c : (member Apply: (^agg -> (string * byte[])[] * ^agg)) command)
-    //     let { DomainLog = ld; DiagnoseLog = lg; EsFunc = esFunc; Agent = agent; Get = get } = t
-    //     ld.Process user cvType aggId traceId "Add command to batch processor."
-    //     // batch.Post <| Add (user, aggId, traceId, cvType, apply)
-    // }
+    let inline batchApply (aggregator: T< ^agg>) (user: string) aggId (traceId: Guid) command = async {
+        let cvType = (^c : (static member ValueType : string) ())
+        let apply = (^c : (member Apply: (^agg -> byte[] -> Result<(string * byte[] * byte[]) seq * ^agg, string>)) command)
+        let { DomainLog = ld; BatAgent = batAgent } = aggregator
+        ld.Process user cvType aggId traceId "Add command to batch processor."
+        match! batAgent.PostAndAsyncReply (fun channel -> Add (aggId, traceId, apply, channel)) with
+        | None -> ld.Success user cvType aggId traceId "Execute command success."
+        | Some err ->
+            ld.Fail user cvType aggId traceId "Execute command failed: %s" err
+            return failwithf "Execute command failed: %s" err
+    }
 
-    let inline get { Agent = agent; Get = get } aggId = async {
-        match! agent.PostAndAsyncReply (fun channel -> Take (aggId, channel)) with
+    let inline get { RepoAgent = repoAgent; Get = get } aggId = async {
+        match! repoAgent.PostAndAsyncReply (fun channel -> Take (aggId, channel)) with
         | Ok (agg, version) ->
-            agent.Post <| Put (aggId, agg, version)
+            repoAgent.Post <| Put (aggId, agg, version)
             return (^agg : (member Value: ^v) agg)
         | Error err -> return failwithf "Take aggregate failed: %s" err
     }

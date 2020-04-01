@@ -3,6 +3,8 @@ namespace Note.Domain
 open UniStream.Domain
 
 
+type ActorCreated = { Name: string }
+
 module Actor =
 
     type Value =
@@ -14,16 +16,16 @@ module Actor =
         | Init
         | Active of Value
 
-    let applyActorCreated t (ev: ActorCreated) =
-        match t with
+    let applyActorCreated agg (ev: ActorCreated) =
+        match agg with
         | Init -> { Name = ev.Name }
         | Active _ -> failwith "只有初始状态才能创建Actor。"
 
-    let apply t evType evBytes =
+    let apply agg evType evBytes =
         match evType with
         | ev when ev = actorCreated ->
             let ev = Delta.fromBytes<ActorCreated> evBytes
-            Active <| applyActorCreated t ev
+            Active <| applyActorCreated agg ev
         | _ -> failwithf "领域事件值类型错误：%s" evType
 
     type T with
@@ -34,5 +36,6 @@ module Actor =
             | Active v -> v
             | Init -> failwith "初始状态，尚未赋值。"
 
-    let createActor ev t =
-        [| actorCreated, Delta.asBytes ev |], Active <| applyActorCreated t ev
+    let createActor ev agg (metadata: byte[]) =
+        try Ok ( seq { actorCreated, Delta.asBytes ev, metadata }, Active <| applyActorCreated agg ev)
+        with ex -> Error ex.Message

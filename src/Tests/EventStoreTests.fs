@@ -58,18 +58,21 @@ let domainEventTests =
                 finish 2
             "创建Note", fun writer finish ->
                 let d1 = Encoding.UTF8.GetBytes "Initial Note"
-                let version = writer aggType aggId 0L [| (evt1, d1) |] <| MetaData.correlationId traceId |> Async.RunSynchronously
+                let metadata = MetaData.correlationId traceId
+                let version = writer aggType aggId 0L [| (evt1, d1, metadata) |] |> Async.RunSynchronously
                 Expect.equal version 0L "返回版本号错误。"
                 finish 3
             "更改Note", fun writer finish ->
                 let d1 = Encoding.UTF8.GetBytes "Changed Note"
-                let version = writer aggType aggId 1L [| (evt2, d1) |] <| MetaData.correlationId traceId |> Async.RunSynchronously
+                let metadata = MetaData.correlationId traceId
+                let version = writer aggType aggId 1L [| (evt2, d1, metadata) |] |> Async.RunSynchronously
                 Expect.equal version 1L "返回版本号错误。"
                 finish 4
             "清理Note", fun writer finish ->
                 let d1 = Encoding.UTF8.GetBytes "Changed Note"
                 let d2 = Encoding.UTF8.GetBytes "Cleaned Note"
-                let version = writer aggType aggId 2L [| (evt2, d1); (evt3, d2) |] <| MetaData.correlationId traceId |> Async.RunSynchronously
+                let metadata = MetaData.correlationId traceId
+                let version = writer aggType aggId 2L [| (evt2, d1, metadata); (evt3, d2, metadata) |] |> Async.RunSynchronously
                 Expect.equal version 3L "返回版本号错误。"
                 finish 5
             "获取全部事件流", fun writer finish ->

@@ -17,10 +17,10 @@ module DomainEvent =
         let events, version = read [||] version
         events |> Array.map (fun e -> (e.Event.EventId, e.Event.EventType, e.Event.Data)), version
 
-    let write (client: IEventStoreConnection) aggType (aggId: Guid) version data metadate = async {
+    let write (client: IEventStoreConnection) aggType (aggId: Guid) version eData = async {
         let streamName = aggType + "-" + aggId.ToString()
         let version = version - 1L
-        let eventData = data |> Array.map (fun (evType, evData) -> EventData (Guid.NewGuid(), evType, true, evData, metadate))
+        let eventData = eData |> Seq.map (fun (evType, evData, metadata) -> EventData (Guid.NewGuid(), evType, true, evData, metadata))
         let! result = client.AppendToStreamAsync (streamName, version, eventData) |> Async.AwaitTask
         return result.NextExpectedVersion
     }

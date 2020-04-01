@@ -3,31 +3,41 @@ namespace UniStream.Domain
 open System
 
 
+type Get = Guid -> int64 -> (Guid * string * byte[])[] * int64
+
+type EsFunc = Guid -> int64 -> (string * byte[] * byte[]) seq -> Async<int64>
+
 type RepoMode =
     | Cache of int64
     | Snapshot of int64 * int64 * int64
 
-type Accessor<'agg> =
+type Repo<'agg> =
     | Take of Guid * AsyncReplyChannel<Result<'agg * int64, string>>
     | Put of Guid * 'agg * int64
     | Refresh
     | Scavenge
+
+type Bat<'agg> =
+    | Add of Guid * Guid * ('agg -> byte[] -> Result<(string * byte[] * byte[]) seq * 'agg, string>) * AsyncReplyChannel<string option>
+    | Launch of DiagnoseLog.Logger * Get * EsFunc * MailboxProcessor<Repo<'agg>>
+    | Clean of DiagnoseLog.Logger
 
 
 module Config =
 
     [<Sealed>]
     type Immutable (esFunc, ldFunc, lgFunc) =
-        member _.EsFunc : (string -> Guid -> int64 -> (string * byte[])[] -> byte[] -> Async<int64>) = esFunc
+        member _.EsFunc : (string -> Guid -> int64 -> (string * byte[] * byte[]) seq -> Async<int64>) = esFunc
         member _.LdFunc : (string -> string -> byte[] -> byte[] -> unit) = ldFunc
         member _.LgFunc : (string -> byte[] -> unit) = lgFunc
 
     [<Sealed>]
-    type Mutable (get, esFunc, ldFunc, lgFunc, ?cacheMode, ?refresh, ?scavenge, ?threshold, ?block) =
+    type Mutable (get, esFunc, ldFunc, lgFunc, ?cacheMode, ?refresh, ?scavenge, ?threshold, ?batch, ?block) =
         let cacheMode = defaultArg cacheMode true
         let refresh = defaultArg refresh 15L
         let scavenge = defaultArg scavenge 2L
         let threshold = defaultArg threshold 1000L
+        let batch = defaultArg batch 50
         let block = defaultArg block 3L
         let repoMode =
             match cacheMode with
@@ -39,10 +49,11 @@ module Config =
             if block <= 0L || block >= 10L then invalidArg "block" "Block timeout must between 0~10 seconds."
 
         member _.Get : (string -> Guid -> int64 -> ((Guid * string * byte[])[] * int64)) = get
-        member _.EsFunc : (string -> Guid -> int64 -> (string * byte[])[] -> byte[] -> Async<int64>) = esFunc
+        member _.EsFunc : (string -> Guid -> int64 -> (string * byte[] * byte[]) seq -> Async<int64>) = esFunc
         member _.LdFunc : (string -> string -> byte[] -> byte[] -> unit) = ldFunc
         member _.LgFunc : (string -> byte[] -> unit) = lgFunc
         member _.RepoMode = repoMode
+        member _.Batch = float batch
         member _.BlockTicks = block * 10000000L
 
     [<Sealed>]

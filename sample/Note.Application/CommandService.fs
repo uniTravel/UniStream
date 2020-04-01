@@ -20,3 +20,8 @@ module CommandService =
         let command = ChangeNote.create cv
         return! Mutable.apply note user aggId traceId command
     }
+
+    let batchChangeNote note user aggId traceId cv = async {
+        let command = ChangeNote.create cv
+        return! Mutable.batchApply note user aggId traceId command
+    }

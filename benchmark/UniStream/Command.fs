@@ -1,10 +1,12 @@
-namespace Note.Domain
+namespace Benchmark.UniStream
 
 open UniStream.Domain
 
 
+[<CLIMutable>]
 type CreateNote = { Title: string; Content: string }
 
+[<RequireQualifiedAccess>]
 module CreateNote =
 
     type T = CreateNote of CreateNote with
@@ -16,8 +18,10 @@ module CreateNote =
     let create = Command.create isValid CreateNote
 
 
+[<CLIMutable>]
 type ChangeNote = { Content: string }
 
+[<RequireQualifiedAccess>]
 module ChangeNote =
     type T = ChangeNote of ChangeNote with
         static member ValueType = typeof<ChangeNote>.FullName

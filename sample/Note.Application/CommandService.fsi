@@ -28,7 +28,7 @@ module internal CommandService =
     /// <param name="aggId">聚合ID。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="cv">领域命令值。</param>
-    val createNote : Mutable.T<Note.T> -> string -> Guid -> Guid -> CreateNote -> Async<unit>
+    val createNote : Mutable.T<Note.T> -> string -> Guid -> Guid -> CreateNote -> Async<Note.Value>
 
     /// <summary>改变Note
     /// </summary>
@@ -37,4 +37,13 @@ module internal CommandService =
     /// <param name="aggId">聚合ID。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="cv">领域命令值。</param>
-    val changeNote : Mutable.T<Note.T> -> string -> Guid -> Guid -> ChangeNote -> Async<unit>
+    val changeNote : Mutable.T<Note.T> -> string -> Guid -> Guid -> ChangeNote -> Async<Note.Value>
+
+    /// <summary>改变Note
+    /// </summary>
+    /// <param name="note">Note聚合器。</param>
+    /// <param name="user">用户。</param>
+    /// <param name="aggId">聚合ID。</param>
+    /// <param name="traceId">跟踪ID。</param>
+    /// <param name="cv">领域命令值。</param>
+    val batchChangeNote : Mutable.T<Note.T> -> string -> Guid -> Guid -> ChangeNote -> Async<unit>

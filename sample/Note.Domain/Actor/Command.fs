@@ -12,5 +12,5 @@ module CreateActor =
         member this.Apply =
             let cv = let (CreateActor c) = this in c
             Actor.createActor { Name = cv.Name }
-    let isValid _ = true
+    let private isValid _ = true
     let create = Command.create isValid CreateActor

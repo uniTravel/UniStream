@@ -19,7 +19,7 @@ module Immutable =
         { AggType: string
           DomainLog: DomainLog.Logger
           DiagnoseLog: DiagnoseLog.Logger
-          EsFunc: Guid -> int64 -> (string * byte[])[] -> byte[] -> Async<int64> }
+          EsFunc: EsFunc }
 
     /// <summary>创建不可变聚合器
     /// </summary>
@@ -31,7 +31,7 @@ module Immutable =
     /// </summary>
     /// <typeparam name="^agg">聚合的类型。</typeparam>
     /// <typeparam name="^c">领域命令类型。</typeparam>
-    /// <param name="t">聚合器。</param>
+    /// <param name="aggregator">聚合器。</param>
     /// <param name="user">用户。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="traceId">跟踪ID。</param>
@@ -40,4 +40,4 @@ module Immutable =
         when ^agg : (static member Initial : ^agg)
         and ^agg : (member Value : ^v)
         and ^c : (static member ValueType : string)
-        and ^c : (member Apply: (^agg -> (string * byte[])[] * ^agg))
+        and ^c : (member Apply: (^agg -> byte[] -> Result<(string * byte[] * byte[]) seq * ^agg, string>))
