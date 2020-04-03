@@ -11,6 +11,6 @@ module CreateActor =
     [<Sealed>]
     type T =
         static member ValueType : string
-        member Apply : (Actor.T -> byte[] -> Result<(string * byte[] * byte[]) seq * Actor.T, string>)
+        member Apply : (Actor.T -> byte[] -> (string * byte[] * byte[]) seq * Actor.T)
 
     val create : (CreateActor -> T)

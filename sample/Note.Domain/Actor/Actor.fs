@@ -37,5 +37,4 @@ module Actor =
             | Init -> failwith "初始状态，尚未赋值。"
 
     let createActor ev agg (metadata: byte[]) =
-        try Ok ( seq { actorCreated, Delta.asBytes ev, metadata }, Active <| applyActorCreated agg ev)
-        with ex -> Error ex.Message
+        seq { actorCreated, Delta.asBytes ev, metadata }, Active <| applyActorCreated agg ev

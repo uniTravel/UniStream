@@ -1,7 +1,6 @@
 namespace UniStream.Domain
 
 open System
-open System.Collections.Generic
 
 
 module Mutable =
@@ -56,7 +55,7 @@ module Mutable =
 
     let inline batAgent< ^agg when ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> =
         MailboxProcessor<Bat< ^agg>>.Start <| fun inbox ->
-            let rec loop (map: Map<Guid, (Guid * (^agg -> byte[] -> Result<(string * byte[] * byte[]) seq * ^agg, string>) * AsyncReplyChannel<string option>) list ref * int64 ref>) = async {
+            let rec loop (map: Map<Guid, (Guid * (^agg -> byte[] -> (string * byte[] * byte[]) seq * ^agg) * AsyncReplyChannel<string option>) list ref * int64 ref>) = async {
                 match! inbox.Receive() with
                 | Add (aggId, traceId, apply, channel) ->
                     if map.ContainsKey aggId then
@@ -68,16 +67,17 @@ module Mutable =
                         let list = ref [ (traceId, apply, channel) ]
                         return! loop <| map.Add (aggId, (list, ref DateTime.Now.Ticks))
                 | Launch ( lg, get, esFunc, agent ) ->
+                    let execute agg traceId apply channel =
+                        try
+                            let (events, agg') = apply agg <| MetaData.correlationId traceId
+                            Some events, agg', channel, None
+                        with ex -> None, agg, channel, Some ex.Message
                     let rec doApply agg batch = seq {
                         match batch with
                         | (traceId, apply, channel) :: tail ->
-                            match apply agg <| MetaData.correlationId traceId with
-                            | Ok (events, agg') ->
-                                yield Some events, agg', channel, None
-                                yield! doApply agg' tail
-                            | Error err ->
-                                yield None, agg, channel, Some err
-                                yield! doApply agg tail
+                            let (events, agg', channel, result) = execute agg traceId apply channel
+                            yield events, agg', channel, result
+                            yield! doApply agg' tail
                         | [] -> ()
                     }
                     let rec buildEvents result = seq {
@@ -158,11 +158,11 @@ module Mutable =
 
     let inline apply aggregator user aggId traceId command = async {
         let cvType = (^c : (static member ValueType : string) ())
-        let apply = (^c : (member Apply: (^agg -> byte[] -> Result<(string * byte[] * byte[]) seq * ^agg, string>)) command)
+        let apply = (^c : (member Apply: (^agg -> byte[] -> (string * byte[] * byte[]) seq * ^agg)) command)
         let { DomainLog = ld; DiagnoseLog = lg; EsFunc = esFunc; Get = get; RepoAgent = repoAgent } = aggregator
         let rec launch apply aggId agg version traceId refreshed = async {
-            match apply agg <| MetaData.correlationId traceId with
-            | Ok (events, agg') ->
+            try
+                let (events, agg') = apply agg <| MetaData.correlationId traceId
                 ld.Process user cvType aggId traceId "Apply command success."
                 try
                     let! version = esFunc aggId (version + 1L) events
@@ -179,9 +179,9 @@ module Mutable =
                         ld.Fail user cvType aggId traceId "Save events failed."
                         repoAgent.Post <| Put (aggId, agg, version)
                         return Error "Save events failed."
-            | Error err ->
+            with ex ->
                 ld.Fail user cvType aggId traceId "Apply command failed."
-                lg.Warn "Apply command failed: %s" err
+                lg.Error ex.StackTrace "Apply command failed: %s" ex.Message
                 repoAgent.Post <| Put (aggId, agg, version)
                 return Error "Apply command failed."
         }
@@ -200,7 +200,7 @@ module Mutable =
 
     let inline batchApply (aggregator: T< ^agg>) (user: string) aggId (traceId: Guid) command = async {
         let cvType = (^c : (static member ValueType : string) ())
-        let apply = (^c : (member Apply: (^agg -> byte[] -> Result<(string * byte[] * byte[]) seq * ^agg, string>)) command)
+        let apply = (^c : (member Apply: (^agg -> byte[] -> (string * byte[] * byte[]) seq * ^agg)) command)
         let { DomainLog = ld; BatAgent = batAgent } = aggregator
         ld.Process user cvType aggId traceId "Add command to batch processor."
         match! batAgent.PostAndAsyncReply (fun channel -> Add (aggId, traceId, apply, channel)) with

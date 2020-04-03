@@ -37,4 +37,4 @@ module Actor =
     /// <param name="ev">领域事件值。</param>
     /// <param name="agg">当前聚合。</param>
     /// <param name="metadata">领域事件元数据。</param>
-    val internal createActor : ActorCreated -> T -> byte[] -> Result<(string * byte[] * byte[]) seq * T, string>
+    val internal createActor : ActorCreated -> T -> byte[] -> (string * byte[] * byte[]) seq * T

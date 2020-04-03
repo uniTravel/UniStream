@@ -48,9 +48,7 @@ module Note =
             | Init -> failwith "初始状态，尚未赋值。"
 
     let createNote ev agg (metadata: byte[]) =
-        try Ok ( seq { noteCreated, Delta.asBytes ev, metadata }, Active <| applyNoteCreated agg ev)
-        with ex -> Error ex.Message
+        seq { noteCreated, Delta.asBytes ev, metadata }, Active <| applyNoteCreated agg ev
 
     let changeNote ev agg (metadata: byte[]) =
-        try Ok ( seq { noteChanged, Delta.asBytes ev, metadata }, Active <| applyNoteChanged agg ev)
-        with ex -> Error ex.Message
+        seq { noteChanged, Delta.asBytes ev, metadata }, Active <| applyNoteChanged agg ev

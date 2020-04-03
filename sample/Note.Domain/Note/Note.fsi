@@ -40,11 +40,11 @@ module Note =
     /// <param name="ev">领域事件值。</param>
     /// <param name="agg">当前聚合。</param>
     /// <param name="metadata">领域事件元数据。</param>
-    val internal createNote : NoteCreated -> T -> byte[] -> Result<(string * byte[] * byte[]) seq * T, string>
+    val internal createNote : NoteCreated -> T -> byte[] -> (string * byte[] * byte[]) seq * T
 
     /// <summary>改变Note
     /// </summary>
     /// <param name="ev">领域事件值。</param>
     /// <param name="agg">当前聚合。</param>
     /// <param name="metadata">领域事件元数据。</param>
-    val internal changeNote : NoteChanged -> T -> byte[] -> Result<(string * byte[] * byte[]) seq * T, string>
+    val internal changeNote : NoteChanged -> T -> byte[] -> (string * byte[] * byte[]) seq * T

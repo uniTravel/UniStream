@@ -23,19 +23,6 @@ module ObServer =
           Get: Get
           RepoAgent: MailboxProcessor<Repo<'agg>> }
 
-    /// <summary>更新观察者聚合
-    /// </summary>
-    /// <typeparam name="^agg">聚合的类型。</typeparam>
-    /// <param name="aggregator">聚合器。</param>
-    /// <param name="user">用户。</param>
-    /// <param name="aggId">聚合ID。</param>
-    /// <param name="evType">领域事件值类型。</param>
-    /// <param name="number">领域事件版本。</param>
-    /// <param name="data">领域事件数据。</param>
-    /// <param name="matadata">领域事件元数据。</param>
-    val inline update : T< ^agg> -> string -> Guid -> string -> int64 -> byte[] -> byte[] -> Async<unit>
-        when ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
-
     /// <summary>创建观察者聚合器
     /// </summary>
     /// <typeparam name="^agg">聚合的类型。</typeparam>

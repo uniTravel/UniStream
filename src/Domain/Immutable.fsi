@@ -40,4 +40,4 @@ module Immutable =
         when ^agg : (static member Initial : ^agg)
         and ^agg : (member Value : ^v)
         and ^c : (static member ValueType : string)
-        and ^c : (member Apply: (^agg -> byte[] -> Result<(string * byte[] * byte[]) seq * ^agg, string>))
+        and ^c : (member Apply: (^agg -> byte[] -> (string * byte[] * byte[]) seq * ^agg))

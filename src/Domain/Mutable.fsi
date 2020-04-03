@@ -48,7 +48,7 @@ module Mutable =
         when ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
         and ^agg : (member Value : ^v)
         and ^c : (static member ValueType : string)
-        and ^c : (member Apply: (^agg -> byte[] -> Result<(string * byte[] * byte[]) seq * ^agg, string>))
+        and ^c : (member Apply: (^agg -> byte[] -> (string * byte[] * byte[]) seq * ^agg))
 
     /// <summary>批量执行命令
     /// </summary>
@@ -61,7 +61,7 @@ module Mutable =
     /// <param name="command">领域命令。</param>
     val inline batchApply : T< ^agg> -> string -> Guid -> Guid -> ^c -> Async<unit>
         when ^c : (static member ValueType : string)
-        and ^c : (member Apply: (^agg -> byte[] -> Result<(string * byte[] * byte[]) seq * ^agg, string>))
+        and ^c : (member Apply: (^agg -> byte[] -> (string * byte[] * byte[]) seq * ^agg))
 
     /// <summary>获取可变聚合
     /// </summary>

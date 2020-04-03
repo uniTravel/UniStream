@@ -10,7 +10,7 @@ module CreateNote =
     [<Sealed>]
     type T =
         static member ValueType : string
-        member Apply : (Note.T -> byte[] -> Result<(string * byte[] * byte[]) seq * Note.T, string>)
+        member Apply : (Note.T -> byte[] -> (string * byte[] * byte[]) seq * Note.T)
 
     val create : (CreateNote -> T)
 
@@ -23,6 +23,6 @@ module ChangeNote =
     [<Sealed>]
     type T =
         static member ValueType : string
-        member Apply : (Note.T -> byte[] -> Result<(string * byte[] * byte[]) seq * Note.T, string>)
+        member Apply : (Note.T -> byte[] -> (string * byte[] * byte[]) seq * Note.T)
 
     val create : (ChangeNote -> T)
