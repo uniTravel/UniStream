@@ -6,7 +6,7 @@ open System
 /// <summary>观察者聚合器模块
 /// </summary>
 [<RequireQualifiedAccess>]
-module ObServer =
+module Observer =
 
     /// <summary>观察者聚合器
     /// </summary>

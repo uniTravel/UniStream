@@ -3,7 +3,7 @@ namespace UniStream.Domain
 open System
 
 
-module ObServer =
+module Observer =
 
     type T<'agg> =
         { AggType: string
