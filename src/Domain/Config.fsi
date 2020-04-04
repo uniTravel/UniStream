@@ -30,7 +30,7 @@ type Repo<'agg> =
 /// <summary>批处理请求类型
 /// </summary>
 type Bat<'agg> =
-    | Add of Guid * Guid * ('agg -> byte[] -> (string * byte[] * byte[]) seq * 'agg) * AsyncReplyChannel<string option>
+    | Add of Guid * Guid * ('agg -> byte[] -> (string * byte[] * byte[]) seq * 'agg) * AsyncReplyChannel<ValueOption<string>>
     | Launch of DiagnoseLog.Logger * Get * EsFunc * MailboxProcessor<Repo<'agg>>
     | Clean of DiagnoseLog.Logger
 
@@ -86,7 +86,7 @@ module Config =
         /// <param name="?refresh">刷新聚合缓存的间隔秒数，缺省为15秒。</param>
         /// <param name="?scavenge">清扫聚合快照的间隔小时数，缺省为2小时。</param>
         /// <param name="?threshold">快照间隔，缺省为1000。</param>
-        /// <param name="?batch">批处理间隔毫秒数，缺省为50毫秒。</param>
+        /// <param name="?batch">批处理间隔毫秒数，缺省为55毫秒。</param>
         /// <param name="?block">挂起超过设定的秒数，阻塞聚合请求，缺省为3秒。</param>
         new :
             get: (string -> Guid -> int64 -> (Guid * string * byte[])[] * int64) *

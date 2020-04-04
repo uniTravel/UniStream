@@ -55,7 +55,7 @@ module Mutable =
 
     let inline batAgent< ^agg when ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> =
         MailboxProcessor<Bat< ^agg>>.Start <| fun inbox ->
-            let rec loop (map: Map<Guid, (Guid * (^agg -> byte[] -> (string * byte[] * byte[]) seq * ^agg) * AsyncReplyChannel<string option>) list ref * int64 ref>) = async {
+            let rec loop (map: Map<Guid, (Guid * (^agg -> byte[] -> (string * byte[] * byte[]) seq * ^agg) * AsyncReplyChannel<ValueOption<string>>) list ref * int64 ref>) = async {
                 match! inbox.Receive() with
                 | Add (aggId, traceId, apply, channel) ->
                     if map.ContainsKey aggId then
@@ -70,8 +70,8 @@ module Mutable =
                     let execute agg traceId apply channel =
                         try
                             let (events, agg') = apply agg <| MetaData.correlationId traceId
-                            Some events, agg', channel, None
-                        with ex -> None, agg, channel, Some ex.Message
+                            events, agg', channel, ValueNone
+                        with ex -> Seq.empty, agg, channel, ValueSome ex.Message
                     let rec doApply agg batch = seq {
                         match batch with
                         | (traceId, apply, channel) :: tail ->
@@ -82,20 +82,17 @@ module Mutable =
                     }
                     let rec buildEvents result = seq {
                         match result with
-                        | (e, _, _, _) :: tail ->
-                            match e with
-                            | Some e -> yield! e; yield! buildEvents tail
-                            | None -> yield! buildEvents tail
+                        | (e, _, _, _) :: tail -> yield! e; yield! buildEvents tail
                         | [] -> ()
                     }
                     let rec launch aggId agg version list refreshed = async {
                         let result = !list |> List.rev |> doApply agg |> Seq.toList
                         let events = buildEvents result
-                        let (_, agg', _, _) = List.last result
                         try
                             let! version = esFunc aggId (version + 1L) events
+                            let (_, agg', _, _) = List.last result
                             agent.Post <| Put (aggId, agg', version)
-                            result |> List.iter (fun (_, _, channel: AsyncReplyChannel<string option>, reply) -> channel.Reply reply)
+                            result |> List.iter (fun (_, _, channel: AsyncReplyChannel<ValueOption<string>>, reply) -> channel.Reply reply)
                         with ex ->
                             lg.Error ex.StackTrace "Batch apply, save events failed: %s" ex.Message
                             if not refreshed then
@@ -105,8 +102,8 @@ module Mutable =
                                 agent.Post <| Put (aggId, agg, version)
                                 result |> List.iter (fun (_, _, channel, reply) ->
                                     match reply with
-                                    | None -> channel.Reply <| Some "Batch apply, save events failed."
-                                    | Some err -> channel.Reply <| Some err
+                                    | ValueNone -> channel.Reply <| ValueSome "Save events failed."
+                                    | ValueSome err -> channel.Reply <| ValueSome err
                                 )
                     }
                     let m = map |> Map.filter (fun _ (list, _) -> not (!list).IsEmpty)
@@ -117,7 +114,7 @@ module Mutable =
                                 do! launch aggId agg version list false
                             | Error err ->
                                 lg.Warn "Batch apply, take aggregate [%A] failed: %s" aggId err
-                                !list |> List.iter (fun (_, _, channel) -> channel.Reply <| Some "Batch apply, take aggregate failed." )
+                                !list |> List.iter (fun (_, _, channel) -> channel.Reply <| ValueSome "Take aggregate failed." )
                             list := List.empty
                         }) |> Async.Parallel |> Async.RunSynchronously |> ignore
                     return! loop map
@@ -204,8 +201,8 @@ module Mutable =
         let { DomainLog = ld; BatAgent = batAgent } = aggregator
         ld.Process user cvType aggId traceId "Add command to batch processor."
         match! batAgent.PostAndAsyncReply (fun channel -> Add (aggId, traceId, apply, channel)) with
-        | None -> ld.Success user cvType aggId traceId "Execute command success."
-        | Some err ->
+        | ValueNone -> ld.Success user cvType aggId traceId "Execute command success."
+        | ValueSome err ->
             ld.Fail user cvType aggId traceId "Execute command failed: %s" err
             return failwithf "Execute command failed: %s" err
     }

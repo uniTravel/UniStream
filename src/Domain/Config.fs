@@ -18,7 +18,7 @@ type Repo<'agg> =
     | Scavenge
 
 type Bat<'agg> =
-    | Add of Guid * Guid * ('agg -> byte[] -> (string * byte[] * byte[]) seq * 'agg) * AsyncReplyChannel<string option>
+    | Add of Guid * Guid * ('agg -> byte[] -> (string * byte[] * byte[]) seq * 'agg) * AsyncReplyChannel<ValueOption<string>>
     | Launch of DiagnoseLog.Logger * Get * EsFunc * MailboxProcessor<Repo<'agg>>
     | Clean of DiagnoseLog.Logger
 
@@ -37,7 +37,7 @@ module Config =
         let refresh = defaultArg refresh 15L
         let scavenge = defaultArg scavenge 2L
         let threshold = defaultArg threshold 1000L
-        let batch = defaultArg batch 50
+        let batch = defaultArg batch 55
         let block = defaultArg block 3L
         let repoMode =
             match cacheMode with
