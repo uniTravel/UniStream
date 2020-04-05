@@ -55,27 +55,27 @@ module Mutable =
 
     let inline batAgent< ^agg when ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> =
         MailboxProcessor<Bat< ^agg>>.Start <| fun inbox ->
-            let rec loop (map: Map<Guid, (Guid * (^agg -> byte[] -> (string * byte[] * byte[]) seq * ^agg) * AsyncReplyChannel<ValueOption<string>>) list ref * int64 ref>) = async {
+            let rec loop (map: Map<Guid, (Guid * (^agg -> byte[] -> (string * byte[] * byte[]) seq * ^agg) * AsyncReplyChannel<string voption>) list ref * int64 ref>) = async {
                 match! inbox.Receive() with
                 | Add (aggId, traceId, apply, channel) ->
                     if map.ContainsKey aggId then
-                        let list, ticks = map.[aggId]
-                        list := (traceId, apply, channel) :: !list
+                        let batch, ticks = map.[aggId]
+                        batch := (traceId, apply, channel) :: !batch
                         ticks := DateTime.Now.Ticks
                         return! loop map
                     else
-                        let list = ref [ (traceId, apply, channel) ]
-                        return! loop <| map.Add (aggId, (list, ref DateTime.Now.Ticks))
-                | Launch ( lg, get, esFunc, agent ) ->
+                        let batch = ref [ (traceId, apply, channel) ]
+                        return! loop <| map.Add (aggId, (batch, ref DateTime.Now.Ticks))
+                | Launch (lg, get, esFunc, agent) ->
                     let execute agg traceId apply channel =
                         try
-                            let (events, agg') = apply agg <| MetaData.correlationId traceId
+                            let events, agg' = apply agg <| MetaData.correlationId traceId
                             events, agg', channel, ValueNone
                         with ex -> Seq.empty, agg, channel, ValueSome ex.Message
                     let rec doApply agg batch = seq {
                         match batch with
                         | (traceId, apply, channel) :: tail ->
-                            let (events, agg', channel, result) = execute agg traceId apply channel
+                            let events, agg', channel, result = execute agg traceId apply channel
                             yield events, agg', channel, result
                             yield! doApply agg' tail
                         | [] -> ()
@@ -85,43 +85,43 @@ module Mutable =
                         | (e, _, _, _) :: tail -> yield! e; yield! buildEvents tail
                         | [] -> ()
                     }
-                    let rec launch aggId agg version list refreshed = async {
-                        let result = !list |> List.rev |> doApply agg |> Seq.toList
-                        let events = buildEvents result
+                    let rec launch aggId agg version batch refreshed = async {
+                        let result = !batch |> List.rev |> doApply agg
+                        let events = buildEvents <| List.ofSeq result
                         try
                             let! version = esFunc aggId (version + 1L) events
-                            let (_, agg', _, _) = List.last result
+                            let _, agg', _, _ = Seq.last result
                             agent.Post <| Put (aggId, agg', version)
-                            result |> List.iter (fun (_, _, channel: AsyncReplyChannel<ValueOption<string>>, reply) -> channel.Reply reply)
+                            result |> Seq.iter (fun (_, _, channel: AsyncReplyChannel<string voption>, reply) -> channel.Reply reply)
                         with ex ->
                             lg.Error ex.StackTrace "Batch apply, save events failed: %s" ex.Message
                             if not refreshed then
                                 let agg, version = Repository.sync lg aggId agg (version + 1L) get
-                                do! launch aggId agg version list true
+                                do! launch aggId agg version batch true
                             else
                                 agent.Post <| Put (aggId, agg, version)
-                                result |> List.iter (fun (_, _, channel, reply) ->
+                                result |> Seq.iter (fun (_, _, channel, reply) ->
                                     match reply with
                                     | ValueNone -> channel.Reply <| ValueSome "Save events failed."
                                     | ValueSome err -> channel.Reply <| ValueSome err
                                 )
                     }
-                    let m = map |> Map.filter (fun _ (list, _) -> not (!list).IsEmpty)
+                    let m = map |> Map.filter (fun _ (batch, _) -> not (!batch).IsEmpty)
                     if not m.IsEmpty then
-                        m |> Map.toSeq |> Seq.map (fun (aggId, (list, _)) -> async {
+                        m |> Map.toSeq |> Seq.map (fun (aggId, (batch, _)) -> async {
                             match! agent.PostAndAsyncReply (fun channel -> Take (aggId, channel)) with
                             | Ok (agg, version) ->
-                                do! launch aggId agg version list false
+                                do! launch aggId agg version batch false
                             | Error err ->
                                 lg.Warn "Batch apply, take aggregate [%A] failed: %s" aggId err
-                                !list |> List.iter (fun (_, _, channel) -> channel.Reply <| ValueSome "Take aggregate failed." )
-                            list := List.empty
+                                !batch |> List.iter (fun (_, _, channel) -> channel.Reply <| ValueSome "Take aggregate failed." )
+                            batch := List.empty
                         }) |> Async.Parallel |> Async.RunSynchronously |> ignore
                     return! loop map
                 | Clean lg ->
                     lg.Trace "Clean batch apply task list."
                     let now = DateTime.Now.Ticks
-                    let newMap = map |> Map.filter (fun _ (list, ticks) -> not (!list).IsEmpty || now - !ticks < 18000000000L )
+                    let newMap = map |> Map.filter (fun _ (batch, ticks) -> not (!batch).IsEmpty || now - !ticks < 18000000000L )
                     return! loop newMap
             }
             loop Map.empty

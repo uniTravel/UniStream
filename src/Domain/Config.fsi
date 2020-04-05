@@ -30,7 +30,7 @@ type Repo<'agg> =
 /// <summary>批处理请求类型
 /// </summary>
 type Bat<'agg> =
-    | Add of Guid * Guid * ('agg -> byte[] -> (string * byte[] * byte[]) seq * 'agg) * AsyncReplyChannel<ValueOption<string>>
+    | Add of Guid * Guid * ('agg -> byte[] -> (string * byte[] * byte[]) seq * 'agg) * AsyncReplyChannel<string voption>
     | Launch of DiagnoseLog.Logger * Get * EsFunc * MailboxProcessor<Repo<'agg>>
     | Clean of DiagnoseLog.Logger
 
