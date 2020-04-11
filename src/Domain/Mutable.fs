@@ -5,16 +5,26 @@ open System
 
 module Mutable =
 
+    type Repo<'agg> =
+        | Take of string * AsyncReplyChannel<Result<'agg * int64, string>>
+        | Put of string * 'agg * int64
+        | Refresh
+        | Scavenge
+
+    type Bat<'agg> =
+        | Add of string * string * ('agg -> string -> (string * byte[] * byte[]) seq * 'agg) * AsyncReplyChannel<string voption>
+        | Launch of DiagnoseLog.Logger * Reader * Writer * MailboxProcessor<Repo<'agg>>
+        | Clean of DiagnoseLog.Logger
+
     type T<'agg> =
-        { AggType: string
-          DomainLog: DomainLog.Logger
+        { DomainLog: DomainLog.Logger
           DiagnoseLog: DiagnoseLog.Logger
-          Get: Get
-          EsFunc: EsFunc
+          Reader: Reader
+          Writer: Writer
           RepoAgent: MailboxProcessor<Repo<'agg>>
           BatAgent: MailboxProcessor<Bat<'agg>> }
 
-    let inline repoAgent< ^agg when ^agg : (static member Initial : ^agg) and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> (lg: DiagnoseLog.Logger) get repoMode blockTicks =
+    let inline repoAgent< ^agg when ^agg : (static member Initial : ^agg) and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> (lg: DiagnoseLog.Logger) reader repoMode blockTicks =
         let take, put, refresh, scavenge =
             match repoMode with
             | Cache r -> Repository.cTake, Repository.cPut, r * 10000000L, 2L * 60L * 60L * 10000000L
@@ -27,6 +37,7 @@ module Mutable =
                         let newRepo = take repo aggId channel
                         return! loop newRepo
                     with ex ->
+                        lg.Error ex.StackTrace "Take aggregate [%A] failed: %s" aggId ex.Message
                         channel.Reply <| Error ex.Message
                         return! loop repo
                 | Put (aggId, agg, version) ->
@@ -51,11 +62,11 @@ module Mutable =
                         lg.Error ex.StackTrace "Scavenge aggregate snapshot failed: %s" ex.Message
                         return! loop repo
             }
-            loop <| Repository.empty lg get blockTicks
+            loop <| Repository.empty lg reader blockTicks
 
     let inline batAgent< ^agg when ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> =
         MailboxProcessor<Bat< ^agg>>.Start <| fun inbox ->
-            let rec loop (map: Map<Guid, (Guid * (^agg -> byte[] -> (string * byte[] * byte[]) seq * ^agg) * AsyncReplyChannel<string voption>) list ref * int64 ref>) = async {
+            let rec loop (map: Map<string, (string * (^agg -> string -> (string * byte[] * byte[]) seq * ^agg) * AsyncReplyChannel<string voption>) list ref * int64 ref>) = async {
                 match! inbox.Receive() with
                 | Add (aggId, traceId, apply, channel) ->
                     if map.ContainsKey aggId then
@@ -69,7 +80,7 @@ module Mutable =
                 | Launch (lg, get, esFunc, agent) ->
                     let execute agg traceId apply channel =
                         try
-                            let events, agg' = apply agg <| MetaData.correlationId traceId
+                            let events, agg' = apply agg traceId
                             events, agg', channel, ValueNone
                         with ex -> Seq.empty, agg, channel, ValueSome ex.Message
                     let rec doApply agg batch = seq {
@@ -112,8 +123,7 @@ module Mutable =
                             match! agent.PostAndAsyncReply (fun channel -> Take (aggId, channel)) with
                             | Ok (agg, version) ->
                                 do! launch aggId agg version batch false
-                            | Error err ->
-                                lg.Warn "Batch apply, take aggregate [%A] failed: %s" aggId err
+                            | Error _ ->
                                 !batch |> List.iter (fun (_, _, channel) -> channel.Reply <| ValueSome "Take aggregate failed." )
                             batch := List.empty
                         }) |> Async.Parallel |> Async.RunSynchronously |> ignore
@@ -135,34 +145,37 @@ module Mutable =
         let aggType = typeof< ^agg>.DeclaringType.FullName
         let ld = DomainLog.logger aggType cfg.LdFunc
         let lg = DiagnoseLog.logger aggType cfg.LgFunc
-        let get = cfg.Get aggType
-        let esFunc = cfg.EsFunc aggType
-        let repoAgent = repoAgent< ^agg> lg get cfg.RepoMode cfg.BlockTicks
+        let aggType = aggType + "-"
+        let reader = cfg.Get aggType
+        let writer = cfg.EsFunc aggType
+        let repoAgent = repoAgent< ^agg> lg reader cfg.RepoMode cfg.BlockTicks
         let batAgent = batAgent< ^agg>
         match cfg.RepoMode with
         | Cache r ->
-            let refresh = float r * 1000.0
-            Async.Start <| createTimer refresh (fun _ -> repoAgent.Post Refresh)
+            let ri = float r * 1000.0
+            Async.Start <| createTimer ri (fun _ -> repoAgent.Post Refresh)
         | Snapshot (r, s, _) ->
-            let refresh = float r * 1000.0
-            let scavenge = float s * 60.0 * 60.0 * 1000.0
-            Async.Start <| createTimer refresh (fun _ -> repoAgent.Post Refresh)
-            Async.Start <| createTimer scavenge (fun _ -> repoAgent.Post Scavenge)
-        let aggregator = { AggType = aggType; DomainLog = ld; DiagnoseLog = lg; Get = get; EsFunc = esFunc; RepoAgent = repoAgent; BatAgent = batAgent }
-        Async.Start <| createTimer cfg.Batch (fun _ -> batAgent.Post <| Launch (lg, get, esFunc, repoAgent))
+            let ri = float r * 1000.0
+            let si = float s * 60.0 * 60.0 * 1000.0
+            Async.Start <| createTimer ri (fun _ -> repoAgent.Post Refresh)
+            Async.Start <| createTimer si (fun _ -> repoAgent.Post Scavenge)
+        let aggregator = { DomainLog = ld; DiagnoseLog = lg; Reader = reader; Writer = writer; RepoAgent = repoAgent; BatAgent = batAgent }
+        Async.Start <| createTimer cfg.Batch (fun _ -> batAgent.Post <| Launch (lg, reader, writer, repoAgent))
         Async.Start <| createTimer 1800000.0 (fun _ -> batAgent.Post <| Clean lg)
         aggregator
 
-    let inline apply aggregator user aggId traceId command = async {
+    let inline apply aggregator user (aggId: Guid) (traceId: Guid) command = async {
+        let aggId = aggId.ToString()
+        let traceId = traceId.ToString()
         let cvType = (^c : (static member ValueType : string) ())
-        let apply = (^c : (member Apply: (^agg -> byte[] -> (string * byte[] * byte[]) seq * ^agg)) command)
-        let { DomainLog = ld; DiagnoseLog = lg; EsFunc = esFunc; Get = get; RepoAgent = repoAgent } = aggregator
+        let apply = (^c : (member Apply: (^agg -> string -> (string * byte[] * byte[]) seq * ^agg)) command)
+        let { DomainLog = ld; DiagnoseLog = lg; Reader = reader; Writer = writer; RepoAgent = repoAgent } = aggregator
         let rec launch apply aggId agg version traceId refreshed = async {
             try
-                let (events, agg') = apply agg <| MetaData.correlationId traceId
+                let (events, agg') = apply agg traceId
                 ld.Process user cvType aggId traceId "Apply command success."
                 try
-                    let! version = esFunc aggId (version + 1L) events
+                    let! version = writer aggId (version + 1L) events
                     ld.Success user cvType aggId traceId "Execute command success."
                     repoAgent.Post <| Put (aggId, agg', version)
                     return Ok (^agg : (member Value: ^v) agg')
@@ -170,7 +183,7 @@ module Mutable =
                     lg.Error ex.StackTrace "Save events failed: %s" ex.Message
                     if not refreshed then
                         ld.Process user cvType aggId traceId "Sync aggregate."
-                        let agg, version = Repository.sync lg aggId agg (version + 1L) get
+                        let agg, version = Repository.sync lg aggId agg (version + 1L) reader
                         return! launch apply aggId agg version traceId true
                     else
                         ld.Fail user cvType aggId traceId "Save events failed."
@@ -195,9 +208,11 @@ module Mutable =
             return failwith "Take aggregate failed."
     }
 
-    let inline batchApply (aggregator: T< ^agg>) (user: string) aggId (traceId: Guid) command = async {
+    let inline batchApply (aggregator: T< ^agg>) (user: string) (aggId: Guid) (traceId: Guid) command = async {
+        let aggId = aggId.ToString()
+        let traceId = traceId.ToString()
         let cvType = (^c : (static member ValueType : string) ())
-        let apply = (^c : (member Apply: (^agg -> byte[] -> (string * byte[] * byte[]) seq * ^agg)) command)
+        let apply = (^c : (member Apply: (^agg -> string -> (string * byte[] * byte[]) seq * ^agg)) command)
         let { DomainLog = ld; BatAgent = batAgent } = aggregator
         ld.Process user cvType aggId traceId "Add command to batch processor."
         match! batAgent.PostAndAsyncReply (fun channel -> Add (aggId, traceId, apply, channel)) with
@@ -207,7 +222,7 @@ module Mutable =
             return failwithf "Execute command failed: %s" err
     }
 
-    let inline get { RepoAgent = repoAgent; Get = get } aggId = async {
+    let inline get { RepoAgent = repoAgent } aggId = async {
         match! repoAgent.PostAndAsyncReply (fun channel -> Take (aggId, channel)) with
         | Ok (agg, version) ->
             repoAgent.Post <| Put (aggId, agg, version)

@@ -1,11 +1,10 @@
 namespace UniStream.Domain
 
-open System
 open System.Text
 
 
 module MetaData =
 
-    let correlationId (id: Guid) =
-        let json = "{\"$correlationId\":\"" + id.ToString() + "\"}"
+    let correlationId id =
+        let json = "{\"$correlationId\":\"" + id + "\"}"
         Encoding.ASCII.GetBytes json

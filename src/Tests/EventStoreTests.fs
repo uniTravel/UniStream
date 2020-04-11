@@ -43,19 +43,19 @@ let domainEventTests =
     let evt1 = "NoteCreated"
     let evt2 = "NoteChanged"
     let evt3 = "NoteCleaned"
-    let aggId = Guid.NewGuid()
-    let traceId = Guid.NewGuid()
+    let aggId = Guid.NewGuid().ToString()
+    let traceId = Guid.NewGuid().ToString()
     testSequenced <| testList "EventStore DomainEvent" [
         let withArgs f () =
             let writer = DomainEvent.write ops
             go "EventStore DomainEvent" |> f writer
         yield! testFixture withArgs [
             "客户端订阅", fun writer finish ->
-                DomainEvent.subscribeToStream admin "$et-NoteChanged" <| handler "单点订阅"
+                let unsub = DomainEvent.subscribe admin "$et-NoteChanged" <| handler "单点订阅"
                 finish 1
-            "服务端订阅", fun writer finish ->
-                DomainEvent.connectSubscription admin "$et-NoteChanged" "Group" <| handler "群组订阅"
-                finish 2
+            // "服务端订阅", fun writer finish ->
+            //     DomainEvent.connectSubscription admin "$et-NoteChanged" "Group" <| handler "群组订阅"
+            //     finish 2
             "创建Note", fun writer finish ->
                 let d1 = Encoding.UTF8.GetBytes "Initial Note"
                 let metadata = MetaData.correlationId traceId
@@ -96,8 +96,8 @@ let domainEventTests =
 let domainLogTests =
     let user = "test"
     let cvType = "CreateNote"
-    let aggId = Guid.NewGuid()
-    let traceId = Guid.NewGuid()
+    let aggId = Guid.NewGuid().ToString()
+    let traceId = Guid.NewGuid().ToString()
     testSequenced <| testList "EventStore DomainLog" [
         let withArgs f () =
             let writer = DomainLog.write "NoteApp" ld
@@ -159,16 +159,16 @@ let domainCommandTests =
             go "EventStore DomainCommand" |> f writer
         yield! testFixture withArgs [
             "命令1", fun writer finish ->
-                let traceId = Guid.NewGuid()
+                let traceId = Guid.NewGuid().ToString()
                 let aggId = Guid.NewGuid()
                 let data = Encoding.UTF8.GetBytes "Initial Note"
                 writer cvType aggId data <| MetaData.correlationId traceId |> Async.RunSynchronously
                 finish 1
             "命令2", fun writer finish ->
-                let traceId = Guid.NewGuid()
-                let aggId = Guid.NewGuid().ToString()
+                let traceId = Guid.NewGuid().ToString()
+                let aggId = Guid.NewGuid()
                 let data = Encoding.UTF8.GetBytes "Change Note"
-                writer cvType traceId data <| MetaData.correlationId traceId |> Async.RunSynchronously
+                writer cvType aggId data <| MetaData.correlationId traceId |> Async.RunSynchronously
                 finish 2
         ]
     ]

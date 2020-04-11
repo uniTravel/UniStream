@@ -11,15 +11,13 @@ module Immutable =
     /// <summary>不可变聚合器
     /// </summary>
     /// <typeparam name="'agg">聚合的类型。</typeparam>
-    /// <param name="AggType">聚合类型。</param>
     /// <param name="DomainLog">领域日志记录器。</param>
     /// <param name="DiagnoseLog">诊断日志记录器。</param>
-    /// <param name="EsFunc">领域事件流存储函数。</param>
+    /// <param name="Writer">聚合事件流存储函数。</param>
     type T<'agg> =
-        { AggType: string
-          DomainLog: DomainLog.Logger
+        { DomainLog: DomainLog.Logger
           DiagnoseLog: DiagnoseLog.Logger
-          EsFunc: EsFunc }
+          Writer: Writer }
 
     /// <summary>创建不可变聚合器
     /// </summary>
@@ -40,4 +38,4 @@ module Immutable =
         when ^agg : (static member Initial : ^agg)
         and ^agg : (member Value : ^v)
         and ^c : (static member ValueType : string)
-        and ^c : (member Apply: (^agg -> byte[] -> (string * byte[] * byte[]) seq * ^agg))
+        and ^c : (member Apply: (^agg -> string -> (string * byte[] * byte[]) seq * ^agg))

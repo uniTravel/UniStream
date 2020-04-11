@@ -1,33 +1,37 @@
 namespace UniStream.Domain
 
+open System
+
 
 module Immutable =
 
     type T<'agg> =
-        { AggType: string
-          DomainLog: DomainLog.Logger
+        { DomainLog: DomainLog.Logger
           DiagnoseLog: DiagnoseLog.Logger
-          EsFunc: EsFunc }
+          Writer: Writer }
 
     let inline create (cfg: Config.Immutable) : T< ^agg> =
         let aggType = typeof< ^agg>.DeclaringType.FullName
         let ld = DomainLog.logger aggType cfg.LdFunc
         let lg = DiagnoseLog.logger aggType cfg.LgFunc
-        let esFunc = cfg.EsFunc aggType
-        { AggType = aggType; DomainLog = ld; DiagnoseLog = lg; EsFunc = esFunc }
+        let aggType = aggType + "-"
+        let writer = cfg.EsFunc aggType
+        { DomainLog = ld; DiagnoseLog = lg; Writer = writer }
 
-    let inline apply (aggregator: T< ^agg>) user aggId traceId command = async {
+    let inline apply (aggregator: T< ^agg>) user (aggId: Guid) (traceId: Guid) command = async {
+        let aggId = aggId.ToString()
+        let traceId = traceId.ToString()
         let cvType = (^c : (static member ValueType : string) ())
-        let apply = (^c : (member Apply: (^agg -> byte[] -> (string * byte[] * byte[]) seq * ^agg)) command)
-        let { DomainLog = ld; DiagnoseLog = lg; EsFunc = esFunc } = aggregator
+        let apply = (^c : (member Apply: (^agg -> string -> (string * byte[] * byte[]) seq * ^agg)) command)
+        let { DomainLog = ld; DiagnoseLog = lg; Writer = writer } = aggregator
         ld.Process user cvType aggId traceId "Start execute command."
         let init = (^agg : (static member Initial : ^agg) ())
         ld.Process user cvType aggId traceId "Initialize immutable aggregate."
         try
-            let (events, agg') = apply init <| MetaData.correlationId traceId
+            let (events, agg') = apply init traceId
             ld.Process user cvType aggId traceId "Apply command success."
             try
-                do! esFunc aggId 0L events |> Async.Ignore
+                do! writer aggId 0L events |> Async.Ignore
                 ld.Success user cvType aggId traceId "Execute command success."
                 return (^agg : (member Value: ^v) agg')
             with ex ->
