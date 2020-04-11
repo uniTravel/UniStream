@@ -23,8 +23,7 @@ Target.create "Clean" (fun _ ->
 )
 
 Target.create "Build" (fun _ ->
-    !! "src/Domain/*.fsproj"
-    ++ "src/Infrastructure/*.fsproj"
+    !! "src/**/*.fsproj"
     |> Seq.iter (DotNet.build id)
 )
 

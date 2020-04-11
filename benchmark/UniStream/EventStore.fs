@@ -45,9 +45,9 @@ type EventStore () =
     // member self.DirectWrite () =
     //     seq { 1 .. self.count }
     //     |> Seq.iter (fun i ->
-    //         let traceId = Guid.NewGuid()
+    //         let traceId = Guid.NewGuid().ToString()
     //         let command = { Content = "changed content" }
-    //         esFunc "Benchmark.UniStream.Note" self.aggId (int64 i)
+    //         esFunc "Benchmark.UniStream.Note" (self.aggId.ToString()) (int64 i)
     //         <| seq { ("NoteChanged", Delta.asBytes command, MetaData.correlationId traceId) }
     //         |> Async.Ignore |> Async.RunSynchronously |> ignore
     //     )
@@ -64,7 +64,7 @@ type EventStore () =
         let data =
             seq { 1 .. self.count }
             |> Seq.map (fun i ->
-                let traceId = Guid.NewGuid()
+                let traceId = Guid.NewGuid().ToString()
                 ("NoteChanged", Delta.asBytes { Content = "changed content" },  MetaData.correlationId traceId)
             )
-        esFunc "Benchmark.UniStream.Note" self.aggId 1L data |> Async.RunSynchronously
+        esFunc "Benchmark.UniStream.Note" (self.aggId.ToString()) 1L data |> Async.RunSynchronously

@@ -47,8 +47,8 @@ module Note =
             | Active v -> v
             | Init -> failwith "初始状态，尚未赋值。"
 
-    let createNote ev agg (metadata: byte[]) =
-        seq { noteCreated, Delta.asBytes ev, metadata }, Active <| applyNoteCreated agg ev
+    let createNote ev agg aggId =
+        seq { noteCreated, Delta.asBytes ev, MetaData.correlationId aggId }, Active <| applyNoteCreated agg ev
 
-    let changeNote ev agg (metadata: byte[]) =
-        seq { noteChanged, Delta.asBytes ev, metadata }, Active <| applyNoteChanged agg ev
+    let changeNote ev agg aggId =
+        seq { noteChanged, Delta.asBytes ev, MetaData.correlationId aggId }, Active <| applyNoteChanged agg ev

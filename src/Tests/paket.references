@@ -1,4 +1,0 @@
-group Test
-    FSharp.Core
-    Expecto
-    EventStore.Client

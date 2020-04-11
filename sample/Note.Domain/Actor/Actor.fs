@@ -36,5 +36,5 @@ module Actor =
             | Active v -> v
             | Init -> failwith "初始状态，尚未赋值。"
 
-    let createActor ev agg (metadata: byte[]) =
-        seq { actorCreated, Delta.asBytes ev, metadata }, Active <| applyActorCreated agg ev
+    let createActor ev agg aggId =
+        seq { actorCreated, Delta.asBytes ev, MetaData.correlationId aggId }, Active <| applyActorCreated agg ev
