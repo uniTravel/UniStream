@@ -147,7 +147,7 @@ module Config =
             get: (string -> string -> int64 -> (string * byte[])[] * int64) *
             ldFunc: (string -> string -> byte[] -> byte[] -> unit) *
             lgFunc: (string -> byte[] -> unit) *
-            subBuilder: SubBuilder *
+            subBuilder: (string -> string -> SubHandler -> SubDropHandler -> (unit -> unit)) *
             ?prefix: string *
             ?cacheMode: bool *
             ?refresh: int64 *

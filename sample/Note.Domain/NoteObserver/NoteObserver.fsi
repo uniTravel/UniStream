@@ -2,17 +2,20 @@ namespace Note.Domain
 
 
 [<CLIMutable>]
-type ActorCreated = { Name: string }
+type Created = { Title: string; Content: string }
+
+[<CLIMutable>]
+type Changed = { Content: string }
 
 
-/// <summary>Actor聚合模块
+/// <summary>NoteObserver聚合模块
 /// </summary>
 [<RequireQualifiedAccess>]
-module Actor =
+module NoteObserver =
 
     /// <summary>聚合值类型
     /// </summary>
-    type Value = { Name: string }
+    type Value = { Title: string; Content: string; Count: int }
 
     /// <summary>聚合类型
     /// </summary>
@@ -31,10 +34,3 @@ module Actor =
         /// <summary>聚合值
         /// </summary>
         member Value : Value
-
-    /// <summary>创建Actor
-    /// </summary>
-    /// <param name="ev">领域事件值。</param>
-    /// <param name="agg">当前聚合。</param>
-    /// <param name="traceId">跟踪ID。</param>
-    val internal createActor : ActorCreated -> T -> string -> ((string * byte[] * byte[]) seq * T)

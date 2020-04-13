@@ -15,7 +15,7 @@ module Note =
     /// <summary>聚合值类型
     /// </summary>
     type Value =
-        { Title: string; Content: string }
+        { Title: string; Content: string; Count: int }
 
     /// <summary>聚合类型
     /// </summary>
@@ -39,12 +39,12 @@ module Note =
     /// </summary>
     /// <param name="ev">领域事件值。</param>
     /// <param name="agg">当前聚合。</param>
-    /// <param name="metadata">领域事件元数据。</param>
-    val internal createNote : NoteCreated -> T -> string -> (string * byte[] * byte[]) seq * T
+    /// <param name="traceId">跟踪ID。</param>
+    val internal createNote : NoteCreated -> T -> string -> ((string * byte[] * byte[]) seq * T)
 
     /// <summary>改变Note
     /// </summary>
     /// <param name="ev">领域事件值。</param>
     /// <param name="agg">当前聚合。</param>
-    /// <param name="aggId">聚合ID。</param>
-    val internal changeNote : NoteChanged -> T -> string -> (string * byte[] * byte[]) seq * T
+    /// <param name="traceId">跟踪ID。</param>
+    val internal changeNote : NoteChanged -> T -> string -> ((string * byte[] * byte[]) seq * T)

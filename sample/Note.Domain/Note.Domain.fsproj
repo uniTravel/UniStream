@@ -17,6 +17,8 @@
     <Compile Include="Note/Note.fs" />
     <Compile Include="Note/Command.fsi" />
     <Compile Include="Note/Command.fs" />
+    <Compile Include="NoteObserver/NoteObserver.fsi" />
+    <Compile Include="NoteObserver/NoteObserver.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

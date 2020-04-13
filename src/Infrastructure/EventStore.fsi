@@ -17,11 +17,12 @@ module DomainEvent =
     /// <para>3、如果起始版本为0，则取出全部聚合事件。</para>
     /// </summary>
     /// <param name="client">EventStore客户端。</param>
+    /// <param name="resolveLink">是否处理链接事件。</param>
     /// <param name="prerix">流名称前缀：聚合类型或$bc。</param>
     /// <param name="id">流名称ID：聚合ID或关联Key。</param>
     /// <param name="version">起始事件版本。</param>
     /// <returns>同一聚合ID下、从某个版本开始的领域事件的有序集合与当前版本号。</returns>
-    val get : IEventStoreConnection -> string -> string -> int64 -> ((string * byte[])[] * int64)
+    val get : IEventStoreConnection -> bool -> string -> string -> int64 -> ((string * byte[])[] * int64)
 
     /// <summary>写入领域事件
     /// <para>聚合类型-聚合ID作为Stream名称。</para>

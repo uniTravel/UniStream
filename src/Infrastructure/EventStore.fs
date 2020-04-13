@@ -7,10 +7,10 @@ open EventStore.ClientAPI
 
 module DomainEvent =
 
-    let get (client: IEventStoreConnection) prefix id version =
+    let get (client: IEventStoreConnection) resolveLink prefix id version =
         let streamName = prefix + id
         let rec read events pos =
-            let slice = (client.ReadStreamEventsForwardAsync (streamName, pos, 64, false)).Result
+            let slice = (client.ReadStreamEventsForwardAsync (streamName, pos, 64, resolveLink)).Result
             let events = Array.append events slice.Events
             if slice.IsEndOfStream then events, slice.LastEventNumber
             else read events slice.NextEventNumber

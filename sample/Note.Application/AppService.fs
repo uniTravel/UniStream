@@ -4,6 +4,7 @@ open System
 open EventStore.ClientAPI
 open UniStream.Domain
 open UniStream.Infrastructure
+open Note.Domain
 
 
 [<Sealed>]
@@ -21,9 +22,11 @@ type AppService (es: Uri, ld: Uri, lg: Uri) =
     let esFunc = DomainEvent.write c1
     let ldFunc = DomainLog.write "NoteApp" c2
     let lgFunc = DiagnoseLog.write "NoteApp" c3
+    let sub = DomainEvent.subscribe c1
 
     let actor = Immutable.create <| Config.Immutable (esFunc, ldFunc, lgFunc)
-    let note = Mutable.create <| Config.Mutable (get, esFunc, ldFunc, lgFunc)
+    let note = Mutable.create <| Config.Mutable (get false, esFunc, ldFunc, lgFunc)
+    let noteObserver = Observer.create<NoteObserver.T> <| Config.Observer (get true, ldFunc, lgFunc, sub)
 
     member _.CreateActor user aggId traceId cv =
         CommandService.createActor actor user aggId traceId cv
@@ -39,3 +42,6 @@ type AppService (es: Uri, ld: Uri, lg: Uri) =
 
     member _.GetNote aggId =
         Mutable.get note aggId
+
+    member _.GetNoteObserver key =
+        Observer.get noteObserver key

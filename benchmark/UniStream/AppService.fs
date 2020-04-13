@@ -22,7 +22,7 @@ type AppService (es: Uri, ld: Uri, lg: Uri) =
     let ldFunc = DomainLog.write "NoteApp" c2
     let lgFunc = DiagnoseLog.write "NoteApp" c3
 
-    let note = Mutable.create <| Config.Mutable (get, esFunc, ldFunc, lgFunc)
+    let note = Mutable.create <| Config.Mutable (get false, esFunc, ldFunc, lgFunc)
 
     member _.CreateNote user aggId traceId cv =
         let command = CreateNote.create cv

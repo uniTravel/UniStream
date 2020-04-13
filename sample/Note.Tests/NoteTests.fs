@@ -7,38 +7,79 @@ open Note.Domain
 
 [<Tests>]
 let tests =
-    let aggId = Guid.NewGuid()
-    testSequenced <| testList "NoteAgg" [
+    let aggId1 = Guid.NewGuid()
+    let aggId2 = Guid.NewGuid()
+    let aggId3 = Guid.NewGuid()
+    let title1 = Guid.NewGuid().ToString()
+    let title2 = Guid.NewGuid().ToString()
+    let title3 = Guid.NewGuid().ToString()
+    testSequenced <| testList "可变聚合" [
         let withArgs f () =
-            go "NoteAgg" |> f
+            go "可变聚合" |> f
         yield! testFixture withArgs [
-            "创建Note", fun finish ->
-                let traceId = Guid.NewGuid()
-                let command : CreateNote = { Title = "title"; Content = "initial content" }
-                let reply = app.CreateNote "test" aggId traceId command |> Async.RunSynchronously
-                Expect.equal reply.Title command.Title "返回值错误。"
-                Expect.equal reply.Content command.Content "返回值错误。"
+            "给定三个聚合ID，创建三个Note", fun finish ->
+                let c1 : CreateNote = { Title = title1; Content = "initial content" }
+                let c2 : CreateNote = { Title = title2; Content = "initial content" }
+                let c3 : CreateNote = { Title = title3; Content = "initial content" }
+                let r1 = app.CreateNote "test" aggId1 (Guid.NewGuid()) c1 |> Async.RunSynchronously
+                let r2 = app.CreateNote "test" aggId2 (Guid.NewGuid()) c2 |> Async.RunSynchronously
+                let r3 = app.CreateNote "test" aggId3 (Guid.NewGuid()) c3 |> Async.RunSynchronously
+                Expect.equal r1.Title c1.Title "返回值错误。"
+                Expect.equal r1.Content c1.Content "返回值错误。"
+                Expect.equal r2.Title c2.Title "返回值错误。"
+                Expect.equal r2.Content c2.Content "返回值错误。"
+                Expect.equal r3.Title c3.Title "返回值错误。"
+                Expect.equal r3.Content c3.Content "返回值错误。"
                 finish 1
-            "重复创建Note", fun finish ->
-                let traceId = Guid.NewGuid()
-                let command : CreateNote = { Title = "title"; Content = "initial content" }
-                let f = fun _ -> app.CreateNote "test" aggId traceId command |> Async.RunSynchronously |> ignore
-                Expect.throwsC f (fun ex -> printfn "%s" ex.Message)
+            "修改第一个Note", fun finish ->
+                let c1 : ChangeNote = { Content = "changed content" }
+                let r1 = app.ChangeNote "test" aggId1 (Guid.NewGuid()) c1 |> Async.RunSynchronously
+                Expect.equal r1.Content c1.Content "返回值错误。"
+                Threading.Thread.Sleep 10
                 finish 2
-            "修改Note", fun finish ->
-                let traceId = Guid.NewGuid()
-                let command : ChangeNote = { Content = "changed content" }
-                let reply = app.ChangeNote "test" aggId traceId command |> Async.RunSynchronously
-                Expect.equal reply.Content command.Content "返回值错误。"
+            "获取三个Note观察者的值", fun finish ->
+                let o1 = app.GetNoteObserver title1 |> Async.RunSynchronously
+                let o2 = app.GetNoteObserver title2 |> Async.RunSynchronously
+                let o3 = app.GetNoteObserver title3 |> Async.RunSynchronously
+                Expect.equal o1.Count 1 "返回值错误。"
+                Expect.equal o2.Count 0 "返回值错误。"
+                Expect.equal o3.Count 0 "返回值错误。"
                 finish 3
-            "批量修改Note", fun finish ->
-                seq { 1 .. 1000 }
-                |> Seq.map (fun i ->
-                    let traceId = Guid.NewGuid()
-                    let command : ChangeNote = { Content = "changed content" }
-                    app.BatchChangeNote "test" aggId traceId command
-                ) |> Async.Parallel |> Async.RunSynchronously |> ignore
+            "连续修改第二个Note", fun finish ->
+                let c2 : ChangeNote = { Content = "changed content" }
+                let r2 = app.ChangeNote "test" aggId2 (Guid.NewGuid()) c2 |> Async.RunSynchronously
+                Expect.equal r2.Content c2.Content "返回值错误。"
+                let c2 : ChangeNote = { Content = "changed content again" }
+                let r2 = app.ChangeNote "test" aggId2 (Guid.NewGuid()) c2 |> Async.RunSynchronously
+                Expect.equal r2.Content c2.Content "返回值错误。"
+                Threading.Thread.Sleep 30
                 finish 4
+            "第二次获取三个Note观察者的值", fun finish ->
+                let o1 = app.GetNoteObserver title1 |> Async.RunSynchronously
+                let o2 = app.GetNoteObserver title2 |> Async.RunSynchronously
+                let o3 = app.GetNoteObserver title3 |> Async.RunSynchronously
+                Expect.equal o1.Count 1 "返回值错误。"
+                Expect.equal o2.Count 2 "返回值错误。"
+                Expect.equal o3.Count 0 "返回值错误。"
+                finish 5
+            "批量修改第三个Note", fun finish ->
+                seq { 1 .. 3 }
+                |> Seq.map (fun i ->
+                    let c3 : ChangeNote = { Content = "batch changed content" }
+                    app.BatchChangeNote "test" aggId3 (Guid.NewGuid()) c3
+                ) |> Async.Parallel |> Async.RunSynchronously |> ignore
+                let r3 = app.GetNote <| aggId3.ToString() |> Async.RunSynchronously
+                Expect.equal r3.Content "batch changed content" "返回值错误。"
+                Threading.Thread.Sleep 50
+                finish 6
+            "第三次获取三个Note观察者的值", fun finish ->
+                let o1 = app.GetNoteObserver title1 |> Async.RunSynchronously
+                let o2 = app.GetNoteObserver title2 |> Async.RunSynchronously
+                let o3 = app.GetNoteObserver title3 |> Async.RunSynchronously
+                Expect.equal o1.Count 1 "返回值错误。"
+                Expect.equal o2.Count 2 "返回值错误。"
+                Expect.equal o3.Count 3 "返回值错误。"
+                finish 7
         ]
     ]
     |> testLabel "Note App"

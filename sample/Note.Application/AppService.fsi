@@ -53,3 +53,8 @@ type AppService =
     /// </summary>
     /// <param name="aggId">聚合ID。</param>
     member GetNote : string -> Async<Note.Value>
+
+    /// <summary>获取NoteObserver
+    /// </summary>
+    /// <param name="key">关联Key。</param>
+    member GetNoteObserver : string -> Async<NoteObserver.Value>
