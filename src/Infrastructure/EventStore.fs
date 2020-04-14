@@ -4,6 +4,16 @@ open System
 open System.Threading.Tasks
 open EventStore.ClientAPI
 
+type EventReader = bool -> string -> string -> int64 -> ((string * byte[])[] * int64)
+
+type EventWriter = string -> string -> int64 -> (string * byte[] * byte[]) seq -> Async<int64>
+
+type Subscriber = string -> string -> (string -> string -> int64 -> byte[] -> byte[] -> Async<unit>) -> (string -> exn -> Async<unit>) -> (unit -> unit)
+
+type DomainLogger = string -> string -> string -> byte[] -> byte[] -> unit
+
+type DiagnoseLogger = string -> string -> byte[] -> unit
+
 
 module DomainEvent =
 
@@ -87,7 +97,7 @@ module DomainCommand =
 
 module DomainLog =
 
-    let write ctx (client: IEventStoreConnection) user category data metadata =
+    let write (client: IEventStoreConnection) ctx user category data metadata =
         let streamName = ctx + user
         let eventData = EventData (Guid.NewGuid(), category, true, data, metadata)
         client.AppendToStreamAsync (streamName, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.Ignore |> ignore
@@ -95,6 +105,6 @@ module DomainLog =
 
 module DiagnoseLog =
 
-    let write ctx (client: IEventStoreConnection) aggType data =
+    let write (client: IEventStoreConnection) ctx aggType data =
         let eventData = EventData (Guid.NewGuid(), aggType, true, data, [||])
         client.AppendToStreamAsync (ctx, int64 ExpectedVersion.Any, eventData) |> Async.AwaitTask |> Async.Ignore |> ignore

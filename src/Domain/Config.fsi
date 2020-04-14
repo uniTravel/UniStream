@@ -134,7 +134,6 @@ module Config =
         /// <summary>构造函数
         /// </summary>
         /// <param name="get">从某个版本开始为聚合获取事件的函数。</param>
-        /// <param name="ldFunc">领域日志流存储函数。</param>
         /// <param name="lgFunc">诊断日志流存储函数。</param>
         /// <param name="subBuilder">订阅函数构造器。</param>
         /// <param name="?prefix">流名称前缀。</param>
@@ -145,7 +144,6 @@ module Config =
         /// <param name="?block">挂起超过设定的秒数，阻塞聚合请求，缺省为3秒。</param>
         new :
             get: (string -> string -> int64 -> (string * byte[])[] * int64) *
-            ldFunc: (string -> string -> byte[] -> byte[] -> unit) *
             lgFunc: (string -> byte[] -> unit) *
             subBuilder: (string -> string -> SubHandler -> SubDropHandler -> (unit -> unit)) *
             ?prefix: string *
@@ -158,10 +156,6 @@ module Config =
         /// <summary>从某个版本开始获取聚合事件的函数
         /// </summary>
         member Reader : Reader
-
-        /// <summary>领域日志流存储函数
-        /// </summary>
-        member LdFunc : (string -> string -> byte[] -> byte[] -> unit)
 
         /// <summary>诊断日志流存储函数
         /// </summary>

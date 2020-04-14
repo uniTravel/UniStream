@@ -123,7 +123,7 @@ module Observer =
 
     let inline create (cfg: Config.Observer) =
         let createTimer interval handler =
-            let timer = new Timers.Timer(interval)
+            let timer = new Timer(interval)
             timer.AutoReset <- true
             timer.Elapsed.Add handler
             async { timer.Start() }

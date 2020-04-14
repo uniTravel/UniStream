@@ -19,8 +19,8 @@ type AppService (es: Uri, ld: Uri, lg: Uri) =
     let c3 = connect lg
     let get = DomainEvent.get c1
     let esFunc = DomainEvent.write c1
-    let ldFunc = DomainLog.write "NoteApp" c2
-    let lgFunc = DiagnoseLog.write "NoteApp" c3
+    let ldFunc = DomainLog.write c2 "NoteApp"
+    let lgFunc = DiagnoseLog.write c3 "NoteApp"
 
     let note = Mutable.create <| Config.Mutable (get false, esFunc, ldFunc, lgFunc)
 

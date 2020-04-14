@@ -41,9 +41,9 @@ let tests =
                 let o1 = app.GetNoteObserver title1 |> Async.RunSynchronously
                 let o2 = app.GetNoteObserver title2 |> Async.RunSynchronously
                 let o3 = app.GetNoteObserver title3 |> Async.RunSynchronously
-                Expect.equal o1.Count 1 "返回值错误。"
-                Expect.equal o2.Count 0 "返回值错误。"
-                Expect.equal o3.Count 0 "返回值错误。"
+                Expect.equal o1.[0].Count 1 "返回值错误。"
+                Expect.equal o2.[0].Count 0 "返回值错误。"
+                Expect.equal o3.[0].Count 0 "返回值错误。"
                 finish 3
             "连续修改第二个Note", fun finish ->
                 let c2 : ChangeNote = { Content = "changed content" }
@@ -58,9 +58,9 @@ let tests =
                 let o1 = app.GetNoteObserver title1 |> Async.RunSynchronously
                 let o2 = app.GetNoteObserver title2 |> Async.RunSynchronously
                 let o3 = app.GetNoteObserver title3 |> Async.RunSynchronously
-                Expect.equal o1.Count 1 "返回值错误。"
-                Expect.equal o2.Count 2 "返回值错误。"
-                Expect.equal o3.Count 0 "返回值错误。"
+                Expect.equal o1.[0].Count 1 "返回值错误。"
+                Expect.equal o2.[0].Count 2 "返回值错误。"
+                Expect.equal o3.[0].Count 0 "返回值错误。"
                 finish 5
             "批量修改第三个Note", fun finish ->
                 seq { 1 .. 3 }
@@ -70,15 +70,15 @@ let tests =
                 ) |> Async.Parallel |> Async.RunSynchronously |> ignore
                 let r3 = app.GetNote <| aggId3.ToString() |> Async.RunSynchronously
                 Expect.equal r3.Content "batch changed content" "返回值错误。"
-                Threading.Thread.Sleep 50
+                Threading.Thread.Sleep 100
                 finish 6
             "第三次获取三个Note观察者的值", fun finish ->
                 let o1 = app.GetNoteObserver title1 |> Async.RunSynchronously
                 let o2 = app.GetNoteObserver title2 |> Async.RunSynchronously
                 let o3 = app.GetNoteObserver title3 |> Async.RunSynchronously
-                Expect.equal o1.Count 1 "返回值错误。"
-                Expect.equal o2.Count 2 "返回值错误。"
-                Expect.equal o3.Count 3 "返回值错误。"
+                Expect.equal o1.[0].Count 1 "返回值错误。"
+                Expect.equal o2.[0].Count 2 "返回值错误。"
+                Expect.equal o3.[0].Count 3 "返回值错误。"
                 finish 7
         ]
     ]

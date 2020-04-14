@@ -1,32 +1,19 @@
 namespace Note.Application
 
-open System
-open EventStore.ClientAPI
 open UniStream.Domain
 open UniStream.Infrastructure
 open Note.Domain
 
 
 [<Sealed>]
-type AppService (es: Uri, ld: Uri, lg: Uri) =
+type AppService (reader: EventReader, writer: EventWriter, ld: DomainLogger, lg: DiagnoseLogger) =
 
-    let connect (uri: Uri) =
-        let conn = EventStoreConnection.Create uri
-        conn.ConnectAsync() |> Async.AwaitTask |> Async.RunSynchronously
-        conn
+    let actor = Immutable.create <| Config.Immutable (writer, ld "NoteApp", lg "NoteApp")
+    let note = Mutable.create <| Config.Mutable (reader false, writer, ld "NoteApp", lg "NoteApp")
+    let mutable noteObserver : Observer.T<NoteObserver.T> list = []
 
-    let c1 = connect es
-    let c2 = connect ld
-    let c3 = connect lg
-    let get = DomainEvent.get c1
-    let esFunc = DomainEvent.write c1
-    let ldFunc = DomainLog.write "NoteApp" c2
-    let lgFunc = DiagnoseLog.write "NoteApp" c3
-    let sub = DomainEvent.subscribe c1
-
-    let actor = Immutable.create <| Config.Immutable (esFunc, ldFunc, lgFunc)
-    let note = Mutable.create <| Config.Mutable (get false, esFunc, ldFunc, lgFunc)
-    let noteObserver = Observer.create<NoteObserver.T> <| Config.Observer (get true, ldFunc, lgFunc, sub)
+    member _.AddNoteObserver (sub: Subscriber) : unit =
+        noteObserver <- (Observer.create<NoteObserver.T> <| Config.Observer (reader true, lg "NoteApp", sub)) :: noteObserver
 
     member _.CreateActor user aggId traceId cv =
         CommandService.createActor actor user aggId traceId cv
@@ -43,5 +30,8 @@ type AppService (es: Uri, ld: Uri, lg: Uri) =
     member _.GetNote aggId =
         Mutable.get note aggId
 
-    member _.GetNoteObserver key =
-        Observer.get noteObserver key
+    member _.GetNoteObserver key = async {
+        match noteObserver with
+        | [] -> return failwith "观察者不存在。"
+        | n -> return! (n |> List.map (fun n -> Observer.get n key) |> Async.Parallel)
+    }

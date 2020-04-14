@@ -1,6 +1,7 @@
 namespace Note.Application
 
 open System
+open UniStream.Infrastructure
 open Note.Domain
 
 
@@ -12,10 +13,16 @@ type AppService =
 
     /// <summary>构造函数
     /// </summary>
-    /// <param name="es">领域事件流存储连接串。</param>
-    /// <param name="ld">领域日志流存储连接串。</param>
-    /// <param name="lg">诊断日志流存储连接串。</param>
-    new : Uri * Uri * Uri -> AppService
+    /// <param name="reader">事件阅读者。</param>
+    /// <param name="writer">事件撰写者。</param>
+    /// <param name="ld">领域日志记录者。</param>
+    /// <param name="lg">诊断日志记录者。</param>
+    new : EventReader * EventWriter * DomainLogger * DiagnoseLogger -> AppService
+
+    /// <summary>增加NoteObserver
+    /// </summary>
+    /// <param name="sub">事件订阅者。</param>
+    member AddNoteObserver : Subscriber -> unit
 
     /// <summary>创建Actor
     /// </summary>
@@ -57,4 +64,4 @@ type AppService =
     /// <summary>获取NoteObserver
     /// </summary>
     /// <param name="key">关联Key。</param>
-    member GetNoteObserver : string -> Async<NoteObserver.Value>
+    member GetNoteObserver : string -> Async<NoteObserver.Value[]>

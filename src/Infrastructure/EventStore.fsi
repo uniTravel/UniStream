@@ -4,6 +4,27 @@ open System
 open EventStore.ClientAPI
 
 
+/// <summary>事件阅读者
+/// </summary>
+type EventReader = bool -> string -> string -> int64 -> ((string * byte[])[] * int64)
+
+/// <summary>事件撰写者
+/// </summary>
+type EventWriter = string -> string -> int64 -> (string * byte[] * byte[]) seq -> Async<int64>
+
+/// <summary>事件订阅者
+/// </summary>
+type Subscriber = string -> string -> (string -> string -> int64 -> byte[] -> byte[] -> Async<unit>) -> (string -> exn -> Async<unit>) -> (unit -> unit)
+
+/// <summary>领域日志记录者
+/// </summary>
+type DomainLogger = string -> string -> string -> byte[] -> byte[] -> unit
+
+/// <summary>诊断日志记录者
+/// </summary>
+type DiagnoseLogger = string -> string -> byte[] -> unit
+
+
 /// <summary>领域事件访问者模块
 /// <para>领域事件流存储的EventStore实现。</para>
 /// </summary>
@@ -117,13 +138,13 @@ module DomainLog =
     /// <summary>写入领域日志
     /// <para>领域上下文加用户作为Stream名称。</para>
     /// </summary>
-    /// <param name="ctx">领域上下文。</param>
     /// <param name="client">EventStore客户端。</param>
+    /// <param name="ctx">领域上下文。</param>
     /// <param name="user">用户。</param>
     /// <param name="category">领域日志类别。</param>
     /// <param name="data">领域日志数据。</param>
     /// <param name="metadata">领域日志元数据。</param>
-    val write : string -> IEventStoreConnection -> string -> string -> byte[] -> byte[] -> unit
+    val write : IEventStoreConnection -> string -> string -> string -> byte[] -> byte[] -> unit
 
 
 /// <summary>诊断日志访问者模块
@@ -135,8 +156,8 @@ module DiagnoseLog =
     /// <summary>写入诊断日志
     /// <para>领域上下文作为Stream名称。</para>
     /// </summary>
-    /// <param name="ctx">领域上下文。</param>
     /// <param name="client">EventStore客户端。</param>
+    /// <param name="ctx">领域上下文。</param>
     /// <param name="aggType">聚合类型。</param>
     /// <param name="data">诊断日志数据。</param>
-    val write : string -> IEventStoreConnection -> string -> byte[] -> unit
+    val write : IEventStoreConnection -> string -> string -> byte[] -> unit

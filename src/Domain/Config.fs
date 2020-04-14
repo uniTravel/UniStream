@@ -50,7 +50,7 @@ module Config =
         member _.BlockTicks = block * 10000000L
 
     [<Sealed>]
-    type Observer (get, ldFunc, lgFunc, subBuilder, ?prefix, ?cacheMode, ?refresh, ?scavenge, ?threshold, ?block) =
+    type Observer (get, lgFunc, subBuilder, ?prefix, ?cacheMode, ?refresh, ?scavenge, ?threshold, ?block) =
         let prefix = defaultArg prefix "$bc-"
         let cacheMode = defaultArg cacheMode true
         let refresh = defaultArg refresh 30L
@@ -67,7 +67,6 @@ module Config =
             if block <= 0L || block >= 10L then invalidArg "blockSeconds" "Block timeout must between 0~10 seconds."
 
         member _.Reader : Reader = get prefix
-        member _.LdFunc : (string -> string -> byte[] -> byte[] -> unit) = ldFunc
         member _.LgFunc : (string -> byte[] -> unit) = lgFunc
         member _.SubBuilder : SubBuilder = subBuilder prefix
         member _.RepoMode = repoMode

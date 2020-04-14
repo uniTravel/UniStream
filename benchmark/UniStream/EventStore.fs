@@ -67,4 +67,4 @@ type EventStore () =
                 let traceId = Guid.NewGuid().ToString()
                 ("NoteChanged", Delta.asBytes { Content = "changed content" },  MetaData.correlationId traceId)
             )
-        esFunc "Benchmark.UniStream.Note" (self.aggId.ToString()) 1L data |> Async.RunSynchronously
+        esFunc "Benchmark.UniStream.Note-" (self.aggId.ToString()) 1L data |> Async.RunSynchronously
