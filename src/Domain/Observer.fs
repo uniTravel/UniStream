@@ -1,6 +1,5 @@
 namespace UniStream.Domain
 
-open System
 open System.Timers
 
 
@@ -35,7 +34,7 @@ module Observer =
                         let newRepo = take repo id channel
                         return! loop newRepo
                     with ex ->
-                        lg.Error ex.StackTrace "Take aggregate [%A] failed: %s" id ex.Message
+                        lg.Error ex.StackTrace "Take aggregate [%s] failed: %s" id ex.Message
                         channel.Reply <| Error ex.Message
                         return! loop repo
                 | Put (id, agg, version) ->
@@ -77,9 +76,14 @@ module Observer =
                         let newSubs = subs.Add (id, unsub)
                         match! repoAgent.PostAndAsyncReply (fun channel -> Take (id, channel)) with
                         | Ok (agg, version) ->
-                            let agg', version = Repository.sync lg id agg (version + 1L) cfg.Reader
-                            repoAgent.Post <| Put (id, agg', version)
-                            channel.Reply ValueNone
+                            try
+                                let agg', version = Repository.sync lg id agg (version + 1L) cfg.Reader
+                                repoAgent.Post <| Put (id, agg', version)
+                                channel.Reply ValueNone
+                            with ex ->
+                                lg.Error ex.StackTrace "Sync aggregate [%s] failed when subscribe: %s" id ex.Message
+                                channel.Reply <| ValueSome ex.Message
+                                return! loop subs
                         | Error err -> channel.Reply <| ValueSome err
                         return! loop newSubs
                 | Unsubscribe id ->

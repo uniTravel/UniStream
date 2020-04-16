@@ -37,7 +37,7 @@ module Mutable =
                         let newRepo = take repo aggId channel
                         return! loop newRepo
                     with ex ->
-                        lg.Error ex.StackTrace "Take aggregate [%A] failed: %s" aggId ex.Message
+                        lg.Error ex.StackTrace "Take aggregate [%s] failed: %s" aggId ex.Message
                         channel.Reply <| Error ex.Message
                         return! loop repo
                 | Put (aggId, agg, version) ->
@@ -107,8 +107,16 @@ module Mutable =
                         with ex ->
                             lg.Error ex.StackTrace "Batch apply, save events failed: %s" ex.Message
                             if not refreshed then
-                                let agg, version = Repository.sync lg aggId agg (version + 1L) get
-                                do! launch aggId agg version batch true
+                                try
+                                    let agg, version = Repository.sync lg aggId agg (version + 1L) get
+                                    do! launch aggId agg version batch true
+                                with _ ->
+                                    agent.Post <| Put (aggId, agg, version)
+                                    result |> Seq.iter (fun (_, _, channel, reply) ->
+                                        match reply with
+                                        | ValueNone -> channel.Reply <| ValueSome "Sync aggregate failed."
+                                        | ValueSome err -> channel.Reply <| ValueSome err
+                                    )
                             else
                                 agent.Post <| Put (aggId, agg, version)
                                 result |> Seq.iter (fun (_, _, channel, reply) ->
@@ -183,8 +191,13 @@ module Mutable =
                     lg.Error ex.StackTrace "Save events failed: %s" ex.Message
                     if not refreshed then
                         ld.Process user cvType aggId traceId "Sync aggregate."
-                        let agg, version = Repository.sync lg aggId agg (version + 1L) reader
-                        return! launch apply aggId agg version traceId true
+                        try
+                            let agg, version = Repository.sync lg aggId agg (version + 1L) reader
+                            return! launch apply aggId agg version traceId true
+                        with _ ->
+                            ld.Fail user cvType aggId traceId "Sync aggregate failed."
+                            repoAgent.Post <| Put (aggId, agg, version)
+                            return Error "Sync aggregate failed."
                     else
                         ld.Fail user cvType aggId traceId "Save events failed."
                         repoAgent.Post <| Put (aggId, agg, version)

@@ -8,7 +8,6 @@ open UniStream.Domain
 
 
 [<MemoryDiagnoser>]
-[<SimpleJob(1, 2, 10)>]
 type EventStore () =
 
     let es = Uri "tcp://admin:changeit@localhost:4011"

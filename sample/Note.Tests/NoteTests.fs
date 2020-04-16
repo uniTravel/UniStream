@@ -45,6 +45,10 @@ let tests =
                 Expect.equal o2.[0].Count 0 "返回值错误。"
                 Expect.equal o3.[0].Count 0 "返回值错误。"
                 finish 3
+            "获取一个不存在的Note观察者的值", fun finish ->
+                let f = fun _ -> app.GetNoteObserver (Guid.NewGuid().ToString()) |> Async.RunSynchronously |> ignore
+                Expect.throwsC f (fun ex -> printfn "%s" ex.Message)
+                finish 4
             "连续修改第二个Note", fun finish ->
                 let c2 : ChangeNote = { Content = "changed content" }
                 let r2 = app.ChangeNote "test" aggId2 (Guid.NewGuid()) c2 |> Async.RunSynchronously
@@ -53,7 +57,7 @@ let tests =
                 let r2 = app.ChangeNote "test" aggId2 (Guid.NewGuid()) c2 |> Async.RunSynchronously
                 Expect.equal r2.Content c2.Content "返回值错误。"
                 Threading.Thread.Sleep 30
-                finish 4
+                finish 5
             "第二次获取三个Note观察者的值", fun finish ->
                 let o1 = app.GetNoteObserver title1 |> Async.RunSynchronously
                 let o2 = app.GetNoteObserver title2 |> Async.RunSynchronously
@@ -61,7 +65,7 @@ let tests =
                 Expect.equal o1.[0].Count 1 "返回值错误。"
                 Expect.equal o2.[0].Count 2 "返回值错误。"
                 Expect.equal o3.[0].Count 0 "返回值错误。"
-                finish 5
+                finish 6
             "批量修改第三个Note", fun finish ->
                 seq { 1 .. 3 }
                 |> Seq.map (fun i ->
@@ -71,7 +75,7 @@ let tests =
                 let r3 = app.GetNote <| aggId3.ToString() |> Async.RunSynchronously
                 Expect.equal r3.Content "batch changed content" "返回值错误。"
                 Threading.Thread.Sleep 100
-                finish 6
+                finish 7
             "第三次获取三个Note观察者的值", fun finish ->
                 let o1 = app.GetNoteObserver title1 |> Async.RunSynchronously
                 let o2 = app.GetNoteObserver title2 |> Async.RunSynchronously
@@ -79,7 +83,7 @@ let tests =
                 Expect.equal o1.[0].Count 1 "返回值错误。"
                 Expect.equal o2.[0].Count 2 "返回值错误。"
                 Expect.equal o3.[0].Count 3 "返回值错误。"
-                finish 7
+                finish 8
         ]
     ]
     |> testLabel "Note App"
