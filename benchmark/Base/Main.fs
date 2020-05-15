@@ -10,6 +10,7 @@ module Main =
             typeof<Serialize>
             typeof<Deserialize>
             typeof<Collections>
+            typeof<Lookup>
         |]
         switch.Run argv |> ignore
         0

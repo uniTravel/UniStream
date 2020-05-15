@@ -31,16 +31,14 @@ module Observer =
                 match! inbox.Receive() with
                 | Take (id, channel) ->
                     try
-                        let newRepo = take repo id channel
-                        return! loop newRepo
+                        return! loop <| take repo id channel
                     with ex ->
                         lg.Error ex.StackTrace "Take aggregate [%s] failed: %s" id ex.Message
                         channel.Reply <| Error ex.Message
                         return! loop repo
                 | Put (id, agg, version) ->
                     try
-                        let newRepo = put repo id agg version
-                        return! loop newRepo
+                        return! loop <| put repo id agg version
                     with ex ->
                         lg.Error ex.StackTrace "Put aggregate failed: %s" ex.Message
                         return! loop repo
@@ -55,8 +53,7 @@ module Observer =
                         return! loop repo
                 | Scavenge ->
                     try
-                        let newRepo = Repository.scavenge repo scavenge
-                        return! loop newRepo
+                        return! loop <| Repository.scavenge repo scavenge
                     with ex ->
                         lg.Error ex.StackTrace "Scavenge aggregate snapshot failed: %s" ex.Message
                         return! loop repo
@@ -92,8 +89,7 @@ module Observer =
                     let newSubs =
                         subs |> Map.filter (fun key unsub ->
                             if ids.ContainsKey key then true
-                            else unsub(); false
-                        )
+                            else unsub(); false)
                     return! loop newSubs
             }
             loop Map.empty

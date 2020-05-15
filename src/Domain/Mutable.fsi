@@ -21,7 +21,6 @@ module Mutable =
     type Bat<'agg> =
         | Add of string * string * ('agg -> string -> (string * byte[] * byte[]) seq * 'agg) * AsyncReplyChannel<string voption>
         | Launch of DiagnoseLog.Logger * Reader * Writer * MailboxProcessor<Repo<'agg>>
-        | Clean of DiagnoseLog.Logger
 
     /// <summary>可变聚合器
     /// </summary>

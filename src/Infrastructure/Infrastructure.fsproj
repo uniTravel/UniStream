@@ -4,6 +4,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="AssemblyInfo.fs" />
     <Compile Include="EventStore.fsi" />
     <Compile Include="EventStore.fs" />
     <None Include="paket.references" />

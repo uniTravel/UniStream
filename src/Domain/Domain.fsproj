@@ -4,6 +4,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="AssemblyInfo.fs" />
     <Compile Include="MetaData.fsi" />
     <Compile Include="MetaData.fs" />
     <Compile Include="DomainLog.fsi" />

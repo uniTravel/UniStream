@@ -26,8 +26,8 @@ type SubBuilder = string -> SubHandler -> SubDropHandler -> (unit -> unit)
 /// <typeparam name="Cache">缓存模式。</typeparam>
 /// <typeparam name="Snapshot">快照模式。</typeparam>
 type RepoMode =
-    | Cache of int64
-    | Snapshot of int64 * int64 * int64
+    | Cache of int * int64
+    | Snapshot of int * int64 * int64 * int64
 
 
 /// <summary>配置模块
@@ -64,8 +64,9 @@ module Config =
 
 
     /// <summary>可变聚合配置
-    /// <para>1、刷新缓存的间隔应介于10~60秒之间。</para>
-    /// <para>2、清扫快照的间隔应介于1~24小时之间。</para>
+    /// <para>1、缓存与快照的容量应介于5000~100000之间。</para>
+    /// <para>2、刷新缓存的间隔应介于10~180秒之间。</para>
+    /// <para>3、清扫快照的间隔应介于24~72小时之间。</para>
     /// </summary>
     [<Sealed>]
     type Mutable =
@@ -78,22 +79,22 @@ module Config =
         /// <param name="ldFunc">领域日志流存储函数。</param>
         /// <param name="lgFunc">诊断日志流存储函数。</param>
         /// <param name="?cacheMode">是否缓存模式：true为缓存模式，false为快照模式，缺省为true。</param>
+        /// <param name="?capacity">缓存与快照的容量，缺省为10000。</param>
         /// <param name="?refresh">刷新聚合缓存的间隔秒数，缺省为15秒。</param>
-        /// <param name="?scavenge">清扫聚合快照的间隔小时数，缺省为2小时。</param>
+        /// <param name="?scavenge">清扫聚合快照的间隔小时数，缺省为24小时。</param>
         /// <param name="?threshold">快照间隔，缺省为1000。</param>
         /// <param name="?batch">批处理间隔毫秒数，缺省为55毫秒。</param>
-        /// <param name="?block">挂起超过设定的秒数，阻塞聚合请求，缺省为3秒。</param>
         new :
             get: (string -> string -> int64 -> (string * byte[])[] * int64) *
             esFunc: (string -> string -> int64 -> (string * byte[] * byte[]) seq -> Async<int64>) *
             ldFunc: (string -> string -> byte[] -> byte[] -> unit) *
             lgFunc: (string -> byte[] -> unit) *
             ?cacheMode: bool *
-            ?refresh: int64 *
-            ?scavenge: int64 *
-            ?threshold: int64 *
-            ?batch: int *
-            ?block: int64 -> Mutable
+            ?capacity: int *
+            ?refresh: int *
+            ?scavenge: int *
+            ?threshold: int *
+            ?batch: int -> Mutable
 
         /// <summary>从某个版本开始为聚合获取事件的函数
         /// </summary>
@@ -119,14 +120,11 @@ module Config =
         /// </summary>
         member Batch : float
 
-        /// <summary>挂起超过设定的Ticks，阻塞聚合请求
-        /// </summary>
-        member BlockTicks : int64
-
 
     /// <summary>观察者聚合配置
-    /// <para>1、刷新缓存的间隔应介于30~3600分钟之间。</para>
-    /// <para>2、清扫快照的间隔应介于24~72小时之间。</para>
+    /// <para>1、缓存与快照的容量应介于5000~100000之间。</para>
+    /// <para>2、刷新缓存的间隔应介于30~3600分钟之间。</para>
+    /// <para>3、清扫快照的间隔应介于24~72小时之间。</para>
     /// </summary>
     [<Sealed>]
     type Observer =
@@ -138,20 +136,20 @@ module Config =
         /// <param name="subBuilder">订阅函数构造器。</param>
         /// <param name="?prefix">流名称前缀。</param>
         /// <param name="?cacheMode">是否缓存模式：true为缓存模式，false为快照模式，缺省为true。</param>
+        /// <param name="?capacity">缓存与快照的容量，缺省为10000。</param>
         /// <param name="?refresh">刷新聚合缓存的间隔秒数，缺省为30分钟。</param>
         /// <param name="?scavenge">清扫聚合快照的间隔小时数，缺省为24小时。</param>
         /// <param name="?threshold">快照间隔，缺省为1000。</param>
-        /// <param name="?block">挂起超过设定的秒数，阻塞聚合请求，缺省为3秒。</param>
         new :
             get: (string -> string -> int64 -> (string * byte[])[] * int64) *
             lgFunc: (string -> byte[] -> unit) *
             subBuilder: (string -> string -> SubHandler -> SubDropHandler -> (unit -> unit)) *
             ?prefix: string *
             ?cacheMode: bool *
-            ?refresh: int64 *
-            ?scavenge: int64 *
-            ?threshold: int64 *
-            ?block: int64 -> Observer
+            ?capacity: int *
+            ?refresh: int *
+            ?scavenge: int *
+            ?threshold: int -> Observer
 
         /// <summary>从某个版本开始获取聚合事件的函数
         /// </summary>
@@ -168,7 +166,3 @@ module Config =
         /// <summary>仓储模式
         /// </summary>
         member RepoMode : RepoMode
-
-        /// <summary>挂起超过设定的Ticks，阻塞聚合请求
-        /// </summary>
-        member BlockTicks : int64

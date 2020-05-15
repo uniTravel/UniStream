@@ -12,8 +12,8 @@ type SubDropHandler = string -> exn -> Async<unit>
 type SubBuilder = string -> SubHandler -> SubDropHandler -> (unit -> unit)
 
 type RepoMode =
-    | Cache of int64
-    | Snapshot of int64 * int64 * int64
+    | Cache of int * int64
+    | Snapshot of int * int64 * int64 * int64
 
 
 module Config =
@@ -25,21 +25,21 @@ module Config =
         member _.LgFunc : (string -> byte[] -> unit) = lgFunc
 
     [<Sealed>]
-    type Mutable (get, esFunc, ldFunc, lgFunc, ?cacheMode, ?refresh, ?scavenge, ?threshold, ?batch, ?block) =
+    type Mutable (get, esFunc, ldFunc, lgFunc, ?cacheMode, ?capacity, ?refresh, ?scavenge, ?threshold, ?batch) =
         let cacheMode = defaultArg cacheMode true
-        let refresh = defaultArg refresh 15L
-        let scavenge = defaultArg scavenge 2L
-        let threshold = defaultArg threshold 1000L
+        let capacity = defaultArg capacity 10000
+        let refresh = defaultArg refresh 15
+        let scavenge = defaultArg scavenge 24
+        let threshold = defaultArg threshold 1000
         let batch = defaultArg batch 55
-        let block = defaultArg block 3L
         let repoMode =
             match cacheMode with
-            | true -> Cache refresh
-            | false -> Snapshot (refresh, scavenge, threshold)
+            | true -> Cache (capacity, int64 refresh)
+            | false -> Snapshot (capacity, int64 refresh, int64 scavenge, int64 threshold)
         do
-            if refresh < 10L || refresh > 60L then invalidArg "refresh" "Interval for refresh mutable aggregator's cache must between 10~60 seconds."
-            if scavenge < 1L || scavenge > 24L then invalidArg "scavenge" "Interval for scavenge mutable aggregator's snapshot must between 1~24 hours."
-            if block <= 0L || block >= 10L then invalidArg "block" "Block timeout must between 0~10 seconds."
+            if capacity < 5000 || capacity > 100000 then invalidArg "capacity" "Capacity of mutable aggregator's repository must between 5000~100000."
+            if refresh < 10 || refresh > 180 then invalidArg "refresh" "Interval for refresh mutable aggregator's cache must between 10~180 seconds."
+            if scavenge < 24 || scavenge > 72 then invalidArg "scavenge" "Interval for scavenge mutable aggregator's snapshot must between 24~72 hours."
 
         member _.Get : (string -> string -> int64 -> ((string * byte[])[] * int64)) = get
         member _.EsFunc : (string -> string -> int64 -> (string * byte[] * byte[]) seq -> Async<int64>) = esFunc
@@ -47,27 +47,25 @@ module Config =
         member _.LgFunc : (string -> byte[] -> unit) = lgFunc
         member _.RepoMode = repoMode
         member _.Batch = float batch
-        member _.BlockTicks = block * 10000000L
 
     [<Sealed>]
-    type Observer (get, lgFunc, subBuilder, ?prefix, ?cacheMode, ?refresh, ?scavenge, ?threshold, ?block) =
+    type Observer (get, lgFunc, subBuilder, ?prefix, ?cacheMode, ?capacity, ?refresh, ?scavenge, ?threshold) =
         let prefix = defaultArg prefix "$bc-"
         let cacheMode = defaultArg cacheMode true
-        let refresh = defaultArg refresh 30L
-        let scavenge = defaultArg scavenge 24L
-        let threshold = defaultArg threshold 1000L
-        let block = defaultArg block 3L
+        let capacity = defaultArg capacity 10000
+        let refresh = defaultArg refresh 30
+        let scavenge = defaultArg scavenge 24
+        let threshold = defaultArg threshold 1000
         let repoMode =
             match cacheMode with
-            | true -> Cache refresh
-            | false -> Snapshot (refresh, scavenge, threshold)
+            | true -> Cache (capacity, int64 refresh)
+            | false -> Snapshot (capacity, int64 refresh, int64 scavenge, int64 threshold)
         do
-            if refresh < 30L || refresh > 3600L then invalidArg "refresh" "Interval for refresh observer aggregator's cache must between 30~3600 minutes."
-            if scavenge < 24L || scavenge > 72L then invalidArg "scavenge" "Interval for scavenge observer aggregator's snapshot must between 24~72 hours."
-            if block <= 0L || block >= 10L then invalidArg "blockSeconds" "Block timeout must between 0~10 seconds."
+            if capacity < 5000 || capacity > 100000 then invalidArg "capacity" "Capacity of observer aggregator's repository must between 5000~100000."
+            if refresh < 30 || refresh > 3600 then invalidArg "refresh" "Interval for refresh observer aggregator's cache must between 30~3600 minutes."
+            if scavenge < 24 || scavenge > 72 then invalidArg "scavenge" "Interval for scavenge observer aggregator's snapshot must between 24~72 hours."
 
         member _.Reader : Reader = get prefix
         member _.LgFunc : (string -> byte[] -> unit) = lgFunc
         member _.SubBuilder : SubBuilder = subBuilder prefix
         member _.RepoMode = repoMode
-        member _.BlockTicks = block * 10000000L

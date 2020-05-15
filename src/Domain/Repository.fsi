@@ -13,27 +13,29 @@ module Repository =
     /// <param name="Available">Available状态。</param>
     /// <param name="Empty">Empty状态。</param>
     /// <param name="Pending">Pending状态。</param>
-    /// <param name="Blocked">Blocked状态，等待堆积的事件跨度超过设定阈值后阻塞。</param>
     type State<'agg> =
-        | Available of 'agg * int64 * int64
+        | Available of 'agg * int64
         | Empty
-        | Pending of int64
-        | Blocked of int64
+        | Pending
 
     /// <summary>聚合仓储
     /// </summary>
     /// <typeparam name="'agg">聚合的类型。</typeparam>
     /// <param name="Reader">从某个版本开始获取聚合事件的函数。</param>
     /// <param name="Logger">诊断日志记录器。</param>
-    /// <param name="BlockTicks">聚合超时锁定Ticks约束。</param>
+    /// <param name="Capacity">缓存与快照的容量。</param>
     /// <param name="Cache">聚合缓存，以聚合ID为键，值包括一个等待队列和聚合状态。</param>
+    /// <param name="CacheUsage">聚合缓存使用记录。</param>
     /// <param name="Snapshot">聚合仓储快照，以聚合ID为键，对应的值为：聚合*版本*台阶*时间戳。</param>
+    /// <param name="SnapUsage">聚合仓储快照使用记录。</param>
     type T<'agg> =
         { Reader: Reader
           Logger: DiagnoseLog.Logger
-          BlockTicks: int64
-          Cache: Map<string, Queue<int64 * AsyncReplyChannel<Result<'agg * int64, string>>> * State<'agg> ref>
-          Snapshot: Map<string, 'agg * int64 * int64 * int64 ref> }
+          Capacity: int
+          Cache: Dictionary<string, Queue<AsyncReplyChannel<Result<'agg * int64, string>>> * State<'agg> ref>
+          CacheUsage: string list
+          Snapshot: Dictionary<string, 'agg * int64 * int64>
+          SnapUsage: string list }
 
     /// <summary>同步聚合
     /// <para>同步到流存储的最新状态。</para>
@@ -68,21 +70,16 @@ module Repository =
         when ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))
 
     /// <summary>刷新聚合缓存
-    /// <para>1、移除长时间未使用的聚合。</para>
-    /// <para>2、移除长时间处于Blocked状态的聚合。</para>
     /// </summary>
     /// <typeparam name="^agg">聚合的类型。</typeparam>
     /// <param name="repo">聚合仓储。</param>
-    /// <param name="interval">以Ticks表示的间隔阈值。</param>
-    val inline refresh : T< ^agg> -> int64 -> T< ^agg>
+    val inline refresh : T< ^agg> -> T< ^agg>
 
     /// <summary>清扫聚合快照
-    /// <para>移除长时间未使用的聚合。</para>
     /// </summary>
     /// <typeparam name="^agg">聚合的类型。</typeparam>
     /// <param name="repo">聚合仓储。</param>
-    /// <param name="interval">以Ticks表示的间隔阈值。</param>
-    val inline scavenge : T< ^agg> -> int64 -> T< ^agg>
+    val inline scavenge : T< ^agg> -> T< ^agg>
 
     /// <summary>占用一个聚合
     /// <para>经由缓存处理。</para>
@@ -132,5 +129,5 @@ module Repository =
     /// <typeparam name="'agg">聚合的类型。</typeparam>
     /// <param name="lg">诊断日志记录器。</param>
     /// <param name="reader">从某个版本开始获取聚合事件的函数。</param>
-    /// <param name="blockTicks">聚合超时锁定Ticks约束。</param>
-    val empty : DiagnoseLog.Logger -> Reader -> int64 -> T<'agg>
+    /// <param name="capacity">缓存与快照的容量。</param>
+    val empty : DiagnoseLog.Logger -> Reader -> int -> T<'agg>

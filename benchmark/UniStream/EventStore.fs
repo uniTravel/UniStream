@@ -8,6 +8,7 @@ open UniStream.Domain
 
 
 [<MemoryDiagnoser>]
+[<SimpleJob(1, 3, 20)>]
 type EventStore () =
 
     let es = Uri "tcp://admin:changeit@localhost:4011"
@@ -21,7 +22,7 @@ type EventStore () =
     let c1 = connect es
     let esFunc = DomainEvent.write c1
 
-    [<DefaultValue>] val mutable aggId: Guid
+    [<DefaultValue>] val mutable AggId: Guid
 
     [<Params(100, 1000)>]
     member val public count = 0 with get, set
@@ -29,9 +30,9 @@ type EventStore () =
     [<IterationSetup>]
     member self.Setup () =
         let traceId = Guid.NewGuid()
-        self.aggId <- Guid.NewGuid()
+        self.AggId <- Guid.NewGuid()
         let command : CreateNote = { Title = "title"; Content = "initial content" }
-        app.CreateNote "benchmark" self.aggId traceId command |> Async.RunSynchronously |> ignore
+        app.CreateNote "benchmark" self.AggId traceId command |> Async.RunSynchronously |> ignore
 
     // [<Benchmark>]
     // member self.Write () =
@@ -54,7 +55,7 @@ type EventStore () =
     [<Benchmark>]
     member self.BatchWrite () =
         seq { 1 .. self.count }
-        |> Seq.map (fun i -> app.BatchChangeNote "benchmark" self.aggId (Guid.NewGuid()) { Content = "changed content" })
+        |> Seq.map (fun i -> app.BatchChangeNote "benchmark" self.AggId (Guid.NewGuid()) { Content = "changed content" })
         |> Async.Parallel
         |> Async.RunSynchronously
 
@@ -66,4 +67,4 @@ type EventStore () =
                 let traceId = Guid.NewGuid().ToString()
                 ("NoteChanged", Delta.asBytes { Content = "changed content" },  MetaData.correlationId traceId)
             )
-        esFunc "Benchmark.UniStream.Note-" (self.aggId.ToString()) 1L data |> Async.RunSynchronously
+        esFunc "Benchmark.UniStream.Note-" (self.AggId.ToString()) 1L data |> Async.RunSynchronously

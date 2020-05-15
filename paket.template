@@ -1,9 +1,4 @@
 type file
-id UniStream
-owners UniCloud
-authors Eric
-description
-    Lightweight framework for CQRS.
 files
     src/Domain/bin/Release
     src/Infrastructure/bin/Release

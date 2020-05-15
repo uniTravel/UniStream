@@ -1,6 +1,7 @@
 namespace UniStream.Domain
 
 open System
+open System.Collections.Generic
 
 
 module Mutable =
@@ -14,7 +15,6 @@ module Mutable =
     type Bat<'agg> =
         | Add of string * string * ('agg -> string -> (string * byte[] * byte[]) seq * 'agg) * AsyncReplyChannel<string voption>
         | Launch of DiagnoseLog.Logger * Reader * Writer * MailboxProcessor<Repo<'agg>>
-        | Clean of DiagnoseLog.Logger
 
     type T<'agg> =
         { DomainLog: DomainLog.Logger
@@ -24,59 +24,52 @@ module Mutable =
           RepoAgent: MailboxProcessor<Repo<'agg>>
           BatAgent: MailboxProcessor<Bat<'agg>> }
 
-    let inline repoAgent< ^agg when ^agg : (static member Initial : ^agg) and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> (lg: DiagnoseLog.Logger) reader repoMode blockTicks =
-        let take, put, refresh, scavenge =
+    let inline repoAgent< ^agg when ^agg : (static member Initial : ^agg) and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> (lg: DiagnoseLog.Logger) reader repoMode =
+        let take, put, capacity =
             match repoMode with
-            | Cache r -> Repository.cTake, Repository.cPut, r * 10000000L, 2L * 60L * 60L * 10000000L
-            | Snapshot (r, s, t) -> Repository.sTake, Repository.sPut t, r * 10000000L, s * 60L * 60L * 10000000L
+            | Cache (c, _) -> Repository.cTake, Repository.cPut, c
+            | Snapshot (c, _, _, t) -> Repository.sTake, Repository.sPut t, c
         MailboxProcessor<Repo< ^agg>>.Start <| fun inbox ->
             let rec loop repo = async {
                 match! inbox.Receive() with
                 | Take (aggId, channel) ->
                     try
-                        let newRepo = take repo aggId channel
-                        return! loop newRepo
+                        return! loop <| take repo aggId channel
                     with ex ->
                         lg.Error ex.StackTrace "Take aggregate [%s] failed: %s" aggId ex.Message
                         channel.Reply <| Error ex.Message
                         return! loop repo
                 | Put (aggId, agg, version) ->
                     try
-                        let newRepo = put repo aggId agg version
-                        return! loop newRepo
+                        return! loop <| put repo aggId agg version
                     with ex ->
                         lg.Error ex.StackTrace "Put aggregate failed: %s" ex.Message
                         return! loop repo
                 | Refresh ->
                     try
-                        let newRepo = Repository.refresh repo refresh
-                        return! loop newRepo
+                        return! loop <| Repository.refresh repo
                     with ex ->
                         lg.Error ex.StackTrace "Refresh aggregate cache failed: %s" ex.Message
                         return! loop repo
                 | Scavenge ->
                     try
-                        let newRepo = Repository.scavenge repo scavenge
-                        return! loop newRepo
+                        return! loop <| Repository.scavenge repo
                     with ex ->
                         lg.Error ex.StackTrace "Scavenge aggregate snapshot failed: %s" ex.Message
                         return! loop repo
             }
-            loop <| Repository.empty lg reader blockTicks
+            loop <| Repository.empty lg reader capacity
 
     let inline batAgent< ^agg when ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> =
         MailboxProcessor<Bat< ^agg>>.Start <| fun inbox ->
-            let rec loop (map: Map<string, (string * (^agg -> string -> (string * byte[] * byte[]) seq * ^agg) * AsyncReplyChannel<string voption>) list ref * int64 ref>) = async {
+            let rec loop (dic: Dictionary<string, (string * (^agg -> string -> (string * byte[] * byte[]) seq * ^agg) * AsyncReplyChannel<string voption>) list ref>) = async {
                 match! inbox.Receive() with
                 | Add (aggId, traceId, apply, channel) ->
-                    if map.ContainsKey aggId then
-                        let batch, ticks = map.[aggId]
+                    if dic.ContainsKey aggId then
+                        let batch = dic.[aggId]
                         batch := (traceId, apply, channel) :: !batch
-                        ticks := DateTime.Now.Ticks
-                        return! loop map
                     else
-                        let batch = ref [ (traceId, apply, channel) ]
-                        return! loop <| map.Add (aggId, (batch, ref DateTime.Now.Ticks))
+                        dic.Add (aggId, ref [ (traceId, apply, channel) ])
                 | Launch (lg, get, esFunc, agent) ->
                     let execute agg traceId apply channel =
                         try
@@ -89,16 +82,10 @@ module Mutable =
                             let events, agg', channel, result = execute agg traceId apply channel
                             yield events, agg', channel, result
                             yield! doApply agg' tail
-                        | [] -> ()
-                    }
-                    let rec buildEvents result = seq {
-                        match result with
-                        | (e, _, _, _) :: tail -> yield! e; yield! buildEvents tail
-                        | [] -> ()
-                    }
+                        | [] -> ()}
                     let rec launch aggId agg version batch refreshed = async {
                         let result = !batch |> List.rev |> doApply agg
-                        let events = buildEvents <| List.ofSeq result
+                        let events = result |> Seq.collect (fun (e, _, _, _) -> e)
                         try
                             let! version = esFunc aggId (version + 1L) events
                             let _, agg', _, _ = Seq.last result
@@ -115,34 +102,28 @@ module Mutable =
                                     result |> Seq.iter (fun (_, _, channel, reply) ->
                                         match reply with
                                         | ValueNone -> channel.Reply <| ValueSome "Sync aggregate failed."
-                                        | ValueSome err -> channel.Reply <| ValueSome err
-                                    )
+                                        | ValueSome err -> channel.Reply <| ValueSome err)
                             else
                                 agent.Post <| Put (aggId, agg, version)
                                 result |> Seq.iter (fun (_, _, channel, reply) ->
                                     match reply with
                                     | ValueNone -> channel.Reply <| ValueSome "Save events failed."
-                                    | ValueSome err -> channel.Reply <| ValueSome err
-                                )
+                                    | ValueSome err -> channel.Reply <| ValueSome err)
                     }
-                    let m = map |> Map.filter (fun _ (batch, _) -> not (!batch).IsEmpty)
-                    if not m.IsEmpty then
-                        m |> Map.toSeq |> Seq.map (fun (aggId, (batch, _)) -> async {
+                    if dic.Count > 0 then
+                        dic.Keys
+                        |> Seq.map (fun aggId -> async {
+                            let batch = dic.[aggId]
                             match! agent.PostAndAsyncReply (fun channel -> Take (aggId, channel)) with
                             | Ok (agg, version) ->
                                 do! launch aggId agg version batch false
                             | Error _ ->
-                                !batch |> List.iter (fun (_, _, channel) -> channel.Reply <| ValueSome "Take aggregate failed." )
-                            batch := List.empty
+                                !batch |> List.iter (fun (_, _, channel) -> channel.Reply <| ValueSome "Take aggregate failed.")
                         }) |> Async.Parallel |> Async.RunSynchronously |> ignore
-                    return! loop map
-                | Clean lg ->
-                    lg.Trace "Clean batch apply task list."
-                    let now = DateTime.Now.Ticks
-                    let newMap = map |> Map.filter (fun _ (batch, ticks) -> not (!batch).IsEmpty || now - !ticks < 18000000000L )
-                    return! loop newMap
+                        dic.Clear()
+                return! loop dic
             }
-            loop Map.empty
+            loop <| Dictionary<string, (string * (^agg -> string -> (string * byte[] * byte[]) seq * ^agg) * AsyncReplyChannel<string voption>) list ref>(10000)
 
     let inline create (cfg: Config.Mutable) =
         let createTimer interval handler =
@@ -156,20 +137,19 @@ module Mutable =
         let aggType = aggType + "-"
         let reader = cfg.Get aggType
         let writer = cfg.EsFunc aggType
-        let repoAgent = repoAgent< ^agg> lg reader cfg.RepoMode cfg.BlockTicks
+        let repoAgent = repoAgent< ^agg> lg reader cfg.RepoMode
         let batAgent = batAgent< ^agg>
         match cfg.RepoMode with
-        | Cache r ->
+        | Cache (_, r) ->
             let ri = float r * 1000.0
             Async.Start <| createTimer ri (fun _ -> repoAgent.Post Refresh)
-        | Snapshot (r, s, _) ->
+        | Snapshot (_, r, s, _) ->
             let ri = float r * 1000.0
             let si = float s * 60.0 * 60.0 * 1000.0
             Async.Start <| createTimer ri (fun _ -> repoAgent.Post Refresh)
             Async.Start <| createTimer si (fun _ -> repoAgent.Post Scavenge)
         let aggregator = { DomainLog = ld; DiagnoseLog = lg; Reader = reader; Writer = writer; RepoAgent = repoAgent; BatAgent = batAgent }
         Async.Start <| createTimer cfg.Batch (fun _ -> batAgent.Post <| Launch (lg, reader, writer, repoAgent))
-        Async.Start <| createTimer 1800000.0 (fun _ -> batAgent.Post <| Clean lg)
         aggregator
 
     let inline apply aggregator user (aggId: Guid) (traceId: Guid) command = async {
