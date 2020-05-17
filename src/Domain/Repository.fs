@@ -1,8 +1,6 @@
 namespace UniStream.Domain
 
-open System.Linq
 open System.Collections.Generic
-
 
 
 module Repository =
@@ -69,16 +67,20 @@ module Repository =
 
     let inline refresh (repo: T< ^agg>) =
         repo.Logger.Trace "Refresh aggregate cache."
-        let usage = repo.CacheUsage |> List.distinct |> List.truncate 3000
-        if repo.Cache.Count > repo.Capacity then
-            repo.Cache.Keys.Except usage |> Seq.iter (repo.Cache.Remove >> ignore)
-        { repo with CacheUsage = usage }
+        let usage = repo.CacheUsage |> List.distinct
+        if repo.Cache.Count > repo.Capacity - 1000 then
+            let usage = usage |> List.truncate 3000
+            let ids = repo.Cache.Keys |> Seq.except usage
+            ids |> Seq.iter (repo.Cache.Remove >> ignore)
+            { repo with CacheUsage = usage }, ids
+        else { repo with CacheUsage = usage }, Seq.empty
 
     let inline scavenge (repo: T< ^agg>) =
         repo.Logger.Trace "Scavenge aggregate snapshot."
-        let usage = repo.SnapUsage |> List.distinct |> List.truncate 3000
-        if repo.Snapshot.Count > repo.Capacity then
-            repo.Snapshot.Keys.Except usage |> Seq.iter (repo.Snapshot.Remove >> ignore)
+        let usage = repo.SnapUsage |> List.distinct
+        if repo.Snapshot.Count > repo.Capacity - 1000 then
+            let usage = usage |> List.truncate 3000
+            repo.Snapshot.Keys |> Seq.except usage |> Seq.iter (repo.Snapshot.Remove >> ignore)
         { repo with SnapUsage = usage }
 
     let inline put (repo: T< ^agg>) id agg version =

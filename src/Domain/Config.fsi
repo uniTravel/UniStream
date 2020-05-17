@@ -83,7 +83,7 @@ module Config =
         /// <param name="?refresh">刷新聚合缓存的间隔秒数，缺省为15秒。</param>
         /// <param name="?scavenge">清扫聚合快照的间隔小时数，缺省为24小时。</param>
         /// <param name="?threshold">快照间隔，缺省为1000。</param>
-        /// <param name="?batch">批处理间隔毫秒数，缺省为55毫秒。</param>
+        /// <param name="?batch">批处理间隔毫秒数，缺省为19毫秒。</param>
         new :
             get: (string -> string -> int64 -> (string * byte[])[] * int64) *
             esFunc: (string -> string -> int64 -> (string * byte[] * byte[]) seq -> Async<int64>) *

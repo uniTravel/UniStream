@@ -11,6 +11,7 @@ module Main =
             typeof<Deserialize>
             typeof<Collections>
             typeof<Lookup>
+            typeof<Pipeline>
         |]
         switch.Run argv |> ignore
         0

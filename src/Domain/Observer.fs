@@ -1,6 +1,7 @@
 namespace UniStream.Domain
 
 open System.Timers
+open System.Collections.Generic
 
 
 module Observer =
@@ -8,13 +9,13 @@ module Observer =
     type Repo<'agg> =
         | Take of string * AsyncReplyChannel<Result<'agg * int64, string>>
         | Put of string * 'agg * int64
-        | Refresh of AsyncReplyChannel<Map<string, unit>>
+        | Refresh of AsyncReplyChannel<string seq>
         | Scavenge
 
     type Sub =
         | Subscribe of string * SubDropHandler * AsyncReplyChannel<string voption>
         | Unsubscribe of string
-        | Clean of Map<string, unit>
+        | Clean of string seq
 
     type T<'agg> =
         { DiagnoseLog: DiagnoseLog.Logger
@@ -22,10 +23,10 @@ module Observer =
           RepoAgent: MailboxProcessor<Repo<'agg>> }
 
     let inline repoAgent< ^agg when ^agg : (static member Initial : ^agg) and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> (lg: DiagnoseLog.Logger) (cfg: Config.Observer) =
-        let take, put, refresh, scavenge =
+        let take, put, capacity =
             match cfg.RepoMode with
-            | Cache r -> Repository.cTake, Repository.cPut, r * 10000000L, 2L * 60L * 60L * 10000000L
-            | Snapshot (r, s, t) -> Repository.sTake, Repository.sPut t, r * 10000000L, s * 60L * 60L * 10000000L
+            | Cache (c, _) -> Repository.cTake, Repository.cPut, c
+            | Snapshot (c, _, _, t) -> Repository.sTake, Repository.sPut t, c
         MailboxProcessor<Repo< ^agg>>.Start <| fun inbox ->
             let rec loop repo = async {
                 match! inbox.Receive() with
@@ -44,8 +45,7 @@ module Observer =
                         return! loop repo
                 | Refresh channel ->
                     try
-                        let newRepo = Repository.refresh repo refresh
-                        let ids = newRepo.Cache |> Map.map (fun _ _ -> ())
+                        let newRepo, ids = Repository.refresh repo
                         channel.Reply ids
                         return! loop newRepo
                     with ex ->
@@ -53,24 +53,23 @@ module Observer =
                         return! loop repo
                 | Scavenge ->
                     try
-                        return! loop <| Repository.scavenge repo scavenge
+                        return! loop <| Repository.scavenge repo
                     with ex ->
                         lg.Error ex.StackTrace "Scavenge aggregate snapshot failed: %s" ex.Message
                         return! loop repo
             }
-            loop <| Repository.empty lg cfg.Reader cfg.BlockTicks
+            loop <| Repository.empty lg cfg.Reader capacity
 
     let inline subAgent (lg: DiagnoseLog.Logger) (cfg: Config.Observer) (repoAgent: MailboxProcessor<Repo< ^agg>>) handler =
         MailboxProcessor<Sub>.Start <| fun inbox ->
-            let rec loop (subs: Map<string, unit -> unit>) = async {
+            let rec loop (dic: Dictionary<string, unit -> unit>) = async {
                 match! inbox.Receive() with
                 | Subscribe (id, dropHandler, channel) ->
-                    if subs.ContainsKey id then
+                    if dic.ContainsKey id then
                         channel.Reply ValueNone
-                        return! loop subs
                     else
                         let unsub = cfg.SubBuilder id handler dropHandler
-                        let newSubs = subs.Add (id, unsub)
+                        dic.Add (id, unsub)
                         match! repoAgent.PostAndAsyncReply (fun channel -> Take (id, channel)) with
                         | Ok (agg, version) ->
                             try
@@ -80,19 +79,14 @@ module Observer =
                             with ex ->
                                 lg.Error ex.StackTrace "Sync aggregate [%s] failed when subscribe: %s" id ex.Message
                                 channel.Reply <| ValueSome ex.Message
-                                return! loop subs
                         | Error err -> channel.Reply <| ValueSome err
-                        return! loop newSubs
-                | Unsubscribe id ->
-                    return! loop <| subs.Remove id
+                | Unsubscribe id -> dic.[id]()
                 | Clean ids ->
-                    let newSubs =
-                        subs |> Map.filter (fun key unsub ->
-                            if ids.ContainsKey key then true
-                            else unsub(); false)
-                    return! loop newSubs
+                    if Seq.isEmpty ids then ()
+                    else ids |> Seq.iter (fun id -> dic.[id](); dic.Remove id |> ignore)
+                return! loop dic
             }
-            loop Map.empty
+            loop <| Dictionary<string, unit -> unit> 10000
 
     let inline update (repoAgent: MailboxProcessor<Repo< ^agg>>) lg reader id evType number data (metadata: byte[]) = async {
         match! repoAgent.PostAndAsyncReply (fun channel -> Take (id, channel)) with
@@ -135,10 +129,10 @@ module Observer =
             let ids = repoAgent.PostAndAsyncReply Refresh |> Async.RunSynchronously
             subAgent.Post <| Clean ids
         match cfg.RepoMode with
-        | Cache r ->
+        | Cache (_, r) ->
             let ri = float r * 1000.0
             Async.Start <| createTimer ri refresh
-        | Snapshot (r, s, _) ->
+        | Snapshot (_, r, s, _) ->
             let ri = float r * 60.0 * 1000.0
             let si = float s * 60.0 * 60.0 * 1000.0
             Async.Start <| createTimer ri refresh

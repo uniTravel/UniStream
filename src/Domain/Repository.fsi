@@ -73,7 +73,7 @@ module Repository =
     /// </summary>
     /// <typeparam name="^agg">聚合的类型。</typeparam>
     /// <param name="repo">聚合仓储。</param>
-    val inline refresh : T< ^agg> -> T< ^agg>
+    val inline refresh : T< ^agg> -> T< ^agg> * string seq
 
     /// <summary>清扫聚合快照
     /// </summary>

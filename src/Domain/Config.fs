@@ -31,7 +31,7 @@ module Config =
         let refresh = defaultArg refresh 15
         let scavenge = defaultArg scavenge 24
         let threshold = defaultArg threshold 1000
-        let batch = defaultArg batch 55
+        let batch = defaultArg batch 19
         let repoMode =
             match cacheMode with
             | true -> Cache (capacity, int64 refresh)

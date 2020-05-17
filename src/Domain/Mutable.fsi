@@ -20,7 +20,7 @@ module Mutable =
     /// </summary>
     type Bat<'agg> =
         | Add of string * string * ('agg -> string -> (string * byte[] * byte[]) seq * 'agg) * AsyncReplyChannel<string voption>
-        | Launch of DiagnoseLog.Logger * Reader * Writer * MailboxProcessor<Repo<'agg>>
+        | Launch of AsyncReplyChannel<(string * (string * (^agg -> string -> (string * byte[] * byte[]) seq * ^agg) * AsyncReplyChannel<string voption>) list ref) list option>
 
     /// <summary>可变聚合器
     /// </summary>

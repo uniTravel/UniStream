@@ -57,7 +57,6 @@ Target.create "Build" (fun _ ->
 
 Target.create "Debug" (fun _ ->
     !! "sample/Note.Tests/*.fsproj"
-    ++ "sample/Note.Server/*.fsproj"
     |> Seq.iter (DotNet.build (fun b -> { b with Configuration = DotNet.BuildConfiguration.Debug })))
 
 Target.create "Pack" (fun _ ->
@@ -81,7 +80,6 @@ Target.create "Release" ignore
     ==> "Release"
 
 "Clean"
-    ==> "AssemblyInfo"
     ==> "Debug"
     ==> "Default"
 

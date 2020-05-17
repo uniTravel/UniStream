@@ -12,7 +12,7 @@ module Observer =
     type Repo<'agg> =
         | Take of string * AsyncReplyChannel<Result<'agg * int64, string>>
         | Put of string * 'agg * int64
-        | Refresh of AsyncReplyChannel<Map<string, unit>>
+        | Refresh of AsyncReplyChannel<string seq>
         | Scavenge
 
     /// <summary>流存储订户访问类型
@@ -20,7 +20,7 @@ module Observer =
     type Sub =
         | Subscribe of string * SubDropHandler * AsyncReplyChannel<string voption>
         | Unsubscribe of string
-        | Clean of Map<string, unit>
+        | Clean of string seq
 
     /// <summary>观察者聚合器
     /// </summary>
