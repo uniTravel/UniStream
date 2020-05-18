@@ -14,6 +14,7 @@ module Repository =
         { Reader: Reader
           Logger: DiagnoseLog.Logger
           Capacity: int
+          Keep: int
           Cache: Dictionary<string, Queue<AsyncReplyChannel<Result<'agg * int64, string>>> * State<'agg> ref>
           CacheUsage: string list
           Snapshot: Dictionary<string, 'agg * int64 * int64>
@@ -69,7 +70,7 @@ module Repository =
         repo.Logger.Trace "Refresh aggregate cache."
         let usage = repo.CacheUsage |> List.distinct
         if repo.Cache.Count > repo.Capacity - 1000 then
-            let usage = usage |> List.truncate 3000
+            let usage = usage |> List.truncate repo.Keep
             let ids = repo.Cache.Keys |> Seq.except usage
             ids |> Seq.iter (repo.Cache.Remove >> ignore)
             { repo with CacheUsage = usage }, ids
@@ -79,7 +80,7 @@ module Repository =
         repo.Logger.Trace "Scavenge aggregate snapshot."
         let usage = repo.SnapUsage |> List.distinct
         if repo.Snapshot.Count > repo.Capacity - 1000 then
-            let usage = usage |> List.truncate 3000
+            let usage = usage |> List.truncate repo.Keep
             repo.Snapshot.Keys |> Seq.except usage |> Seq.iter (repo.Snapshot.Remove >> ignore)
         { repo with SnapUsage = usage }
 
@@ -132,12 +133,13 @@ module Repository =
             else repo
         put repo id agg version
 
-    let empty (lg: DiagnoseLog.Logger) reader capacity =
+    let empty (lg: DiagnoseLog.Logger) reader capacity keep =
         lg.Trace "Initialize aggregate repository."
         { Reader = reader
           Logger = lg
           Capacity = capacity
           Cache = Dictionary<string, Queue<AsyncReplyChannel<Result<'agg * int64, string>>> * State<'agg> ref>(capacity)
           CacheUsage = []
+          Keep = keep
           Snapshot = Dictionary<string, 'agg * int64 * int64>(capacity)
           SnapUsage = [] }

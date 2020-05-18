@@ -23,10 +23,10 @@ module Observer =
           RepoAgent: MailboxProcessor<Repo<'agg>> }
 
     let inline repoAgent< ^agg when ^agg : (static member Initial : ^agg) and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> (lg: DiagnoseLog.Logger) (cfg: Config.Observer) =
-        let take, put, capacity =
+        let take, put, capacity, keep =
             match cfg.RepoMode with
-            | Cache (c, _) -> Repository.cTake, Repository.cPut, c
-            | Snapshot (c, _, _, t) -> Repository.sTake, Repository.sPut t, c
+            | Cache (c, k, _) -> Repository.cTake, Repository.cPut, c, k
+            | Snapshot (c, k, _, _, t) -> Repository.sTake, Repository.sPut t, c, k
         MailboxProcessor<Repo< ^agg>>.Start <| fun inbox ->
             let rec loop repo = async {
                 match! inbox.Receive() with
@@ -58,7 +58,7 @@ module Observer =
                         lg.Error ex.StackTrace "Scavenge aggregate snapshot failed: %s" ex.Message
                         return! loop repo
             }
-            loop <| Repository.empty lg cfg.Reader capacity
+            loop <| Repository.empty lg cfg.Reader capacity keep
 
     let inline subAgent (lg: DiagnoseLog.Logger) (cfg: Config.Observer) (repoAgent: MailboxProcessor<Repo< ^agg>>) handler =
         MailboxProcessor<Sub>.Start <| fun inbox ->
@@ -129,10 +129,10 @@ module Observer =
             let ids = repoAgent.PostAndAsyncReply Refresh |> Async.RunSynchronously
             subAgent.Post <| Clean ids
         match cfg.RepoMode with
-        | Cache (_, r) ->
+        | Cache (_, _, r) ->
             let ri = float r * 1000.0
             Async.Start <| createTimer ri refresh
-        | Snapshot (_, r, s, _) ->
+        | Snapshot (_, _, r, s, _) ->
             let ri = float r * 60.0 * 1000.0
             let si = float s * 60.0 * 60.0 * 1000.0
             Async.Start <| createTimer ri refresh

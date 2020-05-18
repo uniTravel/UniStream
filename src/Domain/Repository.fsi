@@ -24,6 +24,7 @@ module Repository =
     /// <param name="Reader">从某个版本开始获取聚合事件的函数。</param>
     /// <param name="Logger">诊断日志记录器。</param>
     /// <param name="Capacity">缓存与快照的容量。</param>
+    /// <param name="Keep">清理缓存/快照后保留的数量。</param>
     /// <param name="Cache">聚合缓存，以聚合ID为键，值包括一个等待队列和聚合状态。</param>
     /// <param name="CacheUsage">聚合缓存使用记录。</param>
     /// <param name="Snapshot">聚合仓储快照，以聚合ID为键，对应的值为：聚合*版本*台阶*时间戳。</param>
@@ -32,6 +33,7 @@ module Repository =
         { Reader: Reader
           Logger: DiagnoseLog.Logger
           Capacity: int
+          Keep: int
           Cache: Dictionary<string, Queue<AsyncReplyChannel<Result<'agg * int64, string>>> * State<'agg> ref>
           CacheUsage: string list
           Snapshot: Dictionary<string, 'agg * int64 * int64>
@@ -130,4 +132,5 @@ module Repository =
     /// <param name="lg">诊断日志记录器。</param>
     /// <param name="reader">从某个版本开始获取聚合事件的函数。</param>
     /// <param name="capacity">缓存与快照的容量。</param>
-    val empty : DiagnoseLog.Logger -> Reader -> int -> T<'agg>
+    /// <param name="keep">清理缓存/快照后保留的数量。</param>
+    val empty : DiagnoseLog.Logger -> Reader -> int -> int -> T<'agg>

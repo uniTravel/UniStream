@@ -26,8 +26,8 @@ type SubBuilder = string -> SubHandler -> SubDropHandler -> (unit -> unit)
 /// <typeparam name="Cache">缓存模式。</typeparam>
 /// <typeparam name="Snapshot">快照模式。</typeparam>
 type RepoMode =
-    | Cache of int * int64
-    | Snapshot of int * int64 * int64 * int64
+    | Cache of int * int * int64
+    | Snapshot of int * int * int64 * int64 * int64
 
 
 /// <summary>配置模块
@@ -80,6 +80,7 @@ module Config =
         /// <param name="lgFunc">诊断日志流存储函数。</param>
         /// <param name="?cacheMode">是否缓存模式：true为缓存模式，false为快照模式，缺省为true。</param>
         /// <param name="?capacity">缓存与快照的容量，缺省为10000。</param>
+        /// <param name="?keep">清理缓存/快照后保留的数量，缺省为3000。</param>
         /// <param name="?refresh">刷新聚合缓存的间隔秒数，缺省为15秒。</param>
         /// <param name="?scavenge">清扫聚合快照的间隔小时数，缺省为24小时。</param>
         /// <param name="?threshold">快照间隔，缺省为1000。</param>
@@ -91,6 +92,7 @@ module Config =
             lgFunc: (string -> byte[] -> unit) *
             ?cacheMode: bool *
             ?capacity: int *
+            ?keep: int *
             ?refresh: int *
             ?scavenge: int *
             ?threshold: int *
@@ -137,6 +139,7 @@ module Config =
         /// <param name="?prefix">流名称前缀。</param>
         /// <param name="?cacheMode">是否缓存模式：true为缓存模式，false为快照模式，缺省为true。</param>
         /// <param name="?capacity">缓存与快照的容量，缺省为10000。</param>
+        /// <param name="?keep">清理缓存/快照后保留的数量，缺省为5000。</param>
         /// <param name="?refresh">刷新聚合缓存的间隔秒数，缺省为30分钟。</param>
         /// <param name="?scavenge">清扫聚合快照的间隔小时数，缺省为24小时。</param>
         /// <param name="?threshold">快照间隔，缺省为1000。</param>
@@ -147,6 +150,7 @@ module Config =
             ?prefix: string *
             ?cacheMode: bool *
             ?capacity: int *
+            ?keep: int *
             ?refresh: int *
             ?scavenge: int *
             ?threshold: int -> Observer

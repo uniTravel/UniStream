@@ -63,6 +63,7 @@ Target.create "Pack" (fun _ ->
     Paket.pack (fun p ->
         { p with
             OutputPath = packageDir
+            Version = release.NugetVersion
             IncludeReferencedProjects = true
             ReleaseNotes = release.Notes |> String.toLines }))
 

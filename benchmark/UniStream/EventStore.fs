@@ -34,23 +34,21 @@ type EventStore () =
         let command : CreateNote = { Title = "title"; Content = "initial content" }
         app.CreateNote "benchmark" self.AggId traceId command |> Async.RunSynchronously |> ignore
 
-    // [<Benchmark>]
-    // member self.Write () =
-    //     seq { 1 .. self.count }
-    //     |> Seq.iter (fun i ->
-    //         app.ChangeNote "benchmark" self.aggId (Guid.NewGuid()) { Content = "changed content" } |> Async.RunSynchronously |> ignore
-    //     )
+    [<Benchmark>]
+    member self.Write () =
+        seq { 1 .. self.count }
+        |> Seq.iter (fun i ->
+            app.ChangeNote "benchmark" self.AggId (Guid.NewGuid()) { Content = "changed content" } |> Async.RunSynchronously |> ignore)
 
-    // [<Benchmark>]
-    // member self.DirectWrite () =
-    //     seq { 1 .. self.count }
-    //     |> Seq.iter (fun i ->
-    //         let traceId = Guid.NewGuid().ToString()
-    //         let command = { Content = "changed content" }
-    //         esFunc "Benchmark.UniStream.Note" (self.aggId.ToString()) (int64 i)
-    //         <| seq { ("NoteChanged", Delta.asBytes command, MetaData.correlationId traceId) }
-    //         |> Async.Ignore |> Async.RunSynchronously |> ignore
-    //     )
+    [<Benchmark>]
+    member self.DirectWrite () =
+        seq { 1 .. self.count }
+        |> Seq.iter (fun i ->
+            let traceId = Guid.NewGuid().ToString()
+            let command = { Content = "changed content" }
+            esFunc "Benchmark.UniStream.Note" (self.AggId.ToString()) (int64 i)
+            <| seq { ("NoteChanged", Delta.asBytes command, MetaData.correlationId traceId) }
+            |> Async.Ignore |> Async.RunSynchronously |> ignore)
 
     [<Benchmark>]
     member self.BatchWrite () =

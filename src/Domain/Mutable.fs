@@ -25,10 +25,10 @@ module Mutable =
           BatAgent: MailboxProcessor<Bat<'agg>> }
 
     let inline repoAgent< ^agg when ^agg : (static member Initial : ^agg) and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> (lg: DiagnoseLog.Logger) reader repoMode =
-        let take, put, capacity =
+        let take, put, capacity, keep =
             match repoMode with
-            | Cache (c, _) -> Repository.cTake, Repository.cPut, c
-            | Snapshot (c, _, _, t) -> Repository.sTake, Repository.sPut t, c
+            | Cache (c, k,  _) -> Repository.cTake, Repository.cPut, c, k
+            | Snapshot (c, k, _, _, t) -> Repository.sTake, Repository.sPut t, c, k
         MailboxProcessor<Repo< ^agg>>.Start <| fun inbox ->
             let rec loop repo = async {
                 match! inbox.Receive() with
@@ -58,7 +58,7 @@ module Mutable =
                         lg.Error ex.StackTrace "Scavenge aggregate snapshot failed: %s" ex.Message
                         return! loop repo
             }
-            loop <| Repository.empty lg reader capacity
+            loop <| Repository.empty lg reader capacity keep
 
     let inline batAgent< ^agg when ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> =
         MailboxProcessor<Bat< ^agg>>.Start <| fun inbox ->
@@ -82,7 +82,7 @@ module Mutable =
                         channel.Reply None
                         return! loop (round + 1) count dic
             }
-            loop 0 0 <| Dictionary<string, (string * (^agg -> string -> (string * byte[] * byte[]) seq * ^agg) * AsyncReplyChannel<string voption>) list ref> 3000
+            loop 0 0 <| Dictionary<string, (string * (^agg -> string -> (string * byte[] * byte[]) seq * ^agg) * AsyncReplyChannel<string voption>) list ref>()
 
     let inline create (cfg: Config.Mutable) =
         let createTimer interval handler =
@@ -99,10 +99,10 @@ module Mutable =
         let repoAgent = repoAgent< ^agg> lg reader cfg.RepoMode
         let batAgent = batAgent< ^agg>
         match cfg.RepoMode with
-        | Cache (_, r) ->
+        | Cache (_, _, r) ->
             let ri = float r * 1000.0
             Async.Start <| createTimer ri (fun _ -> repoAgent.Post Refresh)
-        | Snapshot (_, r, s, _) ->
+        | Snapshot (_, _, r, s, _) ->
             let ri = float r * 1000.0
             let si = float s * 60.0 * 60.0 * 1000.0
             Async.Start <| createTimer ri (fun _ -> repoAgent.Post Refresh)
@@ -117,8 +117,8 @@ module Mutable =
             let result = Seq.foldBack (fun (traceId, apply, channel) s -> (execute agg traceId apply channel) :: s) batch []
             let events = result |> Seq.collect (fun (e, _, _, _) -> e)
             try
-                let! version = writer aggId (version + 1L) events
                 let _, agg', _, _ = Seq.last result
+                let! version = writer aggId (version + 1L) events
                 repoAgent.Post <| Put (aggId, agg', version)
                 result |> Seq.iter (fun (_, _, channel: AsyncReplyChannel<string voption>, reply) -> channel.Reply reply)
             with ex ->

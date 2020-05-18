@@ -8,9 +8,9 @@
             "name": "Note.Tests",
             "type": "coreclr",
             "request": "launch",
+            "program": "bin/Debug/netcoreapp3.1/Note.Tests.dll",
             "args": ["--debug"],
             "cwd": "${workspaceFolder}/sample/Note.Tests/",
-            "program": "bin/Debug/netcoreapp3.1/Note.Tests.dll",
             "stopAtEntry": false,
             "console": "internalConsole"
         }
