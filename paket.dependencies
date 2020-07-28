@@ -4,8 +4,11 @@ source https://api.nuget.org/v3/index.json
 nuget FSharp.Core
 nuget Grpc.AspNetCore
 nuget Logary
-nuget EventStore.Client
-
+nuget EventStore.Client.Grpc.Streams
+nuget EventStore.Client.Grpc.ProjectionManagement
+nuget EventStore.Client.Grpc.PersistentSubscriptions
+nuget EventStore.Client.Grpc.Operations
+nuget EventStore.Client.Grpc.UserManagement
 
 group Test
     framework auto-detect

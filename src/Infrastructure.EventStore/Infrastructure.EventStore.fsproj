@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>UniStream.Infrastructure.EventStore</AssemblyName>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="Common.fsi" />
+    <Compile Include="Common.fs" />
+    <Compile Include="DomainEvent.fsi" />
+    <Compile Include="DomainEvent.fs" />
+    <Compile Include="DomainCommand.fsi" />
+    <Compile Include="DomainCommand.fs" />
+    <Compile Include="DomainLog.fsi" />
+    <Compile Include="DomainLog.fs" />
+    <Compile Include="DiagnoseLog.fsi" />
+    <Compile Include="DiagnoseLog.fs" />
+    <None Include="paket.references" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

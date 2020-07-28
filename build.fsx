@@ -35,15 +35,24 @@ Target.initEnvironment ()
 Target.create "Clean" (fun _ ->
     !! "src/**/bin"
     ++ "src/**/obj"
-    ++ "sample/Note.Domain/bin"
-    ++ "sample/Note.Domain/obj"
-    ++ "sample/Note.Application/bin"
-    ++ "sample/Note.Application/obj"
-    ++ "sample/Note.Tests/bin"
-    ++ "sample/Note.Tests/obj"
     ++ packageDir
+    |> Shell.cleanDirs)
+
+Target.create "Debug" (fun _ ->
+    !! "sample/**/bin"
+    ++ "sample/**/obj"
     |> Shell.cleanDirs
-)
+    !! "sample/Note.Tests/*.fsproj"
+    |> Seq.iter (DotNet.build (fun b -> { b with Configuration = DotNet.BuildConfiguration.Debug })))
+
+Target.create "Infrastructure.EventStore.Test" (fun _ ->
+    !! "test/Infrastructure.EventStore.Tests/bin"
+    ++ "test/Infrastructure.EventStore.Tests/obj"
+    ++ "src/Infrastructure.EventStore/bin"
+    ++ "src/Infrastructure.EventStore/obj"
+    |> Shell.cleanDirs
+    !! "test/Infrastructure.EventStore.Tests/*.fsproj"
+    |> Seq.iter (DotNet.build (fun b -> { b with Configuration = DotNet.BuildConfiguration.Debug })))
 
 Target.create "AssemblyInfo" (fun _ ->
     !! "src/**/*.fsproj"
@@ -54,10 +63,6 @@ Target.create "Build" (fun _ ->
     Environment.setEnvironVar "GenerateAssemblyInfo" "false"
     !! "src/**/*.fsproj"
     |> Seq.iter (DotNet.build id))
-
-Target.create "Debug" (fun _ ->
-    !! "sample/Note.Tests/*.fsproj"
-    |> Seq.iter (DotNet.build (fun b -> { b with Configuration = DotNet.BuildConfiguration.Debug })))
 
 Target.create "Pack" (fun _ ->
     Paket.pack (fun p ->
