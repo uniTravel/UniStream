@@ -1,33 +1,6 @@
 namespace UniStream.Domain
 
-
-/// <summary>从某个版本开始获取聚合事件的函数
-/// </summary>
-type Reader = string -> int64 -> (string * byte[])[] * int64
-
-/// <summary>聚合事件流存储函数
-/// </summary>
-type Writer = string -> int64 -> (string * byte[] * byte[]) seq -> Async<int64>
-
-/// <summary>订阅事件处理函数
-/// </summary>
-type SubHandler = string -> string -> int64 -> byte[] -> byte[] -> Async<unit>
-
-/// <summary>订阅被删除的善后处理函数
-/// </summary>
-type SubDropHandler = string -> exn -> Async<unit>
-
-/// <summary>订阅函数构造器
-/// </summary>
-type SubBuilder = string -> SubHandler -> SubDropHandler -> (unit -> unit)
-
-/// <summary>仓储模式
-/// </summary>
-/// <typeparam name="Cache">缓存模式。</typeparam>
-/// <typeparam name="Snapshot">快照模式。</typeparam>
-type RepoMode =
-    | Cache of int * int * int64
-    | Snapshot of int * int * int64 * int64 * int64
+open System
 
 
 /// <summary>配置模块
@@ -46,21 +19,42 @@ module Config =
         /// <param name="ldFunc">领域日志流存储函数。</param>
         /// <param name="lgFunc">诊断日志流存储函数。</param>
         new :
-            esFunc: (string -> string -> int64 -> (string * byte[] * byte[]) seq -> Async<int64>) *
-            ldFunc: (string -> string -> byte[] -> byte[] -> unit) *
-            lgFunc: (string -> byte[] -> unit)  -> Immutable
+            esFunc: (string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) *
+            ldFunc: (string -> string -> ReadOnlyMemory<byte> -> Async<unit>) *
+            lgFunc: (string -> ReadOnlyMemory<byte> -> Async<unit>) -> Immutable
 
         /// <summary>领域事件流存储函数
         /// </summary>
-        member EsFunc : (string -> string -> int64 -> (string * byte[] * byte[]) seq -> Async<int64>)
+        /// <param name="aggType">带连字符‘-’的聚合类型。</param>
+        /// <param name="aggKey">聚合键，源自GUID或者业务主键。</param>
+        /// <param name="version">事件版本。</param>
+        /// <param name="eData">事件数据。</param>
+        member EsFunc :
+            aggType: string ->
+            aggKey: string ->
+            version: uint64 ->
+            eData: (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq ->
+            Async<unit>
 
         /// <summary>领域日志流存储函数
         /// </summary>
-        member LdFunc : (string -> string -> byte[] -> byte[] -> unit)
+        /// <param name="user">用户。</param>
+        /// <param name="category">领域日志类别。</param>
+        /// <param name="data">领域日志数据。</param>
+        member LdFunc :
+            user: string ->
+            category: string ->
+            data: ReadOnlyMemory<byte> ->
+            Async<unit>
 
         /// <summary>诊断日志流存储函数
         /// </summary>
-        member LgFunc : (string -> byte[] -> unit)
+        /// <param name="aggType">聚合类型。</param>
+        /// <param name="data">诊断日志数据。</param>
+        member LgFunc :
+            aggType: string ->
+            data: ReadOnlyMemory<byte> ->
+            Async<unit>
 
 
     /// <summary>可变聚合配置
@@ -74,53 +68,98 @@ module Config =
         /// <summary>构造函数
         /// <para>刷新缓存间隔以秒为单位，清扫快照间隔以小时为单位。</para>
         /// </summary>
-        /// <param name="get">从某个版本开始为聚合获取事件的函数。</param>
+        /// <param name="get">从某个版本开始为聚合获取领域事件的函数。</param>
         /// <param name="esFunc">领域事件流存储函数。</param>
         /// <param name="ldFunc">领域日志流存储函数。</param>
         /// <param name="lgFunc">诊断日志流存储函数。</param>
-        /// <param name="?cacheMode">是否缓存模式：true为缓存模式，false为快照模式，缺省为true。</param>
         /// <param name="?capacity">缓存与快照的容量，缺省为10000。</param>
         /// <param name="?keep">清理缓存/快照后保留的数量，缺省为3000。</param>
         /// <param name="?refresh">刷新聚合缓存的间隔秒数，缺省为15秒。</param>
-        /// <param name="?scavenge">清扫聚合快照的间隔小时数，缺省为24小时。</param>
+        /// <param name="?batch">批处理的间隔毫秒数，自然数表示启用/0表示不启用，缺省为0。</param>
+        /// <param name="?scavenge">清扫聚合快照的间隔小时数，自然数表示启用/0表示不启用，缺省为0。</param>
         /// <param name="?threshold">快照间隔，缺省为1000。</param>
-        /// <param name="?batch">批处理间隔毫秒数，缺省为19毫秒。</param>
         new :
-            get: (string -> string -> int64 -> (string * byte[])[] * int64) *
-            esFunc: (string -> string -> int64 -> (string * byte[] * byte[]) seq -> Async<int64>) *
-            ldFunc: (string -> string -> byte[] -> byte[] -> unit) *
-            lgFunc: (string -> byte[] -> unit) *
-            ?cacheMode: bool *
+            get: (string -> string -> uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq) *
+            esFunc: (string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) *
+            ldFunc: (string -> string -> ReadOnlyMemory<byte> -> Async<unit>) *
+            lgFunc: (string -> ReadOnlyMemory<byte> -> Async<unit>) *
             ?capacity: int *
             ?keep: int *
-            ?refresh: int *
-            ?scavenge: int *
-            ?threshold: int *
-            ?batch: int -> Mutable
+            ?refresh: uint *
+            ?batch: uint *
+            ?scavenge: uint *
+            ?threshold: uint64 -> Mutable
 
-        /// <summary>从某个版本开始为聚合获取事件的函数
+        /// <summary>从某个版本开始为聚合获取领域事件的函数
         /// </summary>
-        member Get : (string -> string -> int64 -> (string * byte[])[] * int64)
+        /// <param name="aggType">带连字符‘-’的聚合类型。</param>
+        /// <param name="aggKey">聚合键，源自GUID或者业务主键。</param>
+        /// <param name="version">起始事件版本。</param>
+        member Get :
+            aggType: string ->
+            aggKey: string ->
+            version: uint64 ->
+            (uint64 * string * ReadOnlyMemory<byte>) seq
 
         /// <summary>领域事件流存储函数
         /// </summary>
-        member EsFunc : (string -> string -> int64 -> (string * byte[] * byte[]) seq -> Async<int64>)
+        /// <param name="aggType">带连字符‘-’的聚合类型。</param>
+        /// <param name="aggKey">聚合键，源自GUID或者业务主键。</param>
+        /// <param name="version">事件版本。</param>
+        /// <param name="eData">事件数据。</param>
+        member EsFunc :
+            aggType: string ->
+            aggKey: string ->
+            version: uint64 ->
+            eData: (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq ->
+            Async<unit>
 
         /// <summary>领域日志流存储函数
         /// </summary>
-        member LdFunc : (string -> string -> byte[] -> byte[] -> unit)
+        /// <param name="user">用户。</param>
+        /// <param name="category">领域日志类别。</param>
+        /// <param name="data">领域日志数据。</param>
+        member LdFunc :
+            user: string ->
+            category: string ->
+            data: ReadOnlyMemory<byte> ->
+            Async<unit>
 
         /// <summary>诊断日志流存储函数
         /// </summary>
-        member LgFunc : (string -> byte[] -> unit)
+        /// <param name="aggType">聚合类型。</param>
+        /// <param name="data">诊断日志数据。</param>
+        member LgFunc :
+            aggType: string ->
+            data: ReadOnlyMemory<byte> ->
+            Async<unit>
 
-        /// <summary>仓储模式
+        /// <summary>缓存与快照的容量
         /// </summary>
-        member RepoMode : RepoMode
+        member Capacity : int
 
-        /// <summary>批处理周期
+        /// <summary>清理缓存/快照后保留的数量
         /// </summary>
-        member Batch : float
+        member Keep : int
+
+        /// <summary>刷新聚合缓存的间隔秒数
+        /// </summary>
+        member Refresh : uint
+
+        /// <summary>批处理的间隔毫秒数
+        /// <para>自然数表示启用/0表示不启用。</para>
+        /// </summary>
+        member Batch : uint
+
+        /// <summary>清扫聚合快照的间隔小时数
+        /// <para>自然数表示启用/0表示不启用。</para>
+        /// </summary>
+        member Scavenge : uint
+
+        /// <summary>快照间隔
+        /// <para>自然数表示启用/否则表示不启用。</para>
+        /// </summary>
+        member Threshold : uint64
 
 
     /// <summary>观察者聚合配置
@@ -133,40 +172,60 @@ module Config =
 
         /// <summary>构造函数
         /// </summary>
-        /// <param name="get">从某个版本开始为聚合获取事件的函数。</param>
+        /// <param name="get">从某个版本开始为聚合获取领域事件的函数。</param>
         /// <param name="lgFunc">诊断日志流存储函数。</param>
-        /// <param name="subBuilder">订阅函数构造器。</param>
-        /// <param name="?prefix">流名称前缀。</param>
-        /// <param name="?cacheMode">是否缓存模式：true为缓存模式，false为快照模式，缺省为true。</param>
         /// <param name="?capacity">缓存与快照的容量，缺省为10000。</param>
         /// <param name="?keep">清理缓存/快照后保留的数量，缺省为5000。</param>
         /// <param name="?refresh">刷新聚合缓存的间隔秒数，缺省为30分钟。</param>
-        /// <param name="?scavenge">清扫聚合快照的间隔小时数，缺省为24小时。</param>
+        /// <param name="?scavenge">清扫聚合快照的间隔小时数，自然数表示启用/0表示不启用，缺省为0。</param>
         /// <param name="?threshold">快照间隔，缺省为1000。</param>
         new :
-            get: (string -> string -> int64 -> (string * byte[])[] * int64) *
-            lgFunc: (string -> byte[] -> unit) *
-            subBuilder: (string -> string -> SubHandler -> SubDropHandler -> (unit -> unit)) *
-            ?prefix: string *
-            ?cacheMode: bool *
+            get: (string -> string -> uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq) *
+            lgFunc: (string -> ReadOnlyMemory<byte> -> Async<unit>) *
             ?capacity: int *
             ?keep: int *
-            ?refresh: int *
-            ?scavenge: int *
-            ?threshold: int -> Observer
+            ?refresh: uint *
+            ?scavenge: uint *
+            ?threshold: uint64 -> Observer
 
-        /// <summary>从某个版本开始获取聚合事件的函数
+        /// <summary>从某个版本开始为聚合获取领域事件的函数
         /// </summary>
-        member Reader : Reader
+        /// <param name="aggType">带连字符‘-’的聚合类型。</param>
+        /// <param name="aggKey">聚合键，源自GUID或者业务主键。</param>
+        /// <param name="version">起始事件版本。</param>
+        member Get :
+            aggType: string ->
+            aggKey: string ->
+            version: uint64 ->
+            (uint64 * string * ReadOnlyMemory<byte>) seq
 
         /// <summary>诊断日志流存储函数
         /// </summary>
-        member LgFunc : (string -> byte[] -> unit)
+        /// <param name="aggType">聚合类型。</param>
+        /// <param name="data">诊断日志数据。</param>
+        member LgFunc :
+            aggType: string ->
+            data: ReadOnlyMemory<byte> ->
+            Async<unit>
 
-        /// <summary>订阅函数构造器
+        /// <summary>缓存与快照的容量
         /// </summary>
-        member SubBuilder : SubBuilder
+        member Capacity : int
 
-        /// <summary>仓储模式
+        /// <summary>清理缓存/快照后保留的数量
         /// </summary>
-        member RepoMode : RepoMode
+        member Keep : int
+
+        /// <summary>刷新聚合缓存的间隔秒数
+        /// </summary>
+        member Refresh : uint
+
+        /// <summary>清扫聚合快照的间隔小时数
+        /// <para>自然数表示启用/0表示不启用。</para>
+        /// </summary>
+        member Scavenge : uint
+
+        /// <summary>快照间隔
+        /// <para>自然数表示启用/否则表示不启用。</para>
+        /// </summary>
+        member Threshold : uint64

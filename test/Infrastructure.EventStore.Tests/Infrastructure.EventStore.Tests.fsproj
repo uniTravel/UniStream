@@ -11,7 +11,7 @@
   <ItemGroup>
     <Compile Include="Contract.fs" />
     <Compile Include="AppService.fs" />
-    <Compile Include="DomainEventTest.fs" />
+    <Compile Include="DomainEventTests.fs" />
     <Compile Include="DomainCommandTests.fs" />
     <Compile Include="Main.fs" />
     <None Include="paket.references" />

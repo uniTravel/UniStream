@@ -1,5 +1,6 @@
 namespace UniStream.Domain
 
+open System
 open System.Text.Json
 
 
@@ -14,7 +15,7 @@ type LogLevel =
 
 module DiagnoseLog =
 
-    type Logger = { Name: string; LogFunc: string -> byte[] -> unit }
+    type Logger = { Name: string; LogFunc: string -> ReadOnlyMemory<byte> -> Async<unit> }
 
     let logger name logFunc =
         { Name = name; LogFunc = logFunc }
@@ -23,7 +24,9 @@ module DiagnoseLog =
         let doAfter (s: string) =
             {| Level = level; Message = s; StackTrack = stack |}
             |> JsonSerializer.SerializeToUtf8Bytes
+            |> ReadOnlyMemory
             |> lg.LogFunc lg.Name
+            |> Async.Start
         Printf.ksprintf doAfter format
 
     type Logger with

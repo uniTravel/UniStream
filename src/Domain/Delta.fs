@@ -1,15 +1,13 @@
 namespace UniStream.Domain
 
 open System
-open System.Text
 open System.Text.Json
+
 
 module Delta =
 
-    let inline asBytes delta =
-        let q = Encoding.UTF8
-        JsonSerializer.SerializeToUtf8Bytes delta
+    let inline serialize delta =
+        JsonSerializer.SerializeToUtf8Bytes delta |> ReadOnlyMemory
 
-    let inline fromBytes deltaBytes =
-        let span = ReadOnlyMemory deltaBytes
-        JsonSerializer.Deserialize< ^d> span.Span
+    let inline deserialize (serialized: ReadOnlyMemory<byte>) =
+        JsonSerializer.Deserialize< ^d> serialized.Span

@@ -5,10 +5,10 @@ open System.Text.Json
 open Expecto
 
 
-let handler traceId eType (data: ReadOnlyMemory<byte>) (metadata: ReadOnlyMemory<byte>) = async {
+let handler traceId eType (data: ReadOnlyMemory<byte>) callback = async {
     let note = JsonSerializer.Deserialize<CreateNote> data.Span
     let note = { Title = note.Title; Content = note.Content }
-    return note }
+    callback note }
 
 let subscriber (app: AppService) = async {
     app.SubscribeCreateNote handler |> Async.RunSynchronously |> ignore }

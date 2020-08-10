@@ -16,44 +16,30 @@ module DomainCommand =
     /// <para>1、Stream名称：领域命令值类型全名。</para>
     /// <para>2、关联ID作为事件类型。</para>
     /// </summary>
-    /// <typeparam name="^cv">领域命令值类型。</typeparam>
-    /// <typeparam name="^rv">领域命令响应值类型。</typeparam>
+    /// <typeparam name="^c">领域命令类型。</typeparam>
+    /// <typeparam name="^v">领域命令响应类型。</typeparam>
     /// <param name="client">EventStore客户端。</param>
-    /// <param name="correlationId">关联ID：聚合命令为聚合ID；流程命令为用户。</param>
-    /// <param name="command">领域命令。</param>
+    /// <param name="correlationId">关联ID：聚合命令为聚合键；流程命令为客户端标识。</param>
+    /// <param name="cmd">领域命令。</param>
     /// <returns>聚合命令的执行结果。</returns>
     val inline launch :
         client: EventStoreClient ->
         correlationId: string ->
-        command: ^cv ->
-        Async<Result< ^rv, string>>
-        when ^cv : (static member FullName : string)
-
-    /// <summary>创建领域命令流服务端订阅
-    /// <para>订阅实例在服务端，支持多节点的消费群组连接，用以并行消费。</para>
-    /// <para>领域命令值全名作为Stream及消费群组名称。</para>
-    /// </summary>
-    /// <typeparam name="^cv">领域命令值类型。</typeparam>
-    /// <param name="subClient">EventStore持久化订阅客户端。</param>
-    /// <param name="setting">服务端订阅的设置。</param>
-    val inline subscription< ^cv> :
-        subClient: EventStorePersistentSubscriptionsClient ->
-        setting: PersistentSubscriptionSettings ->
-        Async<unit>
-        when ^cv : (static member FullName : string)
+        cmd: ^c ->
+        Async<Result< ^v, string>>
+        when ^c : (static member FullName : string)
 
     /// <summary>连接到领域命令流服务端订阅
     /// <para>订阅实例在服务端，支持多节点的消费群组连接，用以并行消费。</para>
     /// <para>领域命令值全名作为Stream及消费群组名称。</para>
     /// </summary>
-    /// <typeparam name="^cv">领域命令值类型。</typeparam>
-    /// <typeparam name="^rv">领域命令响应值类型。</typeparam>
+    /// <typeparam name="^c">领域命令类型。</typeparam>
     /// <param name="client">EventStore客户端。</param>
     /// <param name="subClient">EventStore持久化订阅客户端。</param>
-    /// <param name="handler">命令处理函数。</param>
-    val inline subscribe< ^cv, ^rv> :
+    /// <param name="handler">领域命令处理函数。</param>
+    val inline subscribe< ^c, ^v> :
         client: EventStoreClient ->
         subClient: EventStorePersistentSubscriptionsClient ->
-        handler: (string -> string -> ReadOnlyMemory<byte> -> ReadOnlyMemory<byte> -> Async< ^rv>) ->
+        handler: (string -> string -> ReadOnlyMemory<byte> -> (^v -> unit) -> Async<unit>) ->
         Async<SubscriptionDroppedReason * exn>
-        when ^cv : (static member FullName : string)
+        when ^c : (static member FullName : string)

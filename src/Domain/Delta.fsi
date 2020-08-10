@@ -1,24 +1,28 @@
 namespace UniStream.Domain
 
+open System
+
 
 /// <summary>边际影响模块
 /// <para>边际影响包括领域命令值与领域事件值。</para>
 /// </summary>
 [<RequireQualifiedAccess>]
-module Delta =
+module internal Delta =
 
-    /// <summary>边际影响序列化成UTF8字节数组
+    /// <summary>边际影响序列化
     /// <para>边际影响采用UTF8格式的Json序列化。</para>
     /// </summary>
     /// <typeparam name="'d">边际影响类型。</typeparam>
     /// <param name="delta">边际影响。</param>
-    /// <returns>边际影响的UTF8字节数组。</returns>
-    val inline asBytes : 'd -> byte[]
+    val inline serialize :
+        delta: 'd ->
+        ReadOnlyMemory<byte>
 
-    /// <summary>UTF8字节数组反序列化成边际影响
+    /// <summary>边际影响反序列化
     /// <para>边际影响采用UTF8格式的Json序列化。</para>
     /// </summary>
     /// <typeparam name="^d">边际影响类型。</typeparam>
-    /// <param name="deltaBytes">边际影响的UTF8字节数组。</param>
-    /// <returns>边际影响。</returns>
-    val inline fromBytes : byte[] -> ^d
+    /// <param name="serialized">序列化的边际影响。</param>
+    val inline deserialize :
+        serialized: ReadOnlyMemory<byte> ->
+        ^d

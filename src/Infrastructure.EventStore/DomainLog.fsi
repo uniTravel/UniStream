@@ -18,12 +18,10 @@ module DomainLog =
     /// <param name="user">用户。</param>
     /// <param name="category">领域日志类别。</param>
     /// <param name="data">领域日志数据。</param>
-    /// <param name="metadata">领域日志元数据。</param>
     val write :
         client: EventStoreClient ->
         ctx: string ->
         user: string ->
         category: string ->
         data: ReadOnlyMemory<byte> ->
-        metadata: Nullable<ReadOnlyMemory<byte>> ->
         Async<unit>

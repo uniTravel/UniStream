@@ -5,8 +5,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="MetaData.fsi" />
-    <Compile Include="MetaData.fs" />
+    <Compile Include="Exceptions.fsi" />
+    <Compile Include="Exceptions.fs" />
     <Compile Include="DomainLog.fsi" />
     <Compile Include="DomainLog.fs" />
     <Compile Include="DiagnoseLog.fsi" />
@@ -17,8 +17,8 @@
     <Compile Include="Command.fs" />
     <Compile Include="Config.fsi" />
     <Compile Include="Config.fs" />
-    <Compile Include="Repository.fsi" />
-    <Compile Include="Repository.fs" />
+    <Compile Include="Factory.fsi" />
+    <Compile Include="Factory.fs" />
     <Compile Include="Immutable.fsi" />
     <Compile Include="Immutable.fs" />
     <Compile Include="Mutable.fsi" />

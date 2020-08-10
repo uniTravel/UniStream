@@ -1,152 +1,121 @@
 namespace UniStream.Domain
 
-open System.Timers
+open System
 open System.Collections.Generic
 
 
 module Observer =
 
-    type Repo<'agg> =
-        | Take of string * AsyncReplyChannel<Result<'agg * int64, string>>
-        | Put of string * 'agg * int64
-        | Refresh of AsyncReplyChannel<string seq>
+    type Msg<'agg> =
+        | Append of string * uint64 * string * ReadOnlyMemory<byte>
+        | Refresh
         | Scavenge
-
-    type Sub =
-        | Subscribe of string * SubDropHandler * AsyncReplyChannel<string voption>
-        | Unsubscribe of string
-        | Clean of string seq
+        | Get of string * AsyncReplyChannel<Result<'agg, string>>
 
     type T<'agg> =
         { DiagnoseLog: DiagnoseLog.Logger
-          SubAgent: MailboxProcessor<Sub>
-          RepoAgent: MailboxProcessor<Repo<'agg>> }
+          Agent: MailboxProcessor<Msg<'agg>> }
 
-    let inline repoAgent< ^agg when ^agg : (static member Initial : ^agg) and ^agg : (member ApplyEvent : (string -> byte[] -> ^agg))> (lg: DiagnoseLog.Logger) (cfg: Config.Observer) =
-        let take, put, capacity, keep =
-            match cfg.RepoMode with
-            | Cache (c, k, _) -> Repository.cTake, Repository.cPut, c, k
-            | Snapshot (c, k, _, _, t) -> Repository.sTake, Repository.sPut t, c, k
-        MailboxProcessor<Repo< ^agg>>.Start <| fun inbox ->
-            let rec loop repo = async {
+    let inline agent< ^agg when ^agg : (static member Initial : ^agg) and ^agg : (member ApplyEvent : (string -> ReadOnlyMemory<byte> -> ^agg))>
+        (cfg: Config.Observer) lg aggType =
+        let snapshots = Dictionary<string, ^agg * uint64 * uint64>(cfg.Capacity)
+        let caches =
+            Dictionary<string, (uint64 -> string -> ReadOnlyMemory<byte> -> unit) * (AsyncReplyChannel<Result< ^agg, string>> -> unit) * IDisposable>(cfg.Capacity)
+        let inline shot threshold aggKey agg version = async {
+            if snapshots.ContainsKey aggKey then
+                let _, _, step = snapshots.[aggKey]
+                if version - step > threshold then
+                    let step = step + threshold
+                    snapshots.[aggKey] <- (agg, version, step)
+            elif version > threshold then
+                let step = version / threshold * threshold
+                snapshots.Add (aggKey, (agg, version, step)) }
+        let init aggKey snapUsage =
+            let reader = cfg.Get aggType aggKey
+            let snapshot, snapUsage =
+                if snapshots.ContainsKey aggKey then
+                    let agg, version, _ = snapshots.[aggKey]
+                    ValueSome (agg, version), aggKey :: snapUsage
+                else ValueNone, snapUsage
+            let agg, version = Factory.raw< ^agg> reader snapshot
+            let shot = match cfg.Scavenge with | 0u -> None | _ -> Some <| shot cfg.Threshold aggKey
+            let fty =
+                let agent = Observed.agent lg reader agg version shot
+                Observed.append agent, Observed.get agent, agent :> IDisposable
+            caches.Add (aggKey, fty)
+            agg, snapUsage
+        MailboxProcessor<Msg< ^agg>>.Start <| fun inbox ->
+            let rec loop snapUsage cacheUsage = async {
                 match! inbox.Receive() with
-                | Take (id, channel) ->
-                    try
-                        return! loop <| take repo id channel
-                    with ex ->
-                        lg.Error ex.StackTrace "Take aggregate [%s] failed: %s" id ex.Message
-                        channel.Reply <| Error ex.Message
-                        return! loop repo
-                | Put (id, agg, version) ->
-                    try
-                        return! loop <| put repo id agg version
-                    with ex ->
-                        lg.Error ex.StackTrace "Put aggregate failed: %s" ex.Message
-                        return! loop repo
-                | Refresh channel ->
-                    try
-                        let newRepo, ids = Repository.refresh repo
-                        channel.Reply ids
-                        return! loop newRepo
-                    with ex ->
-                        lg.Error ex.StackTrace "Refresh aggregate cache failed: %s" ex.Message
-                        return! loop repo
-                | Scavenge ->
-                    try
-                        return! loop <| Repository.scavenge repo
-                    with ex ->
-                        lg.Error ex.StackTrace "Scavenge aggregate snapshot failed: %s" ex.Message
-                        return! loop repo
-            }
-            loop <| Repository.empty lg cfg.Reader capacity keep
-
-    let inline subAgent (lg: DiagnoseLog.Logger) (cfg: Config.Observer) (repoAgent: MailboxProcessor<Repo< ^agg>>) handler =
-        MailboxProcessor<Sub>.Start <| fun inbox ->
-            let rec loop (dic: Dictionary<string, unit -> unit>) = async {
-                match! inbox.Receive() with
-                | Subscribe (id, dropHandler, channel) ->
-                    if dic.ContainsKey id then
-                        channel.Reply ValueNone
+                | Append (aggKey, number, evType, data) ->
+                    if caches.ContainsKey aggKey then
+                        let post, _, _ = caches.[aggKey]
+                        post number evType data
+                        return! loop snapUsage <| aggKey :: cacheUsage
                     else
-                        let unsub = cfg.SubBuilder id handler dropHandler
-                        dic.Add (id, unsub)
-                        match! repoAgent.PostAndAsyncReply (fun channel -> Take (id, channel)) with
-                        | Ok (agg, version) ->
-                            try
-                                let agg', version = Repository.sync lg id agg (version + 1L) cfg.Reader
-                                repoAgent.Post <| Put (id, agg', version)
-                                channel.Reply ValueNone
-                            with ex ->
-                                lg.Error ex.StackTrace "Sync aggregate [%s] failed when subscribe: %s" id ex.Message
-                                channel.Reply <| ValueSome ex.Message
-                        | Error err -> channel.Reply <| ValueSome err
-                | Unsubscribe id -> dic.[id]()
-                | Clean ids ->
-                    if Seq.isEmpty ids then ()
-                    else ids |> Seq.iter (fun id -> dic.[id](); dic.Remove id |> ignore)
-                return! loop dic
+                        try
+                            let _, snapUsage = init aggKey snapUsage
+                            return! loop snapUsage <| aggKey :: cacheUsage
+                        with ex ->
+                            lg.Error ex.StackTrace "Append event failed, %s" ex.Message
+                            return! loop snapUsage cacheUsage
+                | Refresh ->
+                    let usage = List.distinct cacheUsage
+                    if caches.Count > cfg.Capacity - 1000 then
+                        let usage = List.truncate cfg.Keep usage
+                        Seq.except usage caches.Keys
+                        |> Seq.iter (fun id ->
+                            let _, _, fty = caches.[id]
+                            fty.Dispose()
+                            caches.Remove id |> ignore)
+                        return! loop snapUsage usage
+                    else return! loop snapUsage usage
+                | Scavenge ->
+                    let usage = List.distinct snapUsage
+                    if snapshots.Count > cfg.Capacity - 1000 then
+                        let usage = List.truncate cfg.Keep usage
+                        Seq.except usage snapshots.Keys
+                        |> Seq.iter (snapshots.Remove >> ignore)
+                        return! loop usage cacheUsage
+                    else return! loop usage cacheUsage
+                | Get (aggKey, channel) ->
+                    if caches.ContainsKey aggKey then
+                        let _, get, _ = caches.[aggKey]
+                        get channel
+                        return! loop snapUsage <| aggKey :: cacheUsage
+                    else
+                        try
+                            let agg, snapUsage = init aggKey snapUsage
+                            Ok agg |> Factory.reply channel |> Async.Start
+                            return! loop snapUsage <| aggKey :: cacheUsage
+                        with ex ->
+                            lg.Error ex.StackTrace "Get aggregate failed, %s" ex.Message
+                            Error ex.Message |> Factory.reply channel |> Async.Start
+                            return! loop snapUsage cacheUsage
+                return! loop snapUsage cacheUsage
             }
-            loop <| Dictionary<string, unit -> unit> 10000
+            loop [] []
 
-    let inline update (repoAgent: MailboxProcessor<Repo< ^agg>>) lg reader id evType number data (metadata: byte[]) = async {
-        match! repoAgent.PostAndAsyncReply (fun channel -> Take (id, channel)) with
-        | Ok (agg, version) ->
-            try
-                let v = version + 1L
-                match number with
-                | n when n = v ->
-                    let agg' = (^agg : (member ApplyEvent : (string -> byte[] -> ^agg)) agg) evType data
-                    repoAgent.Post <| Put (id, agg', n)
-                | n when n = version ->
-                    repoAgent.Post <| Put (id, agg, version)
-                | n when n > v ->
-                    let agg, version = Repository.sync lg id agg v reader
-                    repoAgent.Post <| Put (id, agg, version)
-                | n -> failwithf "Unkown error, version is %d but number is %d." version n
-            with ex ->
-                lg.Error ex.StackTrace "Update observer failed: %s" ex.Message
-                repoAgent.Post <| Put (id, agg, version)
-        | Error err ->
-            lg.Warn "Take aggregate failed: %s" err
-    }
-
-    let inline subDropped (subAgent: MailboxProcessor<Sub>) (lg: DiagnoseLog.Logger) id reason (ex: exn) = async {
-        lg.Error ex.StackTrace "Subcribe dropped because of %s." reason
-        subAgent.Post <| Unsubscribe id
-    }
 
     let inline create (cfg: Config.Observer) =
         let createTimer interval handler =
-            let timer = new Timer(interval)
+            let interval = float interval
+            let timer = new Timers.Timer(interval)
             timer.AutoReset <- true
             timer.Elapsed.Add handler
             async { timer.Start() }
         let aggType = typeof< ^agg>.DeclaringType.FullName
         let lg = DiagnoseLog.logger aggType cfg.LgFunc
-        let repoAgent = repoAgent< ^agg> lg cfg
-        let subAgent = subAgent lg cfg repoAgent <| update repoAgent lg cfg.Reader
-        let refresh (e: ElapsedEventArgs) =
-            let ids = repoAgent.PostAndAsyncReply Refresh |> Async.RunSynchronously
-            subAgent.Post <| Clean ids
-        match cfg.RepoMode with
-        | Cache (_, _, r) ->
-            let ri = float r * 1000.0
-            Async.Start <| createTimer ri refresh
-        | Snapshot (_, _, r, s, _) ->
-            let ri = float r * 60.0 * 1000.0
-            let si = float s * 60.0 * 60.0 * 1000.0
-            Async.Start <| createTimer ri refresh
-            Async.Start <| createTimer si (fun _ -> repoAgent.Post Scavenge)
-        { DiagnoseLog = lg; SubAgent = subAgent; RepoAgent = repoAgent }
+        let aggType = aggType + "-"
+        let agent = agent< ^agg> cfg lg aggType
+        Async.Start <| createTimer cfg.Refresh (fun _ -> agent.Post Refresh)
+        if cfg.Scavenge > 0u then Async.Start <| createTimer cfg.Scavenge (fun _ -> agent.Post Scavenge)
+        { DiagnoseLog = lg; Agent = agent }
 
-    let inline get (aggregator: T< ^agg>) id = async {
-        let { DiagnoseLog = lg; SubAgent = subAgent; RepoAgent = repoAgent } = aggregator
-        match subAgent.PostAndReply <| fun channel -> Subscribe (id, subDropped subAgent lg id, channel) with
-        | ValueNone -> ()
-        | ValueSome err -> return failwithf "Check subscribe failed: %s" err
-        match! repoAgent.PostAndAsyncReply (fun channel -> Take (id, channel)) with
-        | Ok (agg, version) ->
-            repoAgent.Post <| Put (id, agg, version)
-            return (^agg : (member Value: ^v) agg)
-        | Error err -> return failwithf "Take aggregate failed: %s" err
-    }
+    let inline append (aggregator: T< ^agg>) aggKey number evType data = async {
+        aggregator.Agent.Post <| Append (aggKey, number, evType, data) }
+
+    let inline get { Agent = agent } aggKey = async {
+        match! agent.PostAndAsyncReply <| fun channel -> Get (aggKey, channel) with
+        | Ok agg -> return (^agg : (member Value: ^v) agg)
+        | Error err -> return failwithf "Get aggregate failed: %s" err }

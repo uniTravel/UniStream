@@ -7,14 +7,14 @@ open EventStore.Client
 
 module DomainEvent =
 
-    let get (client: EventStoreClient) aggType aggId version =
-        let streamName = aggType + aggId
+    let get (client: EventStoreClient) aggType aggKey version =
+        let streamName = aggType + aggKey
         let result = client.ReadStreamAsync (Direction.Forwards, streamName, StreamPosition(version))
-        result.Select(fun e -> e.Event.EventType, e.Event.Data, e.Event.Metadata)
+        result.Select(fun e -> e.Event.EventNumber.ToUInt64(), e.Event.EventType, e.Event.Data).ToEnumerable()
 
-    let write (client: EventStoreClient) aggType aggId version eData =
-        let streamName = aggType + aggId
-        let eventData = eData |> Seq.map (fun (evType, evData, metadata) -> EventData (Uuid.NewUuid(), evType, evData, metadata))
+    let write (client: EventStoreClient) aggType aggKey version eData =
+        let streamName = aggType + aggKey
+        let eventData = eData |> Seq.map (fun (evType, data, metadata) -> EventData (Uuid.NewUuid(), evType, data, metadata))
         client.AppendToStreamAsync (streamName, StreamRevision version, eventData) |> Async.AwaitTask |> Async.Ignore
 
     let filter (client: EventStoreClient) filterType handler = async {
@@ -31,8 +31,9 @@ module DomainEvent =
                     let version = e.Event.EventNumber.ToUInt64()
                     let streamName = e.Event.EventStreamId
                     let len = streamName.Length
-                    let aggId = streamName.[len - 36..len]
-                    handler aggId e.Event.EventType version e.Event.Data e.Event.Metadata |> Async.Start
+                    let idx = streamName.IndexOf '-'
+                    let aggKey = streamName.[idx + 1..len - 1]
+                    handler aggKey e.Event.EventType version e.Event.Data |> Async.Start
                     Task.CompletedTask),
                 false,
                 (fun sub r ex -> dropped.SetResult (r, ex)),

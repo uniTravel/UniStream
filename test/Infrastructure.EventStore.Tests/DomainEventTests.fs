@@ -2,7 +2,6 @@ module Infrastructure.EventStore.Tests.DomainEvent
 
 open System
 open System.Text
-open System.Linq
 open Expecto
 
 
@@ -14,13 +13,13 @@ let domainEvent (app: AppService) name =
         testCase "向不存在的流写入一个领域事件" <| fun _ ->
             let e1 = Encoding.UTF8.GetBytes "test1" |> ReadOnlyMemory
             seq { "Created", e1, Nullable() } |> app.Writer aggType aggId UInt64.MaxValue |> Async.RunSynchronously
-            let count = (app.Reader aggType aggId 0uL).CountAsync().AsTask() |> Async.AwaitTask |> Async.RunSynchronously
+            let count = Seq.length <| app.Reader aggType aggId 0uL
             Expect.equal count 1 "获取的事件数量错误"
         testCase "继续写入两个领域事件" <| fun _ ->
             let e2 = Encoding.UTF8.GetBytes "test2" |> ReadOnlyMemory
             let e3 = Encoding.UTF8.GetBytes "test3" |> ReadOnlyMemory
             seq { "Changed", e2, Nullable(); "Changed", e3, Nullable() } |> app.Writer aggType aggId 0uL |> Async.RunSynchronously
-            let count = (app.Reader aggType aggId 1uL).CountAsync().AsTask() |> Async.AwaitTask |> Async.RunSynchronously
+            let count = Seq.length <| app.Reader aggType aggId 1uL
             Expect.equal count 2 "获取的事件数量错误"
         testCase "继续写入一个版本号为1的领域事件" <| fun _ ->
             let e4 = Encoding.UTF8.GetBytes "test4" |> ReadOnlyMemory
@@ -29,7 +28,7 @@ let domainEvent (app: AppService) name =
         testCase "继续写入一个版本号为2的领域事件" <| fun _ ->
             let e4 = Encoding.UTF8.GetBytes "test4" |> ReadOnlyMemory
             seq { "Changed", e4, Nullable() } |> app.Writer aggType aggId 2uL |> Async.RunSynchronously
-            let count = (app.Reader aggType aggId 1uL).CountAsync().AsTask() |> Async.AwaitTask |> Async.RunSynchronously
+            let count = Seq.length <| app.Reader aggType aggId 1uL
             Expect.equal count 3 "获取的事件数量错误"
     ]
     |> testLabel "EventStore"

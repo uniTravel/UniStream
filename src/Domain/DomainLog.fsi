@@ -1,5 +1,7 @@
 namespace UniStream.Domain
 
+open System
+
 
 /// <summary>领域日志模块
 /// </summary>
@@ -12,9 +14,12 @@ module DomainLog =
 
     /// <summary>创建领域日志记录器
     /// </summary>
-    /// <param name="aggType">领域类型全名。</param>
+    /// <param name="aggType">聚合类型全名。</param>
     /// <param name="logFunc">领域日志流存储函数。</param>
-    val logger : string -> (string -> string -> byte[] -> byte[] -> unit) -> Logger
+    val logger :
+        aggType: string ->
+        logFunc: (string -> string -> ReadOnlyMemory<byte> -> Async<unit>) ->
+        Logger
 
     type Logger with
 
@@ -22,25 +27,43 @@ module DomainLog =
         /// </summary>
         /// <param name="user">用户。</param>
         /// <param name="cvType">领域命令值类型。</param>
-        /// <param name="aggId">聚合ID。</param>
+        /// <param name="aggKey">聚合键，源自GUID或者业务主键。</param>
         /// <param name="traceId">跟踪ID。</param>
         /// <param name="format">字符串格式。</param>
-        member Process : string -> string -> string -> string -> Printf.StringFormat<'a, unit> -> 'a
+        member Process :
+            user: string ->
+            cvType: string ->
+            aggKey: string ->
+            traceId: string ->
+            format: Printf.StringFormat<'a, unit> ->
+            'a
 
         /// <summary>记录Successed状态的领域日志
         /// </summary>
         /// <param name="user">用户。</param>
         /// <param name="cvType">领域命令值类型。</param>
-        /// <param name="aggId">聚合ID。</param>
+        /// <param name="aggKey">聚合键，源自GUID或者业务主键。</param>
         /// <param name="traceId">跟踪ID。</param>
         /// <param name="format">字符串格式。</param>
-        member Success : string -> string -> string -> string -> Printf.StringFormat<'a, unit> -> 'a
+        member Success :
+            user: string ->
+            cvType: string ->
+            aggKey: string ->
+            traceId: string ->
+            format: Printf.StringFormat<'a, unit> ->
+            'a
 
         /// <summary>记录Failed状态的领域日志
         /// </summary>
         /// <param name="user">用户。</param>
         /// <param name="cvType">领域命令值类型。</param>
-        /// <param name="aggId">聚合ID。</param>
+        /// <param name="aggKey">聚合键，源自GUID或者业务主键。</param>
         /// <param name="traceId">跟踪ID。</param>
         /// <param name="format">字符串格式。</param>
-        member Fail : string -> string -> string -> string -> Printf.StringFormat<'a, unit> -> 'a
+        member Fail :
+            user: string ->
+            cvType: string ->
+            aggKey: string ->
+            traceId: string ->
+            format: Printf.StringFormat<'a, unit> ->
+            'a

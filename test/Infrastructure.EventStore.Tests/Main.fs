@@ -1,4 +1,4 @@
-module Infrastructure.EventStore.Test
+module Infrastructure.EventStore.Tests.Entry
 
 open Expecto
 

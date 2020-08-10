@@ -1,5 +1,7 @@
 namespace UniStream.Domain
 
+open System
+
 
 /// <summary>日志级别
 /// </summary>
@@ -25,38 +27,55 @@ module DiagnoseLog =
     /// </summary>
     /// <param name="name">日志名称。</param>
     /// <param name="logFunc">诊断日志流存储函数。</param>
-    val logger : string -> (string -> byte[] -> unit) -> Logger
+    val logger :
+        name: string ->
+        logFunc: (string -> ReadOnlyMemory<byte> -> Async<unit>) ->
+        Logger
 
     type Logger with
 
         /// <summary>记录Trace级别的诊断日志
         /// </summary>
         /// <param name="format">字符串格式。</param>
-        member Trace : Printf.StringFormat<'a, unit> -> 'a
+        member Trace :
+            format: Printf.StringFormat<'a, unit> ->
+            'a
 
         /// <summary>记录Debug级别的诊断日志
         /// </summary>
         /// <param name="format">字符串格式。</param>
-        member Debug : Printf.StringFormat<'a, unit> -> 'a
+        member Debug :
+            format: Printf.StringFormat<'a, unit> ->
+            'a
 
         /// <summary>记录Info级别的诊断日志
         /// </summary>
         /// <param name="format">字符串格式。</param>
-        member Info : Printf.StringFormat<'a, unit> -> 'a
+        member Info :
+            format: Printf.StringFormat<'a, unit> ->
+            'a
 
         /// <summary>记录Warn级别的诊断日志
         /// </summary>
         /// <param name="format">字符串格式。</param>
-        member Warn : Printf.StringFormat<'a, unit> -> 'a
+        member Warn :
+            format: Printf.StringFormat<'a, unit> ->
+            'a
 
         /// <summary>记录Error级别的诊断日志
         /// </summary>
         /// <param name="stack">错误堆栈。</param>
         /// <param name="format">字符串格式。</param>
-        member Error : string -> Printf.StringFormat<'a, unit> -> 'a
+        member Error :
+            stack: string ->
+            format: Printf.StringFormat<'a, unit> ->
+            'a
 
         /// <summary>记录Critical级别的诊断日志
         /// </summary>
         /// <param name="stack">错误堆栈。</param>
         /// <param name="format">字符串格式。</param>
-        member Critical : string -> Printf.StringFormat<'a, unit> -> 'a
+        member Critical :
+            stack: string ->
+            format: Printf.StringFormat<'a, unit> ->
+            'a
