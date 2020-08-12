@@ -1,5 +1,8 @@
 namespace Note.Domain
 
+open System
+open Note.Contract
+
 
 [<CLIMutable>]
 type NoteCreated = { Title: string; Content: string }
@@ -7,15 +10,11 @@ type NoteCreated = { Title: string; Content: string }
 [<CLIMutable>]
 type NoteChanged = { Content: string }
 
+
 /// <summary>Note聚合模块
 /// </summary>
 [<RequireQualifiedAccess>]
 module Note =
-
-    /// <summary>聚合值类型
-    /// </summary>
-    type Value =
-        { Title: string; Content: string; Count: int }
 
     /// <summary>聚合类型
     /// </summary>
@@ -29,22 +28,30 @@ module Note =
         /// <summary>应用领域事件
         /// <para>根据领域事件类型，由事件流重建聚合。</para>
         /// </summary>
-        member ApplyEvent : (string -> byte[] -> T)
+        member ApplyEvent : (string -> ReadOnlyMemory<byte> -> T)
 
         /// <summary>聚合值
         /// </summary>
-        member Value : Value
+        member Value : Note
+
+        /// <summary>聚合是否已关闭
+        /// </summary>
+        member Closed : bool
 
     /// <summary>创建Note
     /// </summary>
     /// <param name="ev">领域事件值。</param>
     /// <param name="agg">当前聚合。</param>
-    /// <param name="traceId">跟踪ID。</param>
-    val internal createNote : NoteCreated -> T -> string -> ((string * byte[] * byte[]) seq * T)
+    val internal createNote :
+        ev: NoteCreated ->
+        agg: T ->
+        ((string * ReadOnlyMemory<byte>) seq * T)
 
     /// <summary>改变Note
     /// </summary>
     /// <param name="ev">领域事件值。</param>
     /// <param name="agg">当前聚合。</param>
-    /// <param name="traceId">跟踪ID。</param>
-    val internal changeNote : NoteChanged -> T -> string -> ((string * byte[] * byte[]) seq * T)
+    val internal changeNote :
+        ev: NoteChanged ->
+        agg: T ->
+        ((string * ReadOnlyMemory<byte>) seq * T)

@@ -10,6 +10,9 @@ let domainEvent (app: AppService) name =
     let aggId = Guid.NewGuid().ToString()
     let name = "领域事件_" + name
     testSequenced <| testList name [
+        testCase "读取一个不存在的流" <| fun _ ->
+            let count = Seq.length <| app.Reader aggType aggId 0uL
+            Expect.equal count 0 "获取的事件数量错误"
         testCase "向不存在的流写入一个领域事件" <| fun _ ->
             let e1 = Encoding.UTF8.GetBytes "test1" |> ReadOnlyMemory
             seq { "Created", e1, Nullable() } |> app.Writer aggType aggId UInt64.MaxValue |> Async.RunSynchronously

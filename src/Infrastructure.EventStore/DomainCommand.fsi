@@ -34,6 +34,7 @@ module DomainCommand =
     /// <para>领域命令值全名作为Stream及消费群组名称。</para>
     /// </summary>
     /// <typeparam name="^c">领域命令类型。</typeparam>
+    /// <typeparam name="^v">领域命令响应类型。</typeparam>
     /// <param name="client">EventStore客户端。</param>
     /// <param name="subClient">EventStore持久化订阅客户端。</param>
     /// <param name="handler">领域命令处理函数。</param>

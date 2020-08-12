@@ -9,6 +9,11 @@
             "command": "fake build -t Infrastructure.EventStore.Test"
         },
         {
+            "label": "Debug",
+            "type": "shell",
+            "command": "fake run"
+        },
+        {
             "label": "Release",
             "type": "shell",
             "command": "fake build -t release"

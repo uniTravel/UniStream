@@ -1,6 +1,7 @@
 namespace Note.Domain
 
 open UniStream.Domain
+open Note.Contract
 
 
 type Created = { Title: string; Content: string }
@@ -10,11 +11,9 @@ type Changed = { Content: string }
 
 module NoteObserver =
 
-    type Value = { Title: string; Content: string; Count: int }
-
     type T =
         | Init
-        | Active of Value
+        | Active of Note
 
     let applyNoteCreated agg (ev: Created) =
         match agg with
@@ -26,13 +25,13 @@ module NoteObserver =
         | Active v -> { v with Content = ev.Content; Count = v.Count + 1 }
         | _ -> failwith "只有Active状态才能改变Note。"
 
-    let apply agg evType evBytes =
+    let apply agg evType data =
         match evType with
         | ev when ev = "Note.Domain.NoteCreated" ->
-            let ev = Delta.fromBytes<Created> evBytes
+            let ev = Delta.deserialize<Created> data
             applyNoteCreated agg ev |> Active
         | ev when ev = "Note.Domain.NoteChanged" ->
-            let ev = Delta.fromBytes<Changed> evBytes
+            let ev = Delta.deserialize<Changed> data
             applyNoteChanged agg ev |> Active
         | _ -> failwithf "领域事件类型错误：%s" evType
 

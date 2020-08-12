@@ -7,7 +7,7 @@ open System
 /// <para>边际影响包括领域命令值与领域事件值。</para>
 /// </summary>
 [<RequireQualifiedAccess>]
-module internal Delta =
+module Delta =
 
     /// <summary>边际影响序列化
     /// <para>边际影响采用UTF8格式的Json序列化。</para>

@@ -7,6 +7,9 @@
     <ProjectReference Include="..\..\src\Domain\Domain.fsproj">
       <Name>Domain.fsproj</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Note.Contract\Note.Contract.fsproj">
+      <Name>Note.Contract.fsproj</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Actor/Actor.fsi" />

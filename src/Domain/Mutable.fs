@@ -2,7 +2,7 @@ namespace UniStream.Domain
 
 open System
 open System.Collections.Generic
-open System.Text.Json
+open System.Text
 
 
 module Mutable =
@@ -47,7 +47,7 @@ module Mutable =
                         try
                             let reader = cfg.Get aggType aggKey
                             let writer = cfg.EsFunc aggType aggKey
-                            let metadata = JsonSerializer.SerializeToUtf8Bytes {| TraceId = traceId |} |> ReadOnlyMemory |> Nullable
+                            let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
                             let snapshot, snapUsage =
                                 if snapshots.ContainsKey aggKey then
                                     let agg, version, _ = snapshots.[aggKey]

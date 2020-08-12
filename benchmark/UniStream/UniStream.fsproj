@@ -7,8 +7,8 @@
     <ProjectReference Include="..\..\src\Domain\Domain.fsproj">
       <Name>Domain.fsproj</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\src\Infrastructure\Infrastructure.fsproj">
-      <Name>Infrastructure.fsproj</Name>
+    <ProjectReference Include="..\..\src\Infrastructure.EventStore\Infrastructure.EventStore.fsproj">
+      <Name>Infrastructure.EventStore.fsproj</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -1,7 +1,7 @@
 namespace UniStream.Domain
 
 open System
-open System.Text.Json
+open System.Text
 
 
 module Immutable =
@@ -28,7 +28,7 @@ module Immutable =
         ld.Process user cvType aggKey traceId "Initialize immutable aggregate."
         try
             let events, agg' = apply init
-            let metadata = JsonSerializer.SerializeToUtf8Bytes {| TraceId = traceId |} |> ReadOnlyMemory |> Nullable
+            let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
             let events = events |> Seq.map (fun (evType, data) -> evType, data, metadata)
             ld.Process user cvType aggKey traceId "Apply command success."
             try

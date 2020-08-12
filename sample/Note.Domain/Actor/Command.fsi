@@ -1,8 +1,7 @@
 namespace Note.Domain
 
-
-[<CLIMutable>]
-type CreateActor = { Name: string }
+open System
+open Note.Contract
 
 
 [<RequireQualifiedAccess>]
@@ -10,7 +9,7 @@ module CreateActor =
 
     [<Sealed>]
     type T =
-        static member ValueType : string
-        member Apply : (Actor.T -> string -> (string * byte[] * byte[]) seq * Actor.T)
+        static member FullName : string
+        member Apply : (Actor.T -> (string * ReadOnlyMemory<byte>) seq * Actor.T)
 
     val create : (CreateActor -> T)

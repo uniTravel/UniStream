@@ -2,29 +2,38 @@
 module ApiConfig
 
 open System
-open EventStore.ClientAPI
-open UniStream.Infrastructure
+open System.Net.Http
+open EventStore.Client
+open UniStream.Infrastructure.EventStore
 open Note.Application
 
 
-let connect (uri: Uri) =
-    let conn = EventStoreConnection.Create uri
-    conn.ConnectAsync() |> Async.AwaitTask |> Async.RunSynchronously
-    conn
+let createHttpMessageHandler () =
+    let handler = new HttpClientHandler()
+    handler.ServerCertificateCustomValidationCallback <- fun _ _ _ _ -> true
+    handler :> HttpMessageHandler
 
-let esUri = Uri "tcp://admin:changeit@localhost:4011"
-let ldUri = Uri "tcp://admin:changeit@localhost:4012"
-let lgUri = Uri "tcp://admin:changeit@localhost:4013"
+let ses = EventStoreClientSettings()
+let scs = EventStoreClientSettings()
+let sld = EventStoreClientSettings()
+let slg = EventStoreClientSettings()
+scs.DefaultCredentials <- UserCredentials ("admin", "changeit")
+ses.CreateHttpMessageHandler <- fun () -> createHttpMessageHandler()
+scs.CreateHttpMessageHandler <- fun () -> createHttpMessageHandler()
+sld.CreateHttpMessageHandler <- fun () -> createHttpMessageHandler()
+slg.CreateHttpMessageHandler <- fun () -> createHttpMessageHandler()
+ses.ConnectivitySettings.Address <- Uri "https://localhost:9011"
+scs.ConnectivitySettings.Address <- Uri "https://localhost:9016"
+sld.ConnectivitySettings.Address <- Uri "https://localhost:9012"
+slg.ConnectivitySettings.Address <- Uri "https://localhost:9013"
+let ces = new EventStoreClient (ses)
+let ccs = new EventStoreClient (scs)
+let cld = new EventStoreClient (sld)
+let clg = new EventStoreClient (slg)
 
-let c1 = connect esUri
-let c2 = connect ldUri
-let c3 = connect lgUri
+let reader = DomainEvent.get ces
+let writer = DomainEvent.write ces
+let ld = DomainLog.write cld
+let lg = DiagnoseLog.write clg
 
-let reader = DomainEvent.get c1
-let writer = DomainEvent.write c1
-let ld = DomainLog.write c2
-let lg = DiagnoseLog.write c3
-let sub = DomainEvent.subscribe c1
-
-let app = AppService (reader, writer, ld, lg)
-app.AddNoteObserver sub
+let app = NoteService (reader, writer, ld, lg)

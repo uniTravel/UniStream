@@ -21,6 +21,7 @@ module Note =
     type T =
         | Init
         | Active of Value
+        | Close of Value
 
     let applyNoteCreated agg (ev: NoteCreated) =
         match agg with
@@ -32,13 +33,13 @@ module Note =
         | Active v -> { v with Content = ev.Content; Count = v.Count + 1 }
         | _ -> failwith "只有Active状态才能改变Note。"
 
-    let apply agg evType evBytes =
+    let apply agg evType data =
         match evType with
         | ev when ev = noteCreated ->
-            let ev = Delta.fromBytes<NoteCreated> evBytes
+            let ev = Delta.deserialize<NoteCreated> data
             applyNoteCreated agg ev |> Active
         | ev when ev = noteChanged ->
-            let ev = Delta.fromBytes<NoteChanged> evBytes
+            let ev = Delta.deserialize<NoteChanged> data
             applyNoteChanged agg ev |> Active
         | _ -> failwithf "领域事件类型错误：%s" evType
 
@@ -47,13 +48,15 @@ module Note =
         member this.ApplyEvent = apply this
         member this.Value =
             match this with
-            | Active v -> v
+            | Active v | Close v -> v
             | Init -> failwith "初始状态，尚未赋值。"
+        member this.Closed =
+            match this with
+            | Close _ -> true
+            | _ -> false
 
-    let createNote ev agg (traceId: string) =
-        let v = applyNoteCreated agg ev
-        seq { noteCreated, Delta.asBytes ev, MetaData.correlationId v.Title }, Active v
+    let createNote ev agg =
+        seq { noteCreated, Delta.serialize ev }, Active <| applyNoteCreated agg ev
 
-    let changeNote ev agg (traceId: string) =
-        let v = applyNoteChanged agg ev
-        seq { noteChanged, Delta.asBytes ev, MetaData.correlationId v.Title }, Active v
+    let changeNote ev agg =
+        seq { noteChanged, Delta.serialize ev }, Active <| applyNoteChanged agg ev

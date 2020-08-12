@@ -2,7 +2,7 @@ namespace UniStream.Domain
 
 open System
 open System.Timers
-open System.Text.Json
+open System.Text
 
 
 module Factory =
@@ -107,7 +107,7 @@ module Basic =
                     if closed then Error "Aggregate closed." |> Factory.reply channel |> Async.Start
                     else
                         try
-                            let metadata = JsonSerializer.SerializeToUtf8Bytes {| TraceId = traceId |} |> ReadOnlyMemory |> Nullable
+                            let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
                             let agg', len = run lg reader writer agg version (apply, metadata, channel)
                             let version' = version + uint64 len
                             match shot with
@@ -152,7 +152,7 @@ module Batched =
                 | Add (traceId, apply, channel) ->
                     if closed then Error "Aggregate closed." |> Factory.reply channel |> Async.Start
                     else
-                        let metadata = JsonSerializer.SerializeToUtf8Bytes {| TraceId = traceId |} |> ReadOnlyMemory |> Nullable
+                        let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
                         return! loop agg version closed <| (apply, metadata, channel) :: batch
                 | Launch timer ->
                     if not batch.IsEmpty then

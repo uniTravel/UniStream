@@ -31,6 +31,7 @@ module Immutable =
     /// </summary>
     /// <typeparam name="^agg">聚合类型。</typeparam>
     /// <typeparam name="^c">领域命令类型。</typeparam>
+    /// <typeparam name="^v">聚合值类型。</typeparam>
     /// <param name="aggregator">聚合器。</param>
     /// <param name="user">用户。</param>
     /// <param name="aggKey">聚合键，源自GUID或者业务主键。</param>

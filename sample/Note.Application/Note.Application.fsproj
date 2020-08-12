@@ -4,9 +4,6 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Infrastructure\Infrastructure.fsproj">
-      <Name>Infrastructure.fsproj</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Note.Domain\Note.Domain.fsproj">
       <Name>Note.Domain.fsproj</Name>
     </ProjectReference>
@@ -16,8 +13,8 @@
     <Compile Include="CommandService.fs" />
     <Compile Include="ProcessManager.fsi" />
     <Compile Include="ProcessManager.fs" />
-    <Compile Include="AppService.fsi" />
-    <Compile Include="AppService.fs" />
+    <Compile Include="NoteService.fsi" />
+    <Compile Include="NoteService.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

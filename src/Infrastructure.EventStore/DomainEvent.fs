@@ -10,7 +10,9 @@ module DomainEvent =
     let get (client: EventStoreClient) aggType aggKey version =
         let streamName = aggType + aggKey
         let result = client.ReadStreamAsync (Direction.Forwards, streamName, StreamPosition(version))
-        result.Select(fun e -> e.Event.EventNumber.ToUInt64(), e.Event.EventType, e.Event.Data).ToEnumerable()
+        match result.ReadState |> Async.AwaitTask |> Async.RunSynchronously with
+        | ReadState.StreamNotFound -> Seq.empty
+        | _ -> result.Select(fun e -> e.Event.EventNumber.ToUInt64(), e.Event.EventType, e.Event.Data).ToEnumerable()
 
     let write (client: EventStoreClient) aggType aggKey version eData =
         let streamName = aggType + aggKey

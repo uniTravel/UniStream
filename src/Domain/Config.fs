@@ -7,9 +7,9 @@ module Config =
 
     [<Sealed>]
     type Immutable
-        ( esFunc: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>,
-          ldFunc: string -> string -> ReadOnlyMemory<byte> -> Async<unit>,
-          lgFunc: string -> ReadOnlyMemory<byte> -> Async<unit> ) =
+        (esFunc: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>,
+         ldFunc: string -> string -> ReadOnlyMemory<byte> -> Async<unit>,
+         lgFunc: string -> ReadOnlyMemory<byte> -> Async<unit>) =
 
         member _.EsFunc aggType aggKey version eData = esFunc aggType aggKey version eData
         member _.LdFunc user category data = ldFunc user category data
@@ -18,11 +18,11 @@ module Config =
 
     [<Sealed>]
     type Mutable
-        ( get: string -> string -> uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq,
-          esFunc: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>,
-          ldFunc: string -> string -> ReadOnlyMemory<byte> -> Async<unit>,
-          lgFunc: string -> ReadOnlyMemory<byte> -> Async<unit>,
-          ?capacity, ?keep, ?refresh, ?batch, ?scavenge, ?threshold ) =
+        (get: string -> string -> uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq,
+         esFunc: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>,
+         ldFunc: string -> string -> ReadOnlyMemory<byte> -> Async<unit>,
+         lgFunc: string -> ReadOnlyMemory<byte> -> Async<unit>,
+         ?capacity, ?keep, ?refresh, ?batch, ?scavenge, ?threshold) =
 
         let capacity = defaultArg capacity 10000
         let keep = defaultArg keep 3000
@@ -52,9 +52,9 @@ module Config =
 
     [<Sealed>]
     type Observer
-        ( get: string -> string -> uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq,
-          lgFunc: string -> ReadOnlyMemory<byte> -> Async<unit>,
-          ?capacity, ?keep, ?refresh, ?scavenge, ?threshold ) =
+        (get: string -> string -> uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq,
+         lgFunc: string -> ReadOnlyMemory<byte> -> Async<unit>,
+         ?capacity, ?keep, ?refresh, ?scavenge, ?threshold) =
         let capacity = defaultArg capacity 10000
         let keep = defaultArg keep 5000
         let refresh = defaultArg refresh 30u

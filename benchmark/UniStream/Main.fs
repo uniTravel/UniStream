@@ -7,8 +7,8 @@ module Main =
 
     [<EntryPoint>]
     let main argv =
-        let switch = BenchmarkSwitcher [|
-            typeof<EventStore>
-        |]
-        switch.Run argv |> ignore
+        // let switch = BenchmarkSwitcher [|
+        //     typeof<EventStore>
+        // |]
+        // switch.Run argv |> ignore
         0

@@ -2,6 +2,7 @@ namespace Note.Application
 
 open System
 open UniStream.Domain
+open Note.Contract
 open Note.Domain
 
 
@@ -11,39 +12,10 @@ open Note.Domain
 [<RequireQualifiedAccess>]
 module internal CommandService =
 
-    /// <summary>创建Actor
-    /// </summary>
-    /// <param name="actor">Actor聚合器。</param>
-    /// <param name="user">用户。</param>
-    /// <param name="aggId">聚合ID。</param>
-    /// <param name="traceId">跟踪ID。</param>
-    /// <param name="cv">领域命令值。</param>
-    /// <returns>聚合值。</returns>
-    val createActor : Immutable.T<Actor.T> -> string -> Guid -> Guid -> CreateActor -> Async<Actor.Value>
+    val createActor :Immutable.T<Actor.T> -> string -> string -> string -> CreateActor -> Async<Actor>
 
-    /// <summary>创建Note
-    /// </summary>
-    /// <param name="note">Note聚合器。</param>
-    /// <param name="user">用户。</param>
-    /// <param name="aggId">聚合ID。</param>
-    /// <param name="traceId">跟踪ID。</param>
-    /// <param name="cv">领域命令值。</param>
-    val createNote : Mutable.T<Note.T> -> string -> Guid -> Guid -> CreateNote -> Async<Note.Value>
+    val createNote : Mutable.T<Note.T> -> string -> string -> string -> CreateNote -> Async<Note>
 
-    /// <summary>改变Note
-    /// </summary>
-    /// <param name="note">Note聚合器。</param>
-    /// <param name="user">用户。</param>
-    /// <param name="aggId">聚合ID。</param>
-    /// <param name="traceId">跟踪ID。</param>
-    /// <param name="cv">领域命令值。</param>
-    val changeNote : Mutable.T<Note.T> -> string -> Guid -> Guid -> ChangeNote -> Async<Note.Value>
+    val changeNote : Mutable.T<Note.T> -> string -> string -> string -> ChangeNote -> Async<Note>
 
-    /// <summary>改变Note
-    /// </summary>
-    /// <param name="note">Note聚合器。</param>
-    /// <param name="user">用户。</param>
-    /// <param name="aggId">聚合ID。</param>
-    /// <param name="traceId">跟踪ID。</param>
-    /// <param name="cv">领域命令值。</param>
-    val batchChangeNote : Mutable.T<Note.T> -> string -> Guid -> Guid -> ChangeNote -> Async<unit>
+    val appendNote : Observer.T<NoteObserver.T> -> string -> uint64 -> string -> ReadOnlyMemory<byte> -> Async<unit>

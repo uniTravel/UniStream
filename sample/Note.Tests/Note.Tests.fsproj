@@ -7,6 +7,9 @@
     <ProjectReference Include="..\Note.Application\Note.Application.fsproj">
       <Name>Note.Application.fsproj</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\src\Infrastructure.EventStore\Infrastructure.EventStore.fsproj">
+      <Name>Infrastructure.EventStore.fsproj</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApiConfig.fs" />
