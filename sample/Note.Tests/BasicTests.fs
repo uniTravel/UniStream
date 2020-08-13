@@ -1,4 +1,4 @@
-module Note.Tests
+module Note.Tests.Basic
 
 open System
 open Expecto
@@ -13,7 +13,7 @@ let tests =
     let title1 = Guid.NewGuid().ToString()
     let title2 = Guid.NewGuid().ToString()
     let title3 = Guid.NewGuid().ToString()
-    testSequenced <| testList "可变聚合" [
+    testSequenced <| testList "可变聚合基本处理" [
         testCase "给定三个聚合ID，创建三个Note" <| fun _ ->
             let c1 : CreateNote = { Title = title1; Content = "initial content" }
             let c2 : CreateNote = { Title = title2; Content = "initial content" }
@@ -38,5 +38,6 @@ let tests =
             let c2 : ChangeNote = { Content = "changed content again" }
             let r2 = app.ChangeNote "test" aggId2 (Guid.NewGuid().ToString()) c2 |> Async.RunSynchronously
             Expect.equal r2.Content c2.Content "返回值错误。"
+            Threading.Thread.Sleep 50
     ]
     |> testLabel "Note App"

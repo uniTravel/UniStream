@@ -62,6 +62,34 @@ type NoteService =
         cv: ChangeNote ->
         Async<Note>
 
+    /// <summary>创建Note
+    /// <para>用于批处理。</para>
+    /// </summary>
+    /// <param name="user">用户。</param>
+    /// <param name="aggKey">聚合键。</param>
+    /// <param name="traceId">跟踪ID。</param>
+    /// <param name="cv">领域命令值。</param>
+    member BatchCreate :
+        user: string ->
+        aggKey: string ->
+        traceId: string ->
+        cv: CreateNote ->
+        Async<Note>
+
+    /// <summary>改变Note
+    /// <para>用于批处理。</para>
+    /// </summary>
+    /// <param name="user">用户。</param>
+    /// <param name="aggKey">聚合键。</param>
+    /// <param name="traceId">跟踪ID。</param>
+    /// <param name="cv">领域命令值。</param>
+    member BatchChange :
+        user: string ->
+        aggKey: string ->
+        traceId: string ->
+        cv: ChangeNote ->
+        Async<Note>
+
     /// <summary>附加事件到NoteObserver
     /// </summary>
     /// <param name="aggKey">聚合键。</param>

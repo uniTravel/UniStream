@@ -21,7 +21,7 @@ module DiagnoseLog =
 
     /// <summary>诊断日志记录器
     /// </summary>
-    type Logger
+    type T
 
     /// <summary>创建诊断日志记录器
     /// </summary>
@@ -30,9 +30,9 @@ module DiagnoseLog =
     val logger :
         name: string ->
         logFunc: (string -> ReadOnlyMemory<byte> -> Async<unit>) ->
-        Logger
+        T
 
-    type Logger with
+    type T with
 
         /// <summary>记录Trace级别的诊断日志
         /// </summary>

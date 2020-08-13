@@ -176,7 +176,7 @@ module Config =
         /// <param name="lgFunc">诊断日志流存储函数。</param>
         /// <param name="?capacity">缓存与快照的容量，缺省为10000。</param>
         /// <param name="?keep">清理缓存/快照后保留的数量，缺省为5000。</param>
-        /// <param name="?refresh">刷新聚合缓存的间隔秒数，缺省为30分钟。</param>
+        /// <param name="?refresh">刷新聚合缓存的间隔分钟数，缺省为30分钟。</param>
         /// <param name="?scavenge">清扫聚合快照的间隔小时数，自然数表示启用/0表示不启用，缺省为0。</param>
         /// <param name="?threshold">快照间隔，缺省为1000。</param>
         new :

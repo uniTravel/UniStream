@@ -27,8 +27,8 @@ module Mutable =
     /// <param name="DiagnoseLog">诊断日志记录器。</param>
     /// <param name="Agent">聚合器代理。</param>
     type T<'agg> =
-        { DomainLog: DomainLog.Logger
-          DiagnoseLog: DiagnoseLog.Logger
+        { DomainLog: DomainLog.T
+          DiagnoseLog: DiagnoseLog.T
           Agent: MailboxProcessor<Msg<'agg>> }
 
     /// <summary>创建可变聚合器

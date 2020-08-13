@@ -1,4 +1,4 @@
-module Actor.Tests
+module Note.Tests.Immutable
 
 open System
 open Expecto
@@ -19,5 +19,6 @@ let tests =
             let command : CreateActor = { Name = "actor" }
             let f = fun _ -> app.CreateActor "test" aggId traceId command |> Async.RunSynchronously |> ignore
             Expect.throwsC f (fun ex -> printfn "%s" ex.Message)
+            Threading.Thread.Sleep 50
     ]
     |> testLabel "Note App"

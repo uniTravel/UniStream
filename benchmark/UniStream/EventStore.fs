@@ -1,68 +1,84 @@
 namespace Benchmark.UniStream
 
-// open System
-// open BenchmarkDotNet.Attributes
-// open EventStore.ClientAPI
-// open UniStream.Infrastructure
-// open UniStream.Domain
+open System
+open System.Text
+open BenchmarkDotNet.Attributes
+open UniStream.Domain
 
 
-// [<MemoryDiagnoser>]
-// [<SimpleJob(1, 3, 20)>]
-// type EventStore () =
+[<MemoryDiagnoser>]
+[<SimpleJob(1, 3, 20)>]
+type Basic () =
+    let reader, writer, ld, lg = App.config()
+    let basic = BasicService (reader, writer, ld, lg)
 
-//     let es = Uri "tcp://admin:changeit@localhost:4011"
-//     let ld = Uri "tcp://admin:changeit@localhost:4012"
-//     let lg = Uri "tcp://admin:changeit@localhost:4013"
-//     let app = AppService (es, ld, lg)
-//     let connect (uri: Uri) =
-//         let conn = EventStoreConnection.Create uri
-//         conn.ConnectAsync() |> Async.AwaitTask |> Async.RunSynchronously
-//         conn
-//     let c1 = connect es
-//     let esFunc = DomainEvent.write c1
+    [<DefaultValue>] val mutable AggId: string
 
-//     [<DefaultValue>] val mutable AggId: Guid
+    [<Params(1, 10)>]
+    member val public count = 0 with get, set
 
-//     [<Params(100, 1000)>]
-//     member val public count = 0 with get, set
+    [<IterationSetup>]
+    member self.Setup () =
+        let traceId = Guid.NewGuid().ToString()
+        self.AggId <- Guid.NewGuid().ToString()
+        let command : CreateNote = { Title = "title"; Content = "initial content" }
+        basic.CreateNote "benchmark" self.AggId traceId command |> Async.RunSynchronously |> ignore
+        let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
+        seq { "NoteChanged", Delta.serialize command, metadata }
+        |> writer "Benchmark.Direct.Note-" self.AggId UInt64.MaxValue |> Async.RunSynchronously
 
-//     [<IterationSetup>]
-//     member self.Setup () =
-//         let traceId = Guid.NewGuid()
-//         self.AggId <- Guid.NewGuid()
-//         let command : CreateNote = { Title = "title"; Content = "initial content" }
-//         app.CreateNote "benchmark" self.AggId traceId command |> Async.RunSynchronously |> ignore
+    [<Benchmark>]
+    member self.Write () =
+        seq { 0 .. self.count - 1 }
+        |> Seq.iter (fun i ->
+            basic.ChangeNote "benchmark" self.AggId (Guid.NewGuid().ToString()) { Content = "changed content" } |> Async.RunSynchronously |> ignore)
 
-//     [<Benchmark>]
-//     member self.Write () =
-//         seq { 1 .. self.count }
-//         |> Seq.iter (fun i ->
-//             app.ChangeNote "benchmark" self.AggId (Guid.NewGuid()) { Content = "changed content" } |> Async.RunSynchronously |> ignore)
+    [<Benchmark>]
+    member self.DirectWrite () =
+        seq { 0 .. self.count - 1 }
+        |> Seq.iter (fun i ->
+            let traceId = Guid.NewGuid().ToString()
+            let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
+            let command = { Content = "changed content" }
+            seq { "NoteCreated", Delta.serialize command, metadata }
+            |> writer "Benchmark.Direct.Note-" self.AggId (uint64 i) |> Async.RunSynchronously |> ignore)
 
-//     [<Benchmark>]
-//     member self.DirectWrite () =
-//         seq { 1 .. self.count }
-//         |> Seq.iter (fun i ->
-//             let traceId = Guid.NewGuid().ToString()
-//             let command = { Content = "changed content" }
-//             esFunc "Benchmark.UniStream.Note" (self.AggId.ToString()) (int64 i)
-//             <| seq { ("NoteChanged", Delta.asBytes command, MetaData.correlationId traceId) }
-//             |> Async.Ignore |> Async.RunSynchronously |> ignore)
 
-//     [<Benchmark>]
-//     member self.BatchWrite () =
-//         seq { 1 .. self.count }
-//         |> Seq.map (fun i -> app.BatchChangeNote "benchmark" self.AggId (Guid.NewGuid()) { Content = "changed content" })
-//         |> Async.Parallel
-//         |> Async.RunSynchronously
+[<MemoryDiagnoser>]
+[<SimpleJob(1, 3, 20)>]
+type Batch () =
+    let reader, writer, ld, lg = App.config()
+    let batch = BatchService (reader, writer, ld, lg)
 
-//     [<Benchmark>]
-//     member self.DirectBatchWrite () =
-//         let data =
-//             seq { 1 .. self.count }
-//             |> Seq.map (fun i ->
-//                 let traceId = Guid.NewGuid().ToString()
-//                 ("NoteChanged", Delta.asBytes { Content = "changed content" },  MetaData.correlationId traceId)
-//             )
-//         esFunc "Benchmark.UniStream.Note-" (self.AggId.ToString()) 1L data |> Async.RunSynchronously
+    [<DefaultValue>] val mutable AggId: string
+
+    [<Params(100, 1000, 5000)>]
+    member val public count = 0 with get, set
+
+    [<IterationSetup>]
+    member self.Setup () =
+        let traceId = Guid.NewGuid().ToString()
+        self.AggId <- Guid.NewGuid().ToString()
+        let command : CreateNote = { Title = "title"; Content = "initial content" }
+        batch.CreateNote "benchmark" self.AggId traceId command |> Async.RunSynchronously |> ignore
+        let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
+        seq { "NoteChanged", Delta.serialize command, metadata }
+        |> writer "Benchmark.Direct.Note-" self.AggId UInt64.MaxValue |> Async.RunSynchronously
+
+    [<Benchmark>]
+    member self.Write () =
+        seq { 0 .. self.count - 1 }
+        |> Seq.map (fun i -> batch.ChangeNote "benchmark" self.AggId (Guid.NewGuid().ToString()) { Content = "changed content" })
+        |> Async.Parallel
+        |> Async.RunSynchronously
+
+    [<Benchmark>]
+    member self.DirectWrite () =
+        let data =
+            seq { 0 .. self.count - 1 }
+            |> Seq.map (fun i ->
+                let traceId = Guid.NewGuid().ToString()
+                let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
+                ("NoteChanged", Delta.serialize { Content = "changed content" }, metadata)
+            )
+        writer "Benchmark.Direct.Note-" self.AggId 0uL data |> Async.RunSynchronously

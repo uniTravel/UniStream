@@ -10,7 +10,7 @@ module DomainLog =
 
     /// <summary>领域日志记录器
     /// </summary>
-    type Logger
+    type T
 
     /// <summary>创建领域日志记录器
     /// </summary>
@@ -19,9 +19,9 @@ module DomainLog =
     val logger :
         aggType: string ->
         logFunc: (string -> string -> ReadOnlyMemory<byte> -> Async<unit>) ->
-        Logger
+        T
 
-    type Logger with
+    type T with
 
         /// <summary>记录Processing状态的领域日志
         /// </summary>

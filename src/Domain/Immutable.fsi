@@ -15,8 +15,8 @@ module Immutable =
     /// <param name="DiagnoseLog">诊断日志记录器。</param>
     /// <param name="Writer">聚合事件流存储函数。</param>
     type T<'agg> =
-        { DomainLog: DomainLog.Logger
-          DiagnoseLog: DiagnoseLog.Logger
+        { DomainLog: DomainLog.T
+          DiagnoseLog: DiagnoseLog.T
           Writer: string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit> }
 
     /// <summary>创建不可变聚合器

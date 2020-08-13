@@ -1,4 +1,4 @@
-﻿module Note.Test
+﻿module Note.Tests.Entry
 
 open Expecto
 

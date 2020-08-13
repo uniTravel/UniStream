@@ -1,5 +1,5 @@
 [<AutoOpen>]
-module ApiConfig
+module Note.Tests.ApiConfig
 
 open System
 open System.Net.Http

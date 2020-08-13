@@ -7,8 +7,8 @@ open System.Text
 module Immutable =
 
     type T<'agg> =
-        { DomainLog: DomainLog.Logger
-          DiagnoseLog: DiagnoseLog.Logger
+        { DomainLog: DomainLog.T
+          DiagnoseLog: DiagnoseLog.T
           Writer: string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit> }
 
     let inline create (cfg: Config.Immutable) : T< ^agg> =
@@ -27,6 +27,7 @@ module Immutable =
         let init = (^agg : (static member Initial : ^agg) ())
         ld.Process user cvType aggKey traceId "Initialize immutable aggregate."
         try
+            lg.Trace "Apply command to immutable aggregate and write to stream."
             let events, agg' = apply init
             let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
             let events = events |> Seq.map (fun (evType, data) -> evType, data, metadata)

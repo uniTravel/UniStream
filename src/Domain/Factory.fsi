@@ -29,7 +29,7 @@ module internal Factory =
     /// <param name="cmd">领域命令。</param>
     /// <returns>聚合及存储的领域事件数量。</returns>
     val inline private build :
-        lg: DiagnoseLog.Logger ->
+        lg: DiagnoseLog.T ->
         writer: (uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) ->
         agg: ^agg ->
         version: uint64 ->
@@ -46,7 +46,7 @@ module internal Factory =
     /// <param name="cmds">领域命令列表。</param>
     /// <returns>聚合及存储的领域事件数量。</returns>
     val inline private batch :
-        lg: DiagnoseLog.Logger ->
+        lg: DiagnoseLog.T ->
         writer: (uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) ->
         agg: ^agg ->
         version: uint64 ->
@@ -57,10 +57,12 @@ module internal Factory =
     /// <para>单纯从存储获取领域事件集合。</para>
     /// </summary>
     /// <typeparam name="^agg">聚合类型。</typeparam>
+    /// <param name="lg">诊断日志记录器。</param>
     /// <param name="reader">基于特定聚合，从某个版本开始获取领域事件的函数。</param>
     /// <param name="snapshot">或有的聚合快照。</param>
     /// <returns>聚合及相应版本。</returns>
     val inline raw :
+        lg: DiagnoseLog.T ->
         reader: (uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq) ->
         snapshot: (^agg * uint64) voption ->
         ^agg * uint64
@@ -78,7 +80,7 @@ module internal Factory =
     /// <param name="cmd">领域命令。</param>
     /// <returns>聚合及相应版本。</returns>
     val inline init :
-        lg: DiagnoseLog.Logger ->
+        lg: DiagnoseLog.T ->
         reader: (uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq) ->
         writer: (uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) ->
         snapshot: (^agg * uint64) voption ->
@@ -112,7 +114,7 @@ module Basic =
     /// <param name="version">聚合版本。</param>
     /// <param name="shot">或有的异步生成快照函数。</param>
     val inline internal agent :
-        lg: DiagnoseLog.Logger ->
+        lg: DiagnoseLog.T ->
         reader: (uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq) ->
         writer: (uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) ->
         agg: ^agg ->
@@ -174,7 +176,7 @@ module Batched =
     /// <param name="version">聚合版本。</param>
     /// <param name="shot">或有的异步生成快照函数。</param>
     val inline internal agent :
-        lg: DiagnoseLog.Logger ->
+        lg: DiagnoseLog.T ->
         reader: (uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq) ->
         writer: (uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) ->
         interval: float ->
@@ -233,7 +235,7 @@ module Observed =
     /// <param name="version">聚合版本。</param>
     /// <param name="shot">或有的异步生成快照函数。</param>
     val inline internal agent :
-        lg: DiagnoseLog.Logger ->
+        lg: DiagnoseLog.T ->
         reader: (uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq) ->
         agg: ^agg ->
         version: uint64 ->

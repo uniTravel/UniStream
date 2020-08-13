@@ -10,7 +10,7 @@ type CreateNote = { Title: string; Content: string }
 module CreateNote =
 
     type T = CreateNote of CreateNote with
-        static member ValueType = typeof<CreateNote>.FullName
+        static member FullName = typeof<CreateNote>.FullName
         member this.Apply =
             let cv = let (CreateNote c) = this in c
             Note.createNote { Title = cv.Title; Content = cv.Content }
@@ -24,7 +24,7 @@ type ChangeNote = { Content: string }
 [<RequireQualifiedAccess>]
 module ChangeNote =
     type T = ChangeNote of ChangeNote with
-        static member ValueType = typeof<ChangeNote>.FullName
+        static member FullName = typeof<ChangeNote>.FullName
         member this.Value = let (ChangeNote c) = this in c
         member this.Apply =
             let cv = let (ChangeNote c) = this in c

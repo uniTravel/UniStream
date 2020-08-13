@@ -1,40 +1,70 @@
 namespace Benchmark.UniStream
 
-// open System
-// open EventStore.ClientAPI
-// open UniStream.Domain
-// open UniStream.Infrastructure
+open System
+open System.Net.Http
+open EventStore.Client
+open UniStream.Infrastructure.EventStore
+open UniStream.Domain
 
 
-// [<Sealed>]
-// type AppService (es: Uri, ld: Uri, lg: Uri) =
+module App =
 
-//     let connect (uri: Uri) =
-//         let conn = EventStoreConnection.Create uri
-//         conn.ConnectAsync() |> Async.AwaitTask |> Async.RunSynchronously
-//         conn
+    let createHttpMessageHandler () =
+        let handler = new HttpClientHandler()
+        handler.ServerCertificateCustomValidationCallback <- fun _ _ _ _ -> true
+        handler :> HttpMessageHandler
 
-//     let c1 = connect es
-//     let c2 = connect ld
-//     let c3 = connect lg
-//     let get = DomainEvent.get c1
-//     let esFunc = DomainEvent.write c1
-//     let ldFunc = DomainLog.write c2 "NoteApp"
-//     let lgFunc = DiagnoseLog.write c3 "NoteApp"
+    let config () =
+        let ses = EventStoreClientSettings()
+        let sld = EventStoreClientSettings()
+        let slg = EventStoreClientSettings()
+        ses.CreateHttpMessageHandler <- fun () -> createHttpMessageHandler()
+        sld.CreateHttpMessageHandler <- fun () -> createHttpMessageHandler()
+        slg.CreateHttpMessageHandler <- fun () -> createHttpMessageHandler()
+        ses.ConnectivitySettings.Address <- Uri "https://localhost:9011"
+        sld.ConnectivitySettings.Address <- Uri "https://localhost:9012"
+        slg.ConnectivitySettings.Address <- Uri "https://localhost:9013"
+        let ces = new EventStoreClient (ses)
+        let cld = new EventStoreClient (sld)
+        let clg = new EventStoreClient (slg)
+        let reader = DomainEvent.get ces
+        let writer = DomainEvent.write ces
+        let ld = DomainLog.write cld
+        let lg = DiagnoseLog.write clg
+        reader, writer, ld, lg
 
-//     let note = Mutable.create <| Config.Mutable (get false, esFunc, ldFunc, lgFunc)
 
-//     member _.CreateNote user aggId traceId cv =
-//         let command = CreateNote.create cv
-//         Mutable.apply note user aggId traceId command
+[<Sealed>]
+type BasicService
+        (reader: string -> string -> uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq,
+         writer: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>,
+         ld: string -> string -> string -> ReadOnlyMemory<byte> -> Async<unit>,
+         lg: string -> string -> ReadOnlyMemory<byte> -> Async<unit>) =
 
-//     member _.ChangeNote user aggId traceId cv =
-//         let command = ChangeNote.create cv
-//         Mutable.apply note user aggId traceId command
+    let note = Mutable.create <| Config.Mutable (reader, writer, ld "NoteApp", lg "NoteApp")
 
-//     member _.BatchChangeNote user aggId traceId cv =
-//         let command = ChangeNote.create cv
-//         Mutable.batchApply note user aggId traceId command
+    member _.CreateNote user aggId traceId cv =
+        let command = CreateNote.create cv
+        Mutable.apply note user aggId traceId command
 
-//     member _.GetNote aggId =
-//         Mutable.get note aggId
+    member _.ChangeNote user aggId traceId cv =
+        let command = ChangeNote.create cv
+        Mutable.apply note user aggId traceId command
+
+
+[<Sealed>]
+type BatchService
+        (reader: string -> string -> uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq,
+         writer: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>,
+         ld: string -> string -> string -> ReadOnlyMemory<byte> -> Async<unit>,
+         lg: string -> string -> ReadOnlyMemory<byte> -> Async<unit>) =
+
+    let note = Mutable.create <| Config.Mutable (reader, writer, ld "NoteApp", lg "NoteApp", ?batch = Some 7u)
+
+    member _.CreateNote user aggId traceId cv =
+        let command = CreateNote.create cv
+        Mutable.apply note user aggId traceId command
+
+    member _.ChangeNote user aggId traceId cv =
+        let command = ChangeNote.create cv
+        Mutable.apply note user aggId traceId command

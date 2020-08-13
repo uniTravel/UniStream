@@ -14,12 +14,12 @@ module Mutable =
         | Get of string * AsyncReplyChannel<Result<'agg, string>>
 
     type T<'agg> =
-        { DomainLog: DomainLog.Logger
-          DiagnoseLog: DiagnoseLog.Logger
+        { DomainLog: DomainLog.T
+          DiagnoseLog: DiagnoseLog.T
           Agent: MailboxProcessor<Msg<'agg>> }
 
     let inline agent< ^agg when ^agg : (static member Initial : ^agg) and ^agg : (member ApplyEvent : (string -> ReadOnlyMemory<byte> -> ^agg)) and ^agg : (member Closed : bool)>
-        (cfg: Config.Mutable) lg aggType =
+        (cfg: Config.Mutable) (lg: DiagnoseLog.T) aggType =
         let snapshots = Dictionary<string, ^agg * uint64 * uint64>(cfg.Capacity)
         let caches =
             Dictionary<string,
@@ -45,6 +45,7 @@ module Mutable =
                         return! loop snapUsage <| aggKey :: cacheUsage
                     else
                         try
+                            lg.Trace "Initialize cache of [%s]" aggKey
                             let reader = cfg.Get aggType aggKey
                             let writer = cfg.EsFunc aggType aggKey
                             let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
@@ -67,25 +68,30 @@ module Mutable =
                             caches.Add (aggKey, fty)
                             return! loop snapUsage <| aggKey :: cacheUsage
                         with ex ->
+                            lg.Error ex.StackTrace "Initialize cache of [%s] failed: %s" aggKey ex.Message
                             Error ex.Message |> Factory.reply channel |> Async.Start
                             return! loop snapUsage cacheUsage
                 | Refresh ->
                     let usage = List.distinct cacheUsage
                     if caches.Count > cfg.Capacity - 1000 then
+                        lg.Trace "Start refresh cache."
                         let usage = List.truncate cfg.Keep usage
                         Seq.except usage caches.Keys
                         |> Seq.iter (fun id ->
                             let _, _, fty = caches.[id]
                             fty.Dispose()
                             caches.Remove id |> ignore)
+                        lg.Trace "Refresh cache finished."
                         return! loop snapUsage usage
                     else return! loop snapUsage usage
                 | Scavenge ->
                     let usage = List.distinct snapUsage
                     if snapshots.Count > cfg.Capacity - 1000 then
+                        lg.Trace "Start scavenge snapshot."
                         let usage = List.truncate cfg.Keep usage
                         Seq.except usage snapshots.Keys
                         |> Seq.iter (snapshots.Remove >> ignore)
+                        lg.Trace "Scavenge snapshot finished."
                         return! loop usage cacheUsage
                     else return! loop usage cacheUsage
                 | Get (aggKey, channel) ->
@@ -110,8 +116,8 @@ module Mutable =
         let lg = DiagnoseLog.logger aggType cfg.LgFunc
         let aggType = aggType + "-"
         let agent = agent< ^agg> cfg lg aggType
-        Async.Start <| createTimer cfg.Refresh (fun _ -> agent.Post Refresh)
-        if cfg.Scavenge > 0u then Async.Start <| createTimer cfg.Scavenge (fun _ -> agent.Post Scavenge)
+        Async.Start <| createTimer (cfg.Refresh * 1000u) (fun _ -> agent.Post Refresh)
+        if cfg.Scavenge > 0u then Async.Start <| createTimer (cfg.Scavenge * 60u * 60u * 1000u) (fun _ -> agent.Post Scavenge)
         { DomainLog = ld; DiagnoseLog = lg; Agent = agent }
 
     let inline apply { DomainLog = ld; Agent = agent } user aggKey traceId command = async {

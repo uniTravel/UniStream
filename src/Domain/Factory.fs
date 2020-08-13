@@ -10,18 +10,20 @@ module Factory =
     let inline reply (channel: AsyncReplyChannel<Result< ^agg, string>>) result =
         async { channel.Reply result }
 
-    let inline build (lg: DiagnoseLog.Logger) writer (agg: ^agg) (version: uint64) (apply, metadata: Nullable<ReadOnlyMemory<byte>>, channel) =
+    let inline build (lg: DiagnoseLog.T) writer (agg: ^agg) (version: uint64) (apply, metadata: Nullable<ReadOnlyMemory<byte>>, channel) =
+        lg.Trace "Apply command to mutable aggregate and write to stream."
         let (events: (string * ReadOnlyMemory<byte>) seq), (agg': ^agg) =
             try apply agg
             with ex ->
-                lg.Error ex.StackTrace "Apply command failed, %s" ex.Message
+                lg.Error ex.StackTrace "Apply command failed: %s" ex.Message
                 raise <| ApplyCommandException ex.Message
         let eData = events |> Seq.map (fun (evType, data) -> evType, data, metadata)
         writer version eData |> Async.RunSynchronously
         Ok agg' |> reply channel |> Async.Start
         agg', Seq.length events
 
-    let inline batch (lg: DiagnoseLog.Logger) writer  (agg: ^agg) (version: uint64) cmds =
+    let inline batch (lg: DiagnoseLog.T) writer  (agg: ^agg) (version: uint64) cmds =
+        lg.Trace "Batch apply commands to mutable aggregate and write to stream."
         let result, agg' =
             cmds
             |> List.rev
@@ -31,7 +33,7 @@ module Factory =
                         let events, agg = apply agg
                         events, agg, Ok agg
                     with ex ->
-                        lg.Error ex.StackTrace "Apply command failed, %s" ex.Message
+                        lg.Error ex.StackTrace "Apply command failed: %s" ex.Message
                         Seq.empty, agg, Error ex.Message
                 let eData = events |> Seq.map (fun (evType, data) -> evType, data, metadata)
                 let reply = reply channel result
@@ -43,12 +45,14 @@ module Factory =
         Async.Start <| async { reply |> Async.Parallel |> Async.RunSynchronously |> ignore }
         agg', Seq.length eData
 
-    let inline raw reader snapshot =
+    let inline raw (lg: DiagnoseLog.T) reader snapshot =
         let agg, version, (events: (uint64 * string * ReadOnlyMemory<byte>) seq) =
             match snapshot with
             | ValueSome (agg, version) -> agg, version, reader (version + 1uL)
             | ValueNone -> (^agg : (static member Initial : ^agg) ()), UInt64.MaxValue, reader 0uL
-        match version, Seq.length events with
+        let len = Seq.length events
+        lg.Trace "Get %d events from store for observe aggregate." len
+        match version, len with
         | UInt64.MaxValue, 0 -> failwith "Raw data not found."
         | _, 0 -> agg, version
         | _, len ->
@@ -57,12 +61,14 @@ module Factory =
                 (^agg : (member ApplyEvent : (string -> ReadOnlyMemory<byte> -> ^agg)) agg) evType data
             ) agg events, version + uint64 len
 
-    let inline init lg reader writer snapshot cmd =
+    let inline init (lg: DiagnoseLog.T) reader writer snapshot cmd =
         let agg, version, (events: (uint64 * string * ReadOnlyMemory<byte>) seq) =
             match snapshot with
             | ValueSome (agg, version) -> agg, version, reader (version + 1uL)
             | ValueNone -> (^agg : (static member Initial : ^agg) ()), UInt64.MaxValue, reader 0uL
-        match version, Seq.length events with
+        let len = Seq.length events
+        lg.Trace "Get %d events from stream for init aggregate." len
+        match version, len with
         | UInt64.MaxValue, 0 ->
             let agg', len = build lg writer agg version cmd
             agg', uint64 len - 1uL
@@ -90,7 +96,7 @@ module Basic =
         with
         | ApplyCommandException ex -> failwith ex
         | ex ->
-            lg.Error ex.StackTrace "Save events failed, %s" ex.Message
+            lg.Error ex.StackTrace "Save events failed: %s" ex.Message
             let events : (uint64 * string * ReadOnlyMemory<byte>) seq = reader <| version + 1uL
             let agg, version =
                 Seq.fold (fun agg elem ->
@@ -99,12 +105,14 @@ module Basic =
                 ) agg events, version + uint64 (Seq.length events)
             Factory.build lg writer agg version cmd
 
-    let inline agent lg reader writer agg version shot =
+    let inline agent (lg: DiagnoseLog.T) reader writer agg version shot =
         MailboxProcessor<Msg< ^agg>>.Start <| fun inbox ->
             let rec loop agg version closed = async {
                 match! inbox.Receive() with
                 | Post (traceId, apply, channel) ->
-                    if closed then Error "Aggregate closed." |> Factory.reply channel |> Async.Start
+                    if closed then
+                        lg.Warn "Aggregate closed."
+                        Error "Aggregate closed." |> Factory.reply channel |> Async.Start
                     else
                         try
                             let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
@@ -114,7 +122,9 @@ module Basic =
                             | None -> ()
                             | Some shot -> shot agg' version' |> Async.Start
                             return! loop agg' version' (^agg : (member Closed : bool) agg')
-                        with ex -> Error ex.Message |> Factory.reply channel |> Async.Start
+                        with ex ->
+                            lg.Error ex.StackTrace "Apply command to stream failed: %s" ex.Message
+                            Error ex.Message |> Factory.reply channel |> Async.Start
                 | Get channel -> Ok agg |> Factory.reply channel |> Async.Start
                 return! loop agg version closed }
             loop agg version (^agg : (member Closed : bool) agg)
@@ -145,12 +155,14 @@ module Batched =
                 ) agg events, version + uint64 (Seq.length events)
             Factory.batch lg writer agg version cmd
 
-    let inline agent lg reader writer interval agg version shot =
+    let inline agent (lg: DiagnoseLog.T) reader writer interval agg version shot =
         let agent = new MailboxProcessor<Msg< ^agg>> (fun inbox ->
             let rec loop agg version closed batch = async {
                 match! inbox.Receive() with
                 | Add (traceId, apply, channel) ->
-                    if closed then Error "Aggregate closed." |> Factory.reply channel |> Async.Start
+                    if closed then
+                        lg.Warn "Aggregate closed."
+                        Error "Aggregate closed." |> Factory.reply channel |> Async.Start
                     else
                         let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
                         return! loop agg version closed <| (apply, metadata, channel) :: batch
@@ -164,8 +176,10 @@ module Batched =
                             | Some shot -> shot agg' version' |> Async.Start
                             let closed' = (^agg : (member Closed : bool) agg')
                             if closed' then timer.Stop()
+                            lg.Trace "Launch batch successed, applied %d commands." batch.Length
                             return! loop agg' version' closed' []
                         with ex ->
+                            lg.Error ex.StackTrace "Launch batch failed: %s" ex.Message
                             batch
                             |> List.map (fun (_, _, channel) -> Factory.reply channel <| Error ex.Message)
                             |> Async.Parallel |> Async.RunSynchronously |> ignore
@@ -194,11 +208,12 @@ module Observed =
         | Append of uint64 * string * ReadOnlyMemory<byte>
         | Get of AsyncReplyChannel<Result<'agg, string>>
 
-    let inline agent (lg: DiagnoseLog.Logger) reader agg version shot =
+    let inline agent (lg: DiagnoseLog.T) reader agg version shot =
         MailboxProcessor<Msg< ^agg>>.Start <| fun inbox ->
             let rec loop agg version = async {
                 match! inbox.Receive() with
                 | Append (number, evType, data) ->
+                    lg.Trace "Append event to observed aggregate."
                     try
                         match number - version with
                         | 1uL ->

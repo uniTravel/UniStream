@@ -15,21 +15,26 @@ type LogLevel =
 
 module DiagnoseLog =
 
-    type Logger = { Name: string; LogFunc: string -> ReadOnlyMemory<byte> -> Async<unit> }
+    type T = { Name: string; LogFunc: string -> ReadOnlyMemory<byte> -> Async<unit> }
 
     let logger name logFunc =
         { Name = name; LogFunc = logFunc }
 
-    let log lg level format (stack: string) =
-        let doAfter (s: string) =
-            {| Level = level; Message = s; StackTrack = stack |}
-            |> JsonSerializer.SerializeToUtf8Bytes
-            |> ReadOnlyMemory
-            |> lg.LogFunc lg.Name
-            |> Async.Start
+    let agent =
+        MailboxProcessor<T * LogLevel * string * string>.Start <| fun inbox ->
+            let rec loop () = async {
+                let! lg, level, s, stack = inbox.Receive()
+                {| Level = level; Message = s; StackTrace = stack |}
+                |> JsonSerializer.SerializeToUtf8Bytes |> ReadOnlyMemory |> lg.LogFunc lg.Name |> Async.RunSynchronously
+                return! loop ()
+            }
+            loop ()
+
+    let log lg level format stack =
+        let doAfter s = agent.Post (lg, level, s, stack)
         Printf.ksprintf doAfter format
 
-    type Logger with
+    type T with
         member this.Trace format = log this LogLevel.Trace format null
         member this.Debug format = log this LogLevel.Debug format null
         member this.Info format = log this LogLevel.Info format null

@@ -13,8 +13,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApiConfig.fs" />
-    <Compile Include="ActorTests.fs" />
-    <Compile Include="NoteTests.fs" />
+    <Compile Include="ImmutableTests.fs" />
+    <Compile Include="BasicTests.fs" />
+    <Compile Include="BatchTests.fs" />
     <Compile Include="Main.fs" />
     <None Include="paket.references" />
   </ItemGroup>
