@@ -13,8 +13,6 @@
     <Compile Include="CommandService.fs" />
     <Compile Include="ProcessManager.fsi" />
     <Compile Include="ProcessManager.fs" />
-    <Compile Include="NoteService.fsi" />
-    <Compile Include="NoteService.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

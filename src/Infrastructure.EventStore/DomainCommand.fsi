@@ -28,6 +28,7 @@ module DomainCommand =
         cmd: ^c ->
         Async<Result< ^v, string>>
         when ^c : (static member FullName : string)
+        and ^c : (member Raw : unit -> ReadOnlyMemory<byte>)
 
     /// <summary>连接到领域命令流服务端订阅
     /// <para>订阅实例在服务端，支持多节点的消费群组连接，用以并行消费。</para>
@@ -41,6 +42,7 @@ module DomainCommand =
     val inline subscribe< ^c, ^v> :
         client: EventStoreClient ->
         subClient: EventStorePersistentSubscriptionsClient ->
-        handler: (string -> string -> ReadOnlyMemory<byte> -> (^v -> unit) -> Async<unit>) ->
+        handler: (string -> string -> string -> ReadOnlyMemory<byte> -> (^v -> unit) -> Async<unit>) ->
         Async<SubscriptionDroppedReason * exn>
         when ^c : (static member FullName : string)
+        and ^c : (member Raw : unit -> ReadOnlyMemory<byte>)

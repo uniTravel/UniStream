@@ -5,6 +5,6 @@ namespace Note.Application
 /// <para>应用的流程管理者内部实现，业务流程涉及多个聚合。</para>
 /// </summary>
 [<RequireQualifiedAccess>]
-module internal ProcessManager =
+module ProcessManager =
 
     type T

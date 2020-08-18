@@ -41,15 +41,17 @@ type BasicService
          ld: string -> string -> string -> ReadOnlyMemory<byte> -> Async<unit>,
          lg: string -> string -> ReadOnlyMemory<byte> -> Async<unit>) =
 
-    let note = Mutable.create <| Config.Mutable (reader, writer, ld "NoteApp", lg "NoteApp")
+    let note : Mutable.T<Note.T> = Mutable.create <| Config.Mutable (reader, writer, ld "NoteApp", lg "NoteApp")
+    let createNote = typeof<CreateNote>.FullName
+    let changeNote = typeof<ChangeNote>.FullName
 
     member _.CreateNote user aggId traceId cv =
-        let command = CreateNote.create cv
-        Mutable.apply note user aggId traceId command
+        let command = (CreateNote.create cv).Raw()
+        Mutable.apply note user aggId createNote traceId command
 
     member _.ChangeNote user aggId traceId cv =
-        let command = ChangeNote.create cv
-        Mutable.apply note user aggId traceId command
+        let command = (ChangeNote.create cv).Raw()
+        Mutable.apply note user aggId changeNote traceId command
 
 
 [<Sealed>]
@@ -59,12 +61,14 @@ type BatchService
          ld: string -> string -> string -> ReadOnlyMemory<byte> -> Async<unit>,
          lg: string -> string -> ReadOnlyMemory<byte> -> Async<unit>) =
 
-    let note = Mutable.create <| Config.Mutable (reader, writer, ld "NoteApp", lg "NoteApp", ?batch = Some 7u)
+    let note : Mutable.T<Note.T> = Mutable.create <| Config.Mutable (reader, writer, ld "NoteApp", lg "NoteApp", ?batch = Some 7u)
+    let createNote = typeof<CreateNote>.FullName
+    let changeNote = typeof<ChangeNote>.FullName
 
     member _.CreateNote user aggId traceId cv =
-        let command = CreateNote.create cv
-        Mutable.apply note user aggId traceId command
+        let command = (CreateNote.create cv).Raw()
+        Mutable.apply note user aggId createNote traceId command
 
     member _.ChangeNote user aggId traceId cv =
-        let command = ChangeNote.create cv
-        Mutable.apply note user aggId traceId command
+        let command = (ChangeNote.create cv).Raw()
+        Mutable.apply note user aggId changeNote traceId command

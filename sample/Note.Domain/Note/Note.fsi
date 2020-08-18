@@ -30,6 +30,10 @@ module Note =
         /// </summary>
         member ApplyEvent : (string -> ReadOnlyMemory<byte> -> T)
 
+        /// <summary>应用领域命令
+        /// </summary>
+        member ApplyCommand : (string -> ReadOnlyMemory<byte> -> (string * ReadOnlyMemory<byte>) seq * T)
+
         /// <summary>聚合值
         /// </summary>
         member Value : Note
@@ -37,21 +41,3 @@ module Note =
         /// <summary>聚合是否已关闭
         /// </summary>
         member Closed : bool
-
-    /// <summary>创建Note
-    /// </summary>
-    /// <param name="ev">领域事件值。</param>
-    /// <param name="agg">当前聚合。</param>
-    val internal createNote :
-        ev: NoteCreated ->
-        agg: T ->
-        ((string * ReadOnlyMemory<byte>) seq * T)
-
-    /// <summary>改变Note
-    /// </summary>
-    /// <param name="ev">领域事件值。</param>
-    /// <param name="agg">当前聚合。</param>
-    val internal changeNote :
-        ev: NoteChanged ->
-        agg: T ->
-        ((string * ReadOnlyMemory<byte>) seq * T)

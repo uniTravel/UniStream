@@ -33,8 +33,9 @@ module internal Factory =
         writer: (uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) ->
         agg: ^agg ->
         version: uint64 ->
-        cmd:((^agg -> (string * ReadOnlyMemory<byte>) seq * ^agg) * Nullable<ReadOnlyMemory<byte>> * AsyncReplyChannel<Result<'agg, string>>) ->
+        cmd:(string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>> * AsyncReplyChannel<Result<'agg, string>>) ->
         ^agg * int
+        when ^agg : (member ApplyCommand : (string -> ReadOnlyMemory<byte> -> (string * ReadOnlyMemory<byte>) seq * ^agg))
 
     /// <summary>批量执行领域命令
     /// </summary>
@@ -50,8 +51,9 @@ module internal Factory =
         writer: (uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) ->
         agg: ^agg ->
         version: uint64 ->
-        cmds:((^agg -> (string * ReadOnlyMemory<byte>) seq * ^agg) * Nullable<ReadOnlyMemory<byte>> * AsyncReplyChannel<Result<'agg, string>>) list ->
+        cmds:(string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>> * AsyncReplyChannel<Result<'agg, string>>) list ->
         ^agg * int
+        when ^agg : (member ApplyCommand : (string -> ReadOnlyMemory<byte> -> (string * ReadOnlyMemory<byte>) seq * ^agg))
 
     /// <summary>初始化聚合工厂
     /// <para>单纯从存储获取领域事件集合。</para>
@@ -84,10 +86,11 @@ module internal Factory =
         reader: (uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq) ->
         writer: (uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) ->
         snapshot: (^agg * uint64) voption ->
-        cmd:((^agg -> (string * ReadOnlyMemory<byte>) seq * ^agg) * Nullable<ReadOnlyMemory<byte>> * AsyncReplyChannel<Result<'agg, string>>) ->
+        cmd:(string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>> * AsyncReplyChannel<Result<'agg, string>>) ->
         ^agg * uint64
         when ^agg : (static member Initial : ^agg)
         and ^agg : (member ApplyEvent : (string -> ReadOnlyMemory<byte> -> ^agg))
+        and ^agg : (member ApplyCommand : (string -> ReadOnlyMemory<byte> -> (string * ReadOnlyMemory<byte>) seq * ^agg))
 
 
 /// <summary>基本聚合工厂模块
@@ -98,10 +101,10 @@ module Basic =
     /// <summary>基本聚合工厂消息类型
     /// </summary>
     /// <typeparam name="'agg">聚合类型。</typeparam>
-    /// <param name="Post">推送领域命令：跟踪ID*应用领域命令的函数*返回聚合的管道。</param>
+    /// <param name="Post">推送领域命令：领域命令值类型全名*跟踪ID*领域命令数据*返回聚合的管道。</param>
     /// <param name="Get">取出当前聚合。</param>
     type Msg<'agg> =
-        | Post of string * ('agg -> (string * ReadOnlyMemory<byte>) seq * 'agg) * AsyncReplyChannel<Result<'agg, string>>
+        | Post of string * string * ReadOnlyMemory<byte> * AsyncReplyChannel<Result<'agg, string>>
         | Get of AsyncReplyChannel<Result<'agg, string>>
 
     /// <summary>创建基本聚合工厂代理
@@ -122,19 +125,22 @@ module Basic =
         shot: (^agg -> uint64 -> Async<unit>) option ->
         MailboxProcessor<Msg< ^agg>>
         when ^agg : (member ApplyEvent : (string -> ReadOnlyMemory<byte> -> ^agg))
+        and ^agg : (member ApplyCommand : (string -> ReadOnlyMemory<byte> -> (string * ReadOnlyMemory<byte>) seq * ^agg))
         and ^agg : (member Closed : bool)
 
     /// <summary>领域命令发往基本聚合工厂
     /// </summary>
     /// <typeparam name="^agg">聚合类型。</typeparam>
     /// <param name="agent">基本聚合工厂代理。</param>
+    /// <param name="cvType">领域命令值类型全名。</param>
     /// <param name="traceId">跟踪ID。</param>
-    /// <param name="apply">应用领域命令的函数。</param>
+    /// <param name="data">领域命令数据。</param>
     /// <param name="channel">返回聚合的管道。</param>
     val inline internal post :
         agent: MailboxProcessor<Msg< ^agg>> ->
+        cvType: string ->
         traceId: string ->
-        apply: (^agg -> (string * ReadOnlyMemory<byte>) seq * ^agg) ->
+        data: ReadOnlyMemory<byte> ->
         channel: AsyncReplyChannel<Result< ^agg, string>> ->
         unit
 
@@ -157,11 +163,11 @@ module Batched =
     /// <summary>批处理聚合工厂消息类型
     /// </summary>
     /// <typeparam name="'agg">聚合类型。</typeparam>
-    /// <param name="Add">添加领域命令：跟踪ID*应用领域命令的函数*返回聚合的管道。</param>
+    /// <param name="Add">添加领域命令：领域命令值类型全名*跟踪ID*领域命令数据*返回聚合的管道。</param>
     /// <param name="Launch">启动批处理。</param>
     /// <param name="Get">取出当前聚合。</param>
     type Msg<'agg> =
-        | Add of string * ('agg -> (string * ReadOnlyMemory<byte>) seq * 'agg) * AsyncReplyChannel<Result<'agg, string>>
+        | Add of string * string * ReadOnlyMemory<byte> * AsyncReplyChannel<Result<'agg, string>>
         | Launch of Timer
         | Get of AsyncReplyChannel<Result<'agg, string>>
 
@@ -185,19 +191,22 @@ module Batched =
         shot: (^agg -> uint64 -> Async<unit>) option ->
         MailboxProcessor<Msg< ^agg>>
         when ^agg : (member ApplyEvent : (string -> ReadOnlyMemory<byte> -> ^agg))
+        and ^agg : (member ApplyCommand : (string -> ReadOnlyMemory<byte> -> (string * ReadOnlyMemory<byte>) seq * ^agg))
         and ^agg : (member Closed : bool)
 
     /// <summary>领域命令发往批处理聚合工厂
     /// </summary>
     /// <typeparam name="^agg">聚合类型。</typeparam>
     /// <param name="agent">批处理聚合工厂代理。</param>
+    /// <param name="cvType">领域命令值类型全名。</param>
     /// <param name="traceId">跟踪ID。</param>
-    /// <param name="apply">应用领域命令的函数。</param>
+    /// <param name="data">领域命令数据。</param>
     /// <param name="channel">返回聚合的管道。</param>
     val inline internal post :
         agent: MailboxProcessor<Msg< ^agg>> ->
+        cvType: string ->
         traceId: string ->
-        apply: (^agg -> (string * ReadOnlyMemory<byte>) seq * ^agg) ->
+        data: ReadOnlyMemory<byte> ->
         channel: AsyncReplyChannel<Result< ^agg, string>> ->
         unit
 

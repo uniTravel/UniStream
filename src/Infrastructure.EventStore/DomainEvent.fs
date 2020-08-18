@@ -32,9 +32,8 @@ module DomainEvent =
                 (fun sub e ct ->
                     let version = e.Event.EventNumber.ToUInt64()
                     let streamName = e.Event.EventStreamId
-                    let len = streamName.Length
                     let idx = streamName.IndexOf '-'
-                    let aggKey = streamName.[idx + 1..len - 1]
+                    let aggKey = streamName.[idx + 1..]
                     handler aggKey e.Event.EventType version e.Event.Data |> Async.Start
                     Task.CompletedTask),
                 false,

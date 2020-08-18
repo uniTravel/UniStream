@@ -30,21 +30,21 @@ module Immutable =
     /// <summary>执行命令
     /// </summary>
     /// <typeparam name="^agg">聚合类型。</typeparam>
-    /// <typeparam name="^c">领域命令类型。</typeparam>
     /// <typeparam name="^v">聚合值类型。</typeparam>
     /// <param name="aggregator">聚合器。</param>
     /// <param name="user">用户。</param>
     /// <param name="aggKey">聚合键，源自GUID或者业务主键。</param>
+    /// <param name="cvType">领域命令值类型全名。</param>
     /// <param name="traceId">跟踪ID。</param>
-    /// <param name="command">领域命令。</param>
+    /// <param name="data">领域命令数据。</param>
     val inline apply :
         aggregator: T< ^agg> ->
         user: string ->
         aggKey: string ->
+        cvType: string ->
         traceId: string ->
-        command: ^c ->
+        data: ReadOnlyMemory<byte> ->
         Async< ^v>
         when ^agg : (static member Initial : ^agg)
+        and ^agg : (member ApplyCommand : (string -> ReadOnlyMemory<byte> -> (string * ReadOnlyMemory<byte>) seq * ^agg))
         and ^agg : (member Value : ^v)
-        and ^c : (static member FullName : string)
-        and ^c : (member Apply: (^agg -> (string * ReadOnlyMemory<byte>) seq * ^agg))

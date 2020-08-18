@@ -3,11 +3,23 @@ namespace Benchmark.UniStream
 open System
 open System.Text
 open BenchmarkDotNet.Attributes
+open BenchmarkDotNet.Configs
+open BenchmarkDotNet.Jobs
+open BenchmarkDotNet.Diagnosers
 open UniStream.Domain
 
 
-[<MemoryDiagnoser>]
-[<SimpleJob(1, 3, 20)>]
+[<AttributeUsage(AttributeTargets.Class)>]
+type private JobAttribute () =
+    inherit Attribute()
+    let cfg =
+        ManualConfig.CreateEmpty()
+            .AddJob(Job.Default.WithLaunchCount(1).WithWarmupCount(3).WithIterationCount(20).WithId("v0.7.0"))
+            .AddDiagnoser(MemoryDiagnoser.Default)
+    interface IConfigSource with member _.Config = cfg :> IConfig
+
+
+[<Job>]
 type Basic () =
     let reader, writer, ld, lg = App.config()
     let basic = BasicService (reader, writer, ld, lg)
@@ -44,8 +56,7 @@ type Basic () =
             |> writer "Benchmark.Direct.Note-" self.AggId (uint64 i) |> Async.RunSynchronously |> ignore)
 
 
-[<MemoryDiagnoser>]
-[<SimpleJob(1, 3, 20)>]
+[<Job>]
 type Batch () =
     let reader, writer, ld, lg = App.config()
     let batch = BatchService (reader, writer, ld, lg)

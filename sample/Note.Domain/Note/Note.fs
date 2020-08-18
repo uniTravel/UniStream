@@ -14,6 +14,9 @@ module Note =
     let noteCreated = typeof<NoteCreated>.FullName
     let noteChanged = typeof<NoteChanged>.FullName
 
+    let createNote = typeof<CreateNote>.FullName
+    let changeNote = typeof<ChangeNote>.FullName
+
     type T =
         | Init
         | Active of Note
@@ -29,7 +32,7 @@ module Note =
         | Active v -> { v with Content = ev.Content; Count = v.Count + 1 }
         | _ -> failwith "只有Active状态才能改变Note。"
 
-    let apply agg evType data =
+    let applyEvent agg evType data =
         match evType with
         | ev when ev = noteCreated ->
             let ev = Delta.deserialize<NoteCreated> data
@@ -39,9 +42,22 @@ module Note =
             applyNoteChanged agg ev |> Active
         | _ -> failwithf "领域事件类型错误：%s" evType
 
+    let applyCommand agg cvType data =
+        match cvType with
+        | cv when cv = createNote ->
+            let cv = Delta.deserialize<CreateNote> data
+            let ev = { Title = cv.Title; Content = cv.Content }
+            seq { noteCreated, Delta.serialize ev }, Active <| applyNoteCreated agg ev
+        | cv when cv = changeNote ->
+            let cv = Delta.deserialize<ChangeNote> data
+            let ev = { Content = cv.Content }
+            seq { noteChanged, Delta.serialize ev }, Active <| applyNoteChanged agg ev
+        | _ -> failwithf "领域命令值类型错误：%s" cvType
+
     type T with
         static member Initial = Init
-        member this.ApplyEvent = apply this
+        member this.ApplyEvent = applyEvent this
+        member this.ApplyCommand = applyCommand this
         member this.Value =
             match this with
             | Active v | Close v -> v
@@ -50,9 +66,3 @@ module Note =
             match this with
             | Close _ -> true
             | _ -> false
-
-    let createNote ev agg =
-        seq { noteCreated, Delta.serialize ev }, Active <| applyNoteCreated agg ev
-
-    let changeNote ev agg =
-        seq { noteChanged, Delta.serialize ev }, Active <| applyNoteChanged agg ev

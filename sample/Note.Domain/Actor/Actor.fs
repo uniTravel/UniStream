@@ -1,5 +1,6 @@
 namespace Note.Domain
 
+open System
 open UniStream.Domain
 open Note.Contract
 
@@ -11,6 +12,8 @@ module Actor =
 
     let actorCreated = typeof<ActorCreated>.FullName
 
+    let createActor = typeof<CreateActor>.FullName
+
     type T =
         | Init
         | Active of Actor
@@ -21,16 +24,25 @@ module Actor =
         | Init -> { Name = ev.Name; Sex = "Male" }
         | _ -> failwith "只有初始状态才能创建Actor。"
 
-    let apply agg evType data =
+    let applyEvent agg evType data =
         match evType with
         | ev when ev = actorCreated ->
             let ev = Delta.deserialize<ActorCreated> data
             Active <| applyActorCreated agg ev
         | _ -> failwithf "领域事件值类型错误：%s" evType
 
+    let applyCommand agg cvType data =
+        match cvType with
+        | cv when cv = createActor ->
+            let cv = Delta.deserialize<CreateActor> data
+            let ev = { Name = cv.Name }
+            seq { actorCreated, Delta.serialize ev }, Active <| applyActorCreated agg ev
+        | _ -> failwithf "领域命令值类型错误：%s" cvType
+
     type T with
         static member Initial = Init
-        member this.ApplyEvent = apply this
+        member this.ApplyEvent = applyEvent this
+        member this.ApplyCommand = applyCommand this
         member this.Value =
             match this with
             | Active v | Close v -> v
@@ -39,7 +51,3 @@ module Actor =
             match this with
             | Close _ -> true
             | _ -> false
-
-
-    let createActor ev agg =
-        seq { actorCreated, Delta.serialize ev }, Active <| applyActorCreated agg ev
