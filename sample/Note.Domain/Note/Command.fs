@@ -1,4 +1,4 @@
-namespace Benchmark.UniStream
+namespace Note.Domain
 
 open UniStream.Domain
 

@@ -1,7 +1,6 @@
 namespace Note.Domain
 
 open UniStream.Domain
-open Note.Contract
 
 
 type Created = { Title: string; Content: string }
@@ -13,7 +12,7 @@ module NoteObserver =
 
     type T =
         | Init
-        | Active of Note
+        | Active of NoteValue
 
     let applyNoteCreated agg (ev: Created) =
         match agg with

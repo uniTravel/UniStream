@@ -10,11 +10,10 @@ module Factory =
     let inline reply (channel: AsyncReplyChannel<Result< ^agg, string>>) result =
         async { channel.Reply result }
 
-    let inline build (lg: DiagnoseLog.T) writer (agg: ^agg) (version: uint64) (cvType, data, metadata: Nullable<ReadOnlyMemory<byte>>, channel) =
+    let inline build (lg: DiagnoseLog.T) writer (agg: ^agg) (version: uint64) (apply, metadata: Nullable<ReadOnlyMemory<byte>>, channel) =
         lg.Trace "Apply command to mutable aggregate and write to stream."
-        let apply = (^agg : (member ApplyCommand : (string -> ReadOnlyMemory<byte> -> (string * ReadOnlyMemory<byte>) seq * ^agg)) agg)
         let (events: (string * ReadOnlyMemory<byte>) seq), (agg': ^agg) =
-            try apply cvType data
+            try apply agg
             with ex ->
                 lg.Error ex.StackTrace "Apply command failed: %s" ex.Message
                 raise <| ApplyCommandException ex.Message
@@ -25,14 +24,13 @@ module Factory =
 
     let inline batch (lg: DiagnoseLog.T) writer  (agg: ^agg) (version: uint64) cmds =
         lg.Trace "Batch apply commands to mutable aggregate and write to stream."
-        let apply = (^agg : (member ApplyCommand : (string -> ReadOnlyMemory<byte> -> (string * ReadOnlyMemory<byte>) seq * ^agg)) agg)
         let result, agg' =
             cmds
             |> List.rev
-            |> List.mapFold (fun agg (cvType, data, metadata: Nullable<ReadOnlyMemory<byte>>, channel) ->
+            |> List.mapFold (fun agg (apply, metadata: Nullable<ReadOnlyMemory<byte>>, channel) ->
                 let (events: (string * ReadOnlyMemory<byte>) seq), (agg: ^agg), result =
                     try
-                        let events, agg = apply cvType data
+                        let events, agg = apply agg
                         events, agg, Ok agg
                     with ex ->
                         lg.Error ex.StackTrace "Apply command failed: %s" ex.Message
@@ -90,7 +88,7 @@ module Factory =
 module Basic =
 
     type Msg<'agg> =
-        | Post of string * string * ReadOnlyMemory<byte> * AsyncReplyChannel<Result<'agg, string>>
+        | Post of string * ('agg -> (string * ReadOnlyMemory<byte>) seq * 'agg) * AsyncReplyChannel<Result<'agg, string>>
         | Get of AsyncReplyChannel<Result<'agg, string>>
 
     let inline run lg reader writer agg version cmd =
@@ -111,14 +109,14 @@ module Basic =
         MailboxProcessor<Msg< ^agg>>.Start <| fun inbox ->
             let rec loop agg version closed = async {
                 match! inbox.Receive() with
-                | Post (cvType, traceId, data, channel) ->
+                | Post (traceId, apply, channel) ->
                     if closed then
                         lg.Warn "Aggregate closed."
                         Error "Aggregate closed." |> Factory.reply channel |> Async.Start
                     else
                         try
                             let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
-                            let agg', len = run lg reader writer agg version (cvType, data, metadata, channel)
+                            let agg', len = run lg reader writer agg version (apply, metadata, channel)
                             let version' = version + uint64 len
                             match shot with
                             | None -> ()
@@ -131,8 +129,8 @@ module Basic =
                 return! loop agg version closed }
             loop agg version (^agg : (member Closed : bool) agg)
 
-    let inline post (agent: MailboxProcessor<Msg< ^agg>>) cvType traceId data channel =
-        agent.Post <| Post (cvType, traceId, data, channel)
+    let inline post (agent: MailboxProcessor<Msg< ^agg>>) traceId apply channel =
+        agent.Post <| Post (traceId, apply, channel)
 
     let inline get (agent: MailboxProcessor<Msg< ^agg>>) channel =
         agent.Post <| Get channel
@@ -141,7 +139,7 @@ module Basic =
 module Batched =
 
     type Msg<'agg> =
-        | Add of string * string * ReadOnlyMemory<byte> * AsyncReplyChannel<Result<'agg, string>>
+        | Add of string * ('agg -> (string * ReadOnlyMemory<byte>) seq * 'agg) * AsyncReplyChannel<Result<'agg, string>>
         | Launch of Timer
         | Get of AsyncReplyChannel<Result<'agg, string>>
 
@@ -161,13 +159,13 @@ module Batched =
         let agent = new MailboxProcessor<Msg< ^agg>> (fun inbox ->
             let rec loop agg version closed batch = async {
                 match! inbox.Receive() with
-                | Add (cvType, traceId, data, channel) ->
+                | Add (traceId, apply, channel) ->
                     if closed then
                         lg.Warn "Aggregate closed."
                         Error "Aggregate closed." |> Factory.reply channel |> Async.Start
                     else
                         let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
-                        return! loop agg version closed <| (cvType, data, metadata, channel) :: batch
+                        return! loop agg version closed <| (apply, metadata, channel) :: batch
                 | Launch timer ->
                     if not batch.IsEmpty then
                         try
@@ -183,7 +181,7 @@ module Batched =
                         with ex ->
                             lg.Error ex.StackTrace "Launch batch failed: %s" ex.Message
                             batch
-                            |> List.map (fun (_, _, _, channel) -> Factory.reply channel <| Error ex.Message)
+                            |> List.map (fun (_, _, channel) -> Factory.reply channel <| Error ex.Message)
                             |> Async.Parallel |> Async.RunSynchronously |> ignore
                             return! loop agg version closed []
                 | Get channel -> Ok agg |> Factory.reply channel |> Async.Start
@@ -197,8 +195,8 @@ module Batched =
             timer.Start() }
         agent
 
-    let inline post (agent: MailboxProcessor<Msg< ^agg>>) cvType traceId data channel =
-        agent.Post <| Add (cvType, traceId, data, channel)
+    let inline post (agent: MailboxProcessor<Msg< ^agg>>) traceId apply channel =
+        agent.Post <| Add (traceId, apply, channel)
 
     let inline get (agent: MailboxProcessor<Msg< ^agg>>) channel =
         agent.Post <| Get channel

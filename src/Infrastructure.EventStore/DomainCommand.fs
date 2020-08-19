@@ -9,12 +9,12 @@ open EventStore.Client
 
 module DomainCommand =
 
-    let inline launch< ^c, ^v when ^c : (static member FullName : string) and ^c : (member Raw : unit -> ReadOnlyMemory<byte>)>
+    let inline launch< ^c, ^v when ^c : (static member FullName : string)>
         (client: EventStoreClient) correlationId (cmd: ^c) = async {
         let result = TaskCompletionSource<Result< ^v, string>>()
         let cvType = (^c : (static member FullName : string)())
         let traceId = Uuid.NewUuid()
-        let data = (^c : (member Raw : unit -> ReadOnlyMemory<byte>) cmd)
+        let data = JsonSerializer.SerializeToUtf8Bytes cmd |> ReadOnlyMemory
         let metadata = Encoding.ASCII.GetBytes ("{\"$correlationId\":\"" + correlationId + "\"}") |> ReadOnlyMemory |> Nullable
         let eventData = EventData (traceId, correlationId, data, metadata)
         use! sub =
@@ -30,7 +30,7 @@ module DomainCommand =
         do! client.AppendToStreamAsync (cvType, StreamState.Any, seq { eventData }) |> Async.AwaitTask |> Async.Ignore
         return! result.Task |> Async.AwaitTask }
 
-    let inline subscribe< ^c, ^v when ^c : (static member FullName : string) and ^c : (member Raw : unit -> ReadOnlyMemory<byte>)>
+    let inline subscribe< ^c, ^v when ^c : (static member FullName : string)>
         (client: EventStoreClient) (subClient: EventStorePersistentSubscriptionsClient) handler = async {
         let dropped = TaskCompletionSource<SubscriptionDroppedReason * exn>()
         let cvType = (^c : (static member FullName : string)())

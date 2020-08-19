@@ -6,14 +6,17 @@ open Note.Domain
 
 module CommandService =
 
-    let createActor (actor: Immutable.T<Actor.T>) user aggId cvType traceId data = async {
-        return! Immutable.apply actor user aggId cvType traceId data }
+    let createActor actor user aggId traceId cmd = async {
+        let command = CreateActor.create cmd
+        return! Immutable.apply actor user aggId traceId command }
 
-    let createNote (note: Mutable.T<Note.T>) user aggId cvType traceId data = async {
-        return! Mutable.apply note user aggId cvType traceId data }
+    let createNote note user aggId traceId cmd = async {
+        let command = CreateNote.create cmd
+        return! Mutable.apply note user aggId traceId command }
 
-    let changeNote (note: Mutable.T<Note.T>) user aggId cvType traceId data = async {
-        return! Mutable.apply note user aggId cvType traceId data }
+    let changeNote note user aggId traceId cmd = async {
+        let command = ChangeNote.create cmd
+        return! Mutable.apply note user aggId traceId command }
 
     let appendNote (note: Observer.T<NoteObserver.T>) aggId number evType data = async {
         return! Observer.append note aggId number evType data }

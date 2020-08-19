@@ -7,15 +7,16 @@
     <ProjectReference Include="..\..\src\Domain\Domain.fsproj">
       <Name>Domain.fsproj</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Note.Contract\Note.Contract.fsproj">
-      <Name>Note.Contract.fsproj</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Actor/Actor.fsi" />
     <Compile Include="Actor/Actor.fs" />
+    <Compile Include="Actor/Command.fsi" />
+    <Compile Include="Actor/Command.fs" />
     <Compile Include="Note/Note.fsi" />
     <Compile Include="Note/Note.fs" />
+    <Compile Include="Note/Command.fsi" />
+    <Compile Include="Note/Command.fs" />
     <Compile Include="NoteObserver/NoteObserver.fsi" />
     <Compile Include="NoteObserver/NoteObserver.fs" />
     <None Include="paket.references" />

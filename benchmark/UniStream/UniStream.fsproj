@@ -12,8 +12,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Command.fs" />
     <Compile Include="Note.fs" />
+    <Compile Include="Command.fs" />
     <Compile Include="AppService.fs" />
     <Compile Include="EventStore.fs" />
     <Compile Include="Main.fs" />

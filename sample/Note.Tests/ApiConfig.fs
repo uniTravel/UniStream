@@ -6,7 +6,7 @@ open System.Net.Http
 open EventStore.Client
 open UniStream.Infrastructure.EventStore
 open UniStream.Domain
-open Note.Contract
+open Note.Domain
 open Note.Application
 
 
@@ -38,9 +38,6 @@ let writer = DomainEvent.write ces
 let ld = DomainLog.write cld
 let lg = DiagnoseLog.write clg
 
-let inline build (data: ^c) =
-    (^c : (member Raw : unit -> ReadOnlyMemory<byte>) data)
-
 [<Sealed>]
 type NoteService
         (reader: string -> string -> uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq,
@@ -53,25 +50,20 @@ type NoteService
     let note2 = Mutable.create <| Config.Mutable (reader, writer, ld "NoteApp", lg "NoteApp", ?batch = Some 7u)
     let obs = Observer.create <| Config.Observer (reader, lg "NoteApp")
 
-    member _.CreateActor user aggKey cvType traceId data =
-        let data = build <| CreateActor.create data
-        CommandService.createActor actor user aggKey cvType traceId data
+    member _.CreateActor user aggKey traceId cmd =
+        CommandService.createActor actor user aggKey traceId cmd
 
-    member _.CreateNote user aggKey cvType traceId data =
-        let data = build <| CreateNote.create data
-        CommandService.createNote note1 user aggKey cvType traceId data
+    member _.CreateNote user aggKey traceId cmd =
+        CommandService.createNote note1 user aggKey traceId cmd
 
-    member _.ChangeNote user aggKey cvType traceId data =
-        let data = build <| ChangeNote.create data
-        CommandService.changeNote note1 user aggKey cvType traceId data
+    member _.ChangeNote user aggKey traceId cmd =
+        CommandService.changeNote note1 user aggKey traceId cmd
 
-    member _.BatchCreate user aggKey cvType traceId data =
-        let data = build <| CreateNote.create data
-        CommandService.createNote note2 user aggKey cvType traceId data
+    member _.BatchCreate user aggKey traceId cmd =
+        CommandService.createNote note2 user aggKey traceId cmd
 
-    member _.BatchChange user aggKey cvType traceId data =
-        let data = build <| ChangeNote.create data
-        CommandService.changeNote note2 user aggKey cvType traceId data
+    member _.BatchChange user aggKey traceId cmd =
+        CommandService.changeNote note2 user aggKey traceId cmd
 
     member _.AppendNote aggKey number evType data =
         CommandService.appendNote obs aggKey number evType data

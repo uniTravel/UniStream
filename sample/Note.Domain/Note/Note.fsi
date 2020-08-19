@@ -1,8 +1,16 @@
 namespace Note.Domain
 
 open System
-open Note.Contract
 
+
+[<CLIMutable>]
+type CreateNoteCommand = { Title: string; Content: string }
+
+[<CLIMutable>]
+type ChangeNoteCommand = { Content: string }
+
+[<CLIMutable>]
+type NoteValue = { Title: string; Content: string; Count: int }
 
 [<CLIMutable>]
 type NoteCreated = { Title: string; Content: string }
@@ -30,14 +38,28 @@ module Note =
         /// </summary>
         member ApplyEvent : (string -> ReadOnlyMemory<byte> -> T)
 
-        /// <summary>应用领域命令
-        /// </summary>
-        member ApplyCommand : (string -> ReadOnlyMemory<byte> -> (string * ReadOnlyMemory<byte>) seq * T)
-
         /// <summary>聚合值
         /// </summary>
-        member Value : Note
+        member Value : NoteValue
 
         /// <summary>聚合是否已关闭
         /// </summary>
         member Closed : bool
+
+    /// <summary>创建Note
+    /// </summary>
+    /// <param name="cv">领域命令值。</param>
+    /// <param name="agg">当前聚合。</param>
+    val internal createNote :
+        cv: CreateNoteCommand ->
+        agg: T ->
+        ((string * ReadOnlyMemory<byte>) seq * T)
+
+    /// <summary>改变Note
+    /// </summary>
+    /// <param name="cv">领域命令值。</param>
+    /// <param name="agg">当前聚合。</param>
+    val internal changeNote :
+        cv: ChangeNoteCommand ->
+        agg: T ->
+        ((string * ReadOnlyMemory<byte>) seq * T)

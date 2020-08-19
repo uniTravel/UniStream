@@ -1,7 +1,6 @@
 namespace Note.Domain
 
 open System
-open Note.Contract
 
 
 [<CLIMutable>]
@@ -32,4 +31,4 @@ module NoteObserver =
 
         /// <summary>聚合值
         /// </summary>
-        member Value : Note
+        member Value : NoteValue

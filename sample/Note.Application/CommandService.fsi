@@ -2,7 +2,6 @@ namespace Note.Application
 
 open System
 open UniStream.Domain
-open Note.Contract
 open Note.Domain
 
 
@@ -17,52 +16,46 @@ module CommandService =
     /// <param name="actor">Actor聚合。</param>
     /// <param name="user">用户。</param>
     /// <param name="aggKey">聚合键。</param>
-    /// <param name="cvType">领域命令值类型全名。</param>
     /// <param name="traceId">跟踪ID。</param>
-    /// <param name="data">领域命令数据。</param>
+    /// <param name="cmd">领域命令。</param>
     /// <returns>聚合值。</returns>
     val createActor :
         actor: Immutable.T<Actor.T> ->
         user: string ->
         aggKey: string ->
-        cvType: string ->
         traceId: string ->
-        data: ReadOnlyMemory<byte> ->
-        Async<Actor>
+        cmd: CreateActorCommand ->
+        Async<ActorValue>
 
     /// <summary>创建Note
     /// </summary>
     /// <param name="note">Note聚合。</param>
     /// <param name="user">用户。</param>
     /// <param name="aggKey">聚合键。</param>
-    /// <param name="cvType">领域命令值类型全名。</param>
     /// <param name="traceId">跟踪ID。</param>
-    /// <param name="data">领域命令数据。</param>
+    /// <param name="cmd">领域命令。</param>
     val createNote :
         note: Mutable.T<Note.T> ->
         user: string ->
         aggKey: string ->
-        cvType: string ->
         traceId: string ->
-        data: ReadOnlyMemory<byte> ->
-        Async<Note>
+        cmd: CreateNoteCommand ->
+        Async<NoteValue>
 
     /// <summary>改变Note
     /// </summary>
     /// <param name="note">Note聚合。</param>
     /// <param name="user">用户。</param>
     /// <param name="aggKey">聚合键。</param>
-    /// <param name="cvType">领域命令值类型全名。</param>
     /// <param name="traceId">跟踪ID。</param>
-    /// <param name="data">领域命令数据。</param>
+    /// <param name="cmd">领域命令。</param>
     val changeNote :
         note: Mutable.T<Note.T> ->
         user: string ->
         aggKey: string ->
-        cvType: string ->
         traceId: string ->
-        data: ReadOnlyMemory<byte> ->
-        Async<Note>
+        cmd: ChangeNoteCommand ->
+        Async<NoteValue>
 
     /// <summary>附加事件到NoteObserver
     /// </summary>

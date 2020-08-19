@@ -1,8 +1,13 @@
 namespace Note.Domain
 
 open System
-open Note.Contract
 
+
+[<CLIMutable>]
+type CreateActorCommand = { Name: string }
+
+[<CLIMutable>]
+type ActorValue = { Name: string; Sex: string }
 
 [<CLIMutable>]
 type ActorCreated = { Name: string }
@@ -27,14 +32,20 @@ module Actor =
         /// </summary>
         member ApplyEvent : (string -> ReadOnlyMemory<byte> -> T)
 
-        /// <summary>应用领域命令
-        /// </summary>
-        member ApplyCommand : (string -> ReadOnlyMemory<byte> -> (string * ReadOnlyMemory<byte>) seq * T)
-
         /// <summary>聚合值
         /// </summary>
-        member Value : Actor
+        member Value : ActorValue
 
         /// <summary>聚合是否已关闭
         /// </summary>
         member Closed : bool
+
+    /// <summary>创建Actor
+    /// </summary>
+    /// <param name="cv">领域命令值。</param>
+    /// <param name="agg">当前聚合。</param>
+    /// <returns>领域事件序列及新聚合。</returns>
+    val internal createActor :
+        cv: CreateActorCommand ->
+        agg: T ->
+        ((string * ReadOnlyMemory<byte>) seq * T)

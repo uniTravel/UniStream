@@ -8,7 +8,7 @@ open System.Text
 module Mutable =
 
     type Msg<'agg> =
-        | Apply of string * string * string * ReadOnlyMemory<byte> * AsyncReplyChannel<Result<'agg, string>>
+        | Apply of string * string * (^agg -> (string * ReadOnlyMemory<byte>) seq * ^agg) * AsyncReplyChannel<Result<'agg, string>>
         | Refresh
         | Scavenge
         | Get of string * AsyncReplyChannel<Result<'agg, string>>
@@ -20,13 +20,12 @@ module Mutable =
 
     let inline agent< ^agg when ^agg : (static member Initial : ^agg)
             and ^agg : (member ApplyEvent : (string -> ReadOnlyMemory<byte> -> ^agg))
-            and ^agg : (member ApplyCommand : (string -> ReadOnlyMemory<byte> -> (string * ReadOnlyMemory<byte>) seq * ^agg))
             and ^agg : (member Closed : bool)>
         (cfg: Config.Mutable) (lg: DiagnoseLog.T) aggType =
         let snapshots = Dictionary<string, ^agg * uint64 * uint64>(cfg.Capacity)
         let caches =
             Dictionary<string,
-                        (string -> string -> ReadOnlyMemory<byte> -> AsyncReplyChannel<Result< ^agg, string>> -> unit) *
+                        (string -> (^agg -> (string * ReadOnlyMemory<byte>) seq * ^agg) -> AsyncReplyChannel<Result< ^agg, string>> -> unit) *
                         (AsyncReplyChannel<Result< ^agg, string>> -> unit) *
                         IDisposable>(cfg.Capacity)
         let inline shot threshold aggKey agg version = async {
@@ -41,10 +40,10 @@ module Mutable =
         MailboxProcessor<Msg< ^agg>>.Start <| fun inbox ->
             let rec loop snapUsage cacheUsage = async {
                 match! inbox.Receive() with
-                | Apply (aggKey, cvType, traceId, data, channel) ->
+                | Apply (aggKey, traceId, apply, channel) ->
                     if caches.ContainsKey aggKey then
                         let post, _, _ = caches.[aggKey]
-                        post cvType traceId data channel
+                        post traceId apply channel
                         return! loop snapUsage <| aggKey :: cacheUsage
                     else
                         try
@@ -57,7 +56,7 @@ module Mutable =
                                     let agg, version, _ = snapshots.[aggKey]
                                     ValueSome (agg, version), aggKey :: snapUsage
                                 else ValueNone, snapUsage
-                            let agg, version = Factory.init< ^agg> lg reader writer snapshot (cvType, data, metadata, channel)
+                            let agg, version = Factory.init< ^agg> lg reader writer snapshot (apply, metadata, channel)
                             let shot = match cfg.Scavenge with | 0u -> None | _ -> Some <| shot cfg.Threshold aggKey
                             let fty =
                                 match cfg.Batch with
@@ -123,9 +122,11 @@ module Mutable =
         if cfg.Scavenge > 0u then Async.Start <| createTimer (cfg.Scavenge * 60u * 60u * 1000u) (fun _ -> agent.Post Scavenge)
         { DomainLog = ld; DiagnoseLog = lg; Agent = agent }
 
-    let inline apply { DomainLog = ld; Agent = agent } user aggKey cvType traceId data = async {
+    let inline apply { DomainLog = ld; Agent = agent } user aggKey traceId cmd = async {
+        let cvType = (^c : (static member FullName : string)())
+        let apply = (^c : (member Apply : (^agg -> (string * ReadOnlyMemory<byte>) seq * ^agg)) cmd)
         ld.Process user cvType aggKey traceId "Start execute command."
-        match! agent.PostAndAsyncReply <| fun channel -> Apply (aggKey, cvType, traceId, data, channel) with
+        match! agent.PostAndAsyncReply <| fun channel -> Apply (aggKey, traceId, apply, channel) with
         | Ok agg ->
             ld.Success user cvType aggKey traceId "Execute command success."
             return (^agg : (member Value: ^v) agg)

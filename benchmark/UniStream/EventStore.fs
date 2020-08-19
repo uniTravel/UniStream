@@ -33,7 +33,7 @@ type Basic () =
     member self.Setup () =
         let traceId = Guid.NewGuid().ToString()
         self.AggId <- Guid.NewGuid().ToString()
-        let command : CreateNote = { Title = "title"; Content = "initial content" }
+        let command : CreateNoteCommand = { Title = "title"; Content = "initial content" }
         basic.CreateNote "benchmark" self.AggId traceId command |> Async.RunSynchronously |> ignore
         let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
         seq { "NoteChanged", Delta.serialize command, metadata }
@@ -70,7 +70,7 @@ type Batch () =
     member self.Setup () =
         let traceId = Guid.NewGuid().ToString()
         self.AggId <- Guid.NewGuid().ToString()
-        let command : CreateNote = { Title = "title"; Content = "initial content" }
+        let command : CreateNoteCommand = { Title = "title"; Content = "initial content" }
         batch.CreateNote "benchmark" self.AggId traceId command |> Async.RunSynchronously |> ignore
         let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
         seq { "NoteChanged", Delta.serialize command, metadata }

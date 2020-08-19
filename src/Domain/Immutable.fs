@@ -19,15 +19,15 @@ module Immutable =
         let writer = cfg.EsFunc aggType
         { DomainLog = ld; DiagnoseLog = lg; Writer = writer }
 
-    let inline apply (aggregator: T< ^agg>) user aggKey cvType traceId data = async {
+    let inline apply (aggregator: T< ^agg>) user aggKey traceId cmd = async {
+        let cvType = (^c : (static member FullName : string)())
+        let apply = (^c : (member Apply : (^agg -> (string * ReadOnlyMemory<byte>) seq * ^agg)) cmd)
         let { DomainLog = ld; DiagnoseLog = lg; Writer = writer } = aggregator
         ld.Process user cvType aggKey traceId "Start execute command."
         let init = (^agg : (static member Initial : ^agg) ())
-        let applyCommand = (^agg : (member ApplyCommand : (string -> ReadOnlyMemory<byte> -> (string * ReadOnlyMemory<byte>) seq * ^agg)) init)
-        ld.Process user cvType aggKey traceId "Initialize immutable aggregate."
         try
             lg.Trace "Apply command to immutable aggregate and write to stream."
-            let events, agg' = applyCommand cvType data
+            let events, agg' = apply init
             let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
             let events = events |> Seq.map (fun (evType, data) -> evType, data, metadata)
             ld.Process user cvType aggKey traceId "Apply command success."

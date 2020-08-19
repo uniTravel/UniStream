@@ -42,16 +42,14 @@ type BasicService
          lg: string -> string -> ReadOnlyMemory<byte> -> Async<unit>) =
 
     let note : Mutable.T<Note.T> = Mutable.create <| Config.Mutable (reader, writer, ld "NoteApp", lg "NoteApp")
-    let createNote = typeof<CreateNote>.FullName
-    let changeNote = typeof<ChangeNote>.FullName
 
     member _.CreateNote user aggId traceId cv =
-        let command = (CreateNote.create cv).Raw()
-        Mutable.apply note user aggId createNote traceId command
+        let command = CreateNote.create cv
+        Mutable.apply note user aggId traceId command
 
     member _.ChangeNote user aggId traceId cv =
-        let command = (ChangeNote.create cv).Raw()
-        Mutable.apply note user aggId changeNote traceId command
+        let command = ChangeNote.create cv
+        Mutable.apply note user aggId traceId command
 
 
 [<Sealed>]
@@ -62,13 +60,11 @@ type BatchService
          lg: string -> string -> ReadOnlyMemory<byte> -> Async<unit>) =
 
     let note : Mutable.T<Note.T> = Mutable.create <| Config.Mutable (reader, writer, ld "NoteApp", lg "NoteApp", ?batch = Some 7u)
-    let createNote = typeof<CreateNote>.FullName
-    let changeNote = typeof<ChangeNote>.FullName
 
     member _.CreateNote user aggId traceId cv =
-        let command = (CreateNote.create cv).Raw()
-        Mutable.apply note user aggId createNote traceId command
+        let command = CreateNote.create cv
+        Mutable.apply note user aggId traceId command
 
     member _.ChangeNote user aggId traceId cv =
-        let command = (ChangeNote.create cv).Raw()
-        Mutable.apply note user aggId changeNote traceId command
+        let command = ChangeNote.create cv
+        Mutable.apply note user aggId traceId command
