@@ -10,13 +10,13 @@ open EventStore.Client
 module DomainCommand =
 
     let inline launch< ^c, ^v when ^c : (static member FullName : string)>
-        (client: EventStoreClient) correlationId (cmd: ^c) = async {
+        (client: EventStoreClient) user correlationId (cmd: ^c) = async {
         let result = TaskCompletionSource<Result< ^v, string>>()
         let cvType = (^c : (static member FullName : string)())
         let traceId = Uuid.NewUuid()
         let data = JsonSerializer.SerializeToUtf8Bytes cmd |> ReadOnlyMemory
         let metadata = Encoding.ASCII.GetBytes ("{\"$correlationId\":\"" + correlationId + "\"}") |> ReadOnlyMemory |> Nullable
-        let eventData = EventData (traceId, correlationId, data, metadata)
+        let eventData = EventData (traceId, user, data, metadata)
         use! sub =
             client.SubscribeToStreamAsync (traceId.ToString(),
                 (fun sub e ct ->
@@ -37,13 +37,17 @@ module DomainCommand =
         use! sub =
             subClient.SubscribeAsync (cvType, cvType,
                 (fun sub e r ct ->
+                    let cvType = e.Event.EventStreamId
                     let traceId = e.Event.EventId.ToString()
+                    let user = e.Event.EventType
+                    let metadata = e.Event.Metadata.ToArray() |> Encoding.ASCII.GetString
+                    let correlationId = metadata.[19..metadata.Length - 3]
                     let callback (v: ^v) =
                         let data = JsonSerializer.SerializeToUtf8Bytes v |> ReadOnlyMemory
                         let eventData = EventData (Uuid.NewUuid(), cvType, data)
                         client.AppendToStreamAsync (traceId, StreamState.NoStream, seq { eventData })
                         |> Async.AwaitTask |> Async.Ignore |> Async.Start
-                    handler e.Event.EventStreamId traceId e.Event.EventType e.Event.Data callback |> Async.Start
+                    handler cvType traceId user correlationId e.Event.Data callback |> Async.Start
                     Task.CompletedTask),
                 (fun sub r ex -> dropped.SetResult (r, ex))
             ) |> Async.AwaitTask

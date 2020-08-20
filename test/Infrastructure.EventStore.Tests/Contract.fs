@@ -1,8 +1,5 @@
 namespace Infrastructure.EventStore.Tests
 
-open System
-open System.Text.Json
-
 
 [<CLIMutable>]
 type CreateNote =

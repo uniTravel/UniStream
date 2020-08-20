@@ -5,7 +5,7 @@ open System.Text.Json
 open Expecto
 
 
-let handler stream traceId eType (data: ReadOnlyMemory<byte>) callback = async {
+let handler cvType traceId user correlationId (data: ReadOnlyMemory<byte>) callback = async {
     let note = JsonSerializer.Deserialize<CreateNote> data.Span
     let note = { Title = note.Title; Content = note.Content }
     callback note }
@@ -20,12 +20,12 @@ let domainCommand (app: AppService) name =
     testSequenced <| testList name [
         testCase "向不存在的流写入一个领域命令" <| fun _ ->
             let n1 : CreateNote = { Title = "title1"; Content = "content1" }
-            match app.LaunchCreateNote aggId n1 |> Async.RunSynchronously with
+            match app.LaunchCreateNote "Test" aggId n1 |> Async.RunSynchronously with
             | Ok result -> Expect.equal result.Content n1.Content "返回结果错误"
             | Error err -> failtestf "测试出错：%s" err
         testCase "向流写入第二个领域命令" <| fun _ ->
             let n2 : CreateNote = { Title = "title2"; Content = "content2" }
-            match app.LaunchCreateNote aggId n2 |> Async.RunSynchronously with
+            match app.LaunchCreateNote "Test" aggId n2 |> Async.RunSynchronously with
             | Ok result -> Expect.equal result.Content n2.Content "返回结果错误"
             | Error err -> failtestf "测试出错：%s" err
     ]

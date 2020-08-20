@@ -19,11 +19,13 @@ module DomainCommand =
     /// <typeparam name="^c">领域命令类型。</typeparam>
     /// <typeparam name="^v">领域命令响应类型。</typeparam>
     /// <param name="client">EventStore客户端。</param>
+    /// <param name="user">用户。</param>
     /// <param name="correlationId">关联ID：聚合命令为聚合键；流程命令为客户端标识。</param>
     /// <param name="cmd">领域命令。</param>
     /// <returns>聚合命令的执行结果。</returns>
     val inline launch :
         client: EventStoreClient ->
+        user: string ->
         correlationId: string ->
         cmd: ^c ->
         Async<Result< ^v, string>>
@@ -41,6 +43,6 @@ module DomainCommand =
     val inline subscribe< ^c, ^v> :
         client: EventStoreClient ->
         subClient: EventStorePersistentSubscriptionsClient ->
-        handler: (string -> string -> string -> ReadOnlyMemory<byte> -> (^v -> unit) -> Async<unit>) ->
+        handler: (string -> string -> string -> string -> ReadOnlyMemory<byte> -> (^v -> unit) -> Async<unit>) ->
         Async<SubscriptionDroppedReason * exn>
         when ^c : (static member FullName : string)
