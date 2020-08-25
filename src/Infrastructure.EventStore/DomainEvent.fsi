@@ -23,7 +23,7 @@ module DomainEvent =
         aggType: string ->
         aggKey: string ->
         version: uint64 ->
-        (uint64 * string * ReadOnlyMemory<byte>) seq
+        Async<(uint64 * string * ReadOnlyMemory<byte>) seq>
 
     /// <summary>写入领域事件
     /// </summary>

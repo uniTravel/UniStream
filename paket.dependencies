@@ -18,7 +18,6 @@ group Test
     nuget Expecto.BenchmarkDotNet
     nuget Expecto.FsCheck
     nuget Expecto.Hopac
-    nuget EventStore.Client
 
 
 group Build
@@ -30,9 +29,5 @@ group Build
     nuget Fake.Core.ReleaseNotes
     nuget Fake.DotNet.AssemblyInfoFile
     nuget Fake.DotNet.Paket
-    nuget Fake.Tools.Git
     nuget Fake.Core.Environment
-    nuget Fake.Core.UserInput
     nuget Fake.IO.FileSystem
-    nuget Fake.DotNet.MsBuild
-    nuget Fake.Api.GitHub

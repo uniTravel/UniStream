@@ -79,7 +79,7 @@ module Config =
         /// <param name="?scavenge">清扫聚合快照的间隔小时数，自然数表示启用/0表示不启用，缺省为0。</param>
         /// <param name="?threshold">快照间隔，缺省为1000。</param>
         new :
-            get: (string -> string -> uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq) *
+            get: (string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>) *
             esFunc: (string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) *
             ldFunc: (string -> string -> ReadOnlyMemory<byte> -> Async<unit>) *
             lgFunc: (string -> ReadOnlyMemory<byte> -> Async<unit>) *
@@ -99,7 +99,7 @@ module Config =
             aggType: string ->
             aggKey: string ->
             version: uint64 ->
-            (uint64 * string * ReadOnlyMemory<byte>) seq
+            Async<(uint64 * string * ReadOnlyMemory<byte>) seq>
 
         /// <summary>领域事件流存储函数
         /// </summary>
@@ -180,7 +180,7 @@ module Config =
         /// <param name="?scavenge">清扫聚合快照的间隔小时数，自然数表示启用/0表示不启用，缺省为0。</param>
         /// <param name="?threshold">快照间隔，缺省为1000。</param>
         new :
-            get: (string -> string -> uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq) *
+            get: (string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>) *
             lgFunc: (string -> ReadOnlyMemory<byte> -> Async<unit>) *
             ?capacity: int *
             ?keep: int *
@@ -197,7 +197,7 @@ module Config =
             aggType: string ->
             aggKey: string ->
             version: uint64 ->
-            (uint64 * string * ReadOnlyMemory<byte>) seq
+            Async<(uint64 * string * ReadOnlyMemory<byte>) seq>
 
         /// <summary>诊断日志流存储函数
         /// </summary>

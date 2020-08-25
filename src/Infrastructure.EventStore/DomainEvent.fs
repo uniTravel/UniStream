@@ -7,12 +7,12 @@ open EventStore.Client
 
 module DomainEvent =
 
-    let get (client: EventStoreClient) aggType aggKey version =
+    let get (client: EventStoreClient) aggType aggKey version = async {
         let streamName = aggType + aggKey
         let result = client.ReadStreamAsync (Direction.Forwards, streamName, StreamPosition(version))
-        match result.ReadState |> Async.AwaitTask |> Async.RunSynchronously with
-        | ReadState.StreamNotFound -> Seq.empty
-        | _ -> result.Select(fun e -> e.Event.EventNumber.ToUInt64(), e.Event.EventType, e.Event.Data).ToEnumerable()
+        match! result.ReadState |> Async.AwaitTask with
+        | ReadState.StreamNotFound -> return Seq.empty
+        | _ -> return result.Select(fun e -> e.Event.EventNumber.ToUInt64(), e.Event.EventType, e.Event.Data).ToEnumerable() }
 
     let write (client: EventStoreClient) aggType aggKey version eData =
         let streamName = aggType + aggKey

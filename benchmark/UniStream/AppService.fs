@@ -36,7 +36,7 @@ module App =
 
 [<Sealed>]
 type BasicService
-        (reader: string -> string -> uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq,
+        (reader: string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>,
          writer: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>,
          ld: string -> string -> string -> ReadOnlyMemory<byte> -> Async<unit>,
          lg: string -> string -> ReadOnlyMemory<byte> -> Async<unit>) =
@@ -54,7 +54,7 @@ type BasicService
 
 [<Sealed>]
 type BatchService
-        (reader: string -> string -> uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq,
+        (reader: string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>,
          writer: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>,
          ld: string -> string -> string -> ReadOnlyMemory<byte> -> Async<unit>,
          lg: string -> string -> ReadOnlyMemory<byte> -> Async<unit>) =

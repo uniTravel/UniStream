@@ -2,7 +2,6 @@ namespace UniStream.Domain
 
 open System
 open System.Collections.Generic
-open System.Text
 
 
 module Mutable =
@@ -46,33 +45,27 @@ module Mutable =
                         post traceId apply channel
                         return! loop snapUsage <| aggKey :: cacheUsage
                     else
-                        try
-                            lg.Trace "Initialize cache of [%s]" aggKey
-                            let reader = cfg.Get aggType aggKey
-                            let writer = cfg.EsFunc aggType aggKey
-                            let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
-                            let snapshot, snapUsage =
-                                if snapshots.ContainsKey aggKey then
-                                    let agg, version, _ = snapshots.[aggKey]
-                                    ValueSome (agg, version), aggKey :: snapUsage
-                                else ValueNone, snapUsage
-                            let agg, version = Factory.init< ^agg> lg reader writer snapshot (apply, metadata, channel)
-                            let shot = match cfg.Scavenge with | 0u -> None | _ -> Some <| shot cfg.Threshold aggKey
-                            let fty =
-                                match cfg.Batch with
-                                | 0u ->
-                                    let agent = Basic.agent lg reader writer agg version shot
-                                    Basic.post agent, Basic.get agent, agent :> IDisposable
-                                | batch ->
-                                    let interval = float batch
-                                    let agent = Batched.agent lg reader writer interval agg version shot
-                                    Batched.post agent, Batched.get agent, agent :> IDisposable
-                            caches.Add (aggKey, fty)
-                            return! loop snapUsage <| aggKey :: cacheUsage
-                        with ex ->
-                            lg.Error ex.StackTrace "Initialize cache of [%s] failed: %s" aggKey ex.Message
-                            Error ex.Message |> Factory.reply channel |> Async.Start
-                            return! loop snapUsage cacheUsage
+                        let reader = cfg.Get aggType aggKey
+                        let writer = cfg.EsFunc aggType aggKey
+                        let snapshot, snapUsage =
+                            if snapshots.ContainsKey aggKey then
+                                let agg, version, _ = snapshots.[aggKey]
+                                ValueSome (agg, version), aggKey :: snapUsage
+                            else ValueNone, snapUsage
+                        let shot = match cfg.Scavenge with | 0u -> None | _ -> Some <| shot cfg.Threshold aggKey
+                        let post, get, agent =
+                            match cfg.Batch with
+                            | 0u ->
+                                let agent = Basic.agent lg reader writer aggKey shot
+                                agent.Post <| Basic.Init (traceId, apply, snapshot, channel)
+                                Basic.post agent, Basic.get agent, agent :> IDisposable
+                            | batch ->
+                                let interval = float batch
+                                let agent = Batched.agent lg reader writer interval aggKey shot
+                                agent.Post <| Batched.Init (traceId, apply, snapshot, channel)
+                                Batched.post agent, Batched.get agent, agent :> IDisposable
+                        caches.Add (aggKey, (post, get, agent))
+                        return! loop snapUsage <| aggKey :: cacheUsage
                 | Refresh ->
                     let usage = List.distinct cacheUsage
                     if caches.Count > cfg.Capacity - 1000 then

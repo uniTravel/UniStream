@@ -18,7 +18,7 @@ module Config =
 
     [<Sealed>]
     type Mutable
-        (get: string -> string -> uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq,
+        (get: string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>,
          esFunc: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>,
          ldFunc: string -> string -> ReadOnlyMemory<byte> -> Async<unit>,
          lgFunc: string -> ReadOnlyMemory<byte> -> Async<unit>,
@@ -52,7 +52,7 @@ module Config =
 
     [<Sealed>]
     type Observer
-        (get: string -> string -> uint64 -> (uint64 * string * ReadOnlyMemory<byte>) seq,
+        (get: string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>,
          lgFunc: string -> ReadOnlyMemory<byte> -> Async<unit>,
          ?capacity, ?keep, ?refresh, ?scavenge, ?threshold) =
         let capacity = defaultArg capacity 10000

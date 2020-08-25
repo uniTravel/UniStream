@@ -20,7 +20,10 @@ module Observer =
         (cfg: Config.Observer) (lg: DiagnoseLog.T) aggType =
         let snapshots = Dictionary<string, ^agg * uint64 * uint64>(cfg.Capacity)
         let caches =
-            Dictionary<string, (uint64 -> string -> ReadOnlyMemory<byte> -> unit) * (AsyncReplyChannel<Result< ^agg, string>> -> unit) * IDisposable>(cfg.Capacity)
+            Dictionary<string,
+                        (uint64 -> string -> ReadOnlyMemory<byte> -> unit) *
+                        (AsyncReplyChannel<Result< ^agg, string>> -> unit) *
+                        MailboxProcessor<Observed.Msg< ^agg>>>(cfg.Capacity)
         let inline shot threshold aggKey agg version = async {
             if snapshots.ContainsKey aggKey then
                 let _, _, step = snapshots.[aggKey]
@@ -37,13 +40,12 @@ module Observer =
                     let agg, version, _ = snapshots.[aggKey]
                     ValueSome (agg, version), aggKey :: snapUsage
                 else ValueNone, snapUsage
-            let agg, version = Factory.raw< ^agg> lg reader snapshot
             let shot = match cfg.Scavenge with | 0u -> None | _ -> Some <| shot cfg.Threshold aggKey
             let fty =
-                let agent = Observed.agent lg reader agg version shot
-                Observed.append agent, Observed.get agent, agent :> IDisposable
+                let agent = Observed.agent lg reader aggKey shot
+                Observed.append agent, Observed.get agent, agent
             caches.Add (aggKey, fty)
-            agg, snapUsage
+            fty, snapshot, snapUsage
         MailboxProcessor<Msg< ^agg>>.Start <| fun inbox ->
             let rec loop snapUsage cacheUsage = async {
                 match! inbox.Receive() with
@@ -53,13 +55,10 @@ module Observer =
                         post number evType data
                         return! loop snapUsage <| aggKey :: cacheUsage
                     else
-                        try
-                            lg.Trace "Initialize cache of [%s]" aggKey
-                            let _, snapUsage = init aggKey snapUsage
-                            return! loop snapUsage <| aggKey :: cacheUsage
-                        with ex ->
-                            lg.Error ex.StackTrace "Initialize cache of [%s] failed: %s" aggKey ex.Message
-                            return! loop snapUsage cacheUsage
+                        let (post, _, agent), snapshot, snapUsage = init aggKey snapUsage
+                        agent.Post <| Observed.Init snapshot
+                        post number evType data
+                        return! loop snapUsage <| aggKey :: cacheUsage
                 | Refresh ->
                     let usage = List.distinct cacheUsage
                     if caches.Count > cfg.Capacity - 1000 then
@@ -68,7 +67,7 @@ module Observer =
                         Seq.except usage caches.Keys
                         |> Seq.iter (fun id ->
                             let _, _, fty = caches.[id]
-                            fty.Dispose()
+                            (fty :> IDisposable).Dispose()
                             caches.Remove id |> ignore)
                         lg.Trace "Refresh cache finished."
                         return! loop snapUsage usage
@@ -89,14 +88,10 @@ module Observer =
                         get channel
                         return! loop snapUsage <| aggKey :: cacheUsage
                     else
-                        try
-                            let agg, snapUsage = init aggKey snapUsage
-                            Ok agg |> Factory.reply channel |> Async.Start
-                            return! loop snapUsage <| aggKey :: cacheUsage
-                        with ex ->
-                            lg.Error ex.StackTrace "Get aggregate failed, %s" ex.Message
-                            Error ex.Message |> Factory.reply channel |> Async.Start
-                            return! loop snapUsage cacheUsage
+                        let (_, get, agent),snapshot, snapUsage = init aggKey snapUsage
+                        agent.Post <| Observed.Init snapshot
+                        get channel
+                        return! loop snapUsage <| aggKey :: cacheUsage
                 return! loop snapUsage cacheUsage
             }
             loop [] []

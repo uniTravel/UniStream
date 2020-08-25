@@ -10,6 +10,7 @@ module Main =
         let switch = BenchmarkSwitcher [|
             typeof<Basic>
             typeof<Batch>
+            typeof<Parallel>
         |]
         switch.Run argv |> ignore
         0
