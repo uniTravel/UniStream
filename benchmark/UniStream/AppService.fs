@@ -35,6 +35,20 @@ module App =
 
 
 [<Sealed>]
+type ImmuteService
+        (reader: string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>,
+         writer: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>,
+         ld: string -> string -> string -> ReadOnlyMemory<byte> -> Async<unit>,
+         lg: string -> string -> ReadOnlyMemory<byte> -> Async<unit>) =
+
+    let actor : Immutable.T<Actor.T> = Immutable.create <| Config.Immutable (writer, ld "NoteApp", lg "NoteApp")
+
+    member _.CreateActor user aggId traceId cv =
+        let command = CreateActor.create cv
+        Immutable.apply actor user aggId traceId command
+
+
+[<Sealed>]
 type BasicService
         (reader: string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>,
          writer: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>,

@@ -11,6 +11,7 @@ module Main =
             typeof<Basic>
             typeof<Batch>
             typeof<Parallel>
+            typeof<Immute>
         |]
         switch.Run argv |> ignore
         0

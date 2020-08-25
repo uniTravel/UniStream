@@ -132,3 +132,36 @@ type Parallel () =
             do! seq { "NoteChanged", Delta.serialize command, metadata } |> writer "Benchmark.Direct.Note-" aggId 0uL })
         |> Async.Parallel
         |> Async.RunSynchronously
+
+
+[<Job>]
+type Immute () =
+    let reader, writer, ld, lg = App.config()
+    let imute = ImmuteService (reader, writer, ld, lg)
+
+    [<Params(100, 2000)>]
+    member val public count = 0 with get, set
+
+    [<Benchmark>]
+    member self.Write () =
+        seq { 0 .. self.count - 1 }
+        |> Seq.map (fun i -> async {
+            let aggId = Guid.NewGuid().ToString()
+            let traceId = Guid.NewGuid().ToString()
+            let command : CreateActorCommand = { Name = "actor" }
+            let! note = imute.CreateActor "benchmark" aggId traceId command
+            () })
+        |> Async.Parallel
+        |> Async.RunSynchronously
+
+    [<Benchmark>]
+    member self.DirectWrite () =
+        seq { 0 .. self.count - 1 }
+        |> Seq.map (fun i -> async {
+            let aggId = Guid.NewGuid().ToString()
+            let traceId = Guid.NewGuid().ToString()
+            let command : CreateActorCommand = { Name = "actor" }
+            let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
+            do! seq { "ActorCreated", Delta.serialize command, metadata } |> writer "Benchmark.Direct.Actor-" aggId UInt64.MaxValue })
+        |> Async.Parallel
+        |> Async.RunSynchronously

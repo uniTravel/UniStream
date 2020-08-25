@@ -12,6 +12,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Actor.fs" />
     <Compile Include="Note.fs" />
     <Compile Include="Command.fs" />
     <Compile Include="AppService.fs" />
