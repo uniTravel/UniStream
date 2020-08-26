@@ -1,13 +1,10 @@
-namespace Note.Domain
+namespace Note
 
-open System
 open UniStream.Domain
+open Note.Contract
 
 
-type CreateActorCommand = { Name: string }
-
-type ActorValue = { Name: string; Sex: string }
-
+[<CLIMutable>]
 type ActorCreated = { Name: string }
 
 
@@ -15,10 +12,14 @@ module Actor =
 
     let actorCreated = typeof<ActorCreated>.FullName
 
+    type Value =
+        { Name: string
+          Sex: string }
+
     type T =
         | Init
-        | Active of ActorValue
-        | Close of ActorValue
+        | Active of Value
+        | Close of Value
 
     let applyActorCreated (ev: ActorCreated) =
         { Name = ev.Name; Sex = "Male" }
@@ -30,7 +31,7 @@ module Actor =
             Active <| applyActorCreated ev
         | _ -> failwithf "领域事件值类型为%s。" evType
 
-    let createActor (cv: CreateActorCommand) (agg: T) : ((string * ReadOnlyMemory<byte>) seq * T) =
+    let createActor (cv: CreateActor) (agg: T) =
         match agg with
         | Init ->
             let ev = { Name = cv.Name }

@@ -6,7 +6,7 @@ open System.Net.Http
 open EventStore.Client
 open UniStream.Infrastructure.EventStore
 open UniStream.Domain
-open Note.Domain
+open Note
 open Note.Application
 
 

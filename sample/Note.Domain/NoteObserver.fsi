@@ -1,19 +1,19 @@
-namespace Note.Domain
+namespace Note
 
 open System
-
-
-[<CLIMutable>]
-type Created = { Title: string; Content: string }
-
-[<CLIMutable>]
-type Changed = { Content: string }
 
 
 /// <summary>NoteObserver聚合模块
 /// </summary>
 [<RequireQualifiedAccess>]
 module NoteObserver =
+
+    /// <summary>聚合值类型
+    /// </summary>
+    type Value =
+        { Title: string
+          Content: string
+          Count: int }
 
     /// <summary>聚合类型
     /// </summary>
@@ -31,4 +31,4 @@ module NoteObserver =
 
         /// <summary>聚合值
         /// </summary>
-        member Value : NoteValue
+        member Value : Value

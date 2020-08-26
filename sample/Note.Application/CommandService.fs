@@ -1,7 +1,7 @@
 namespace Note.Application
 
 open UniStream.Domain
-open Note.Domain
+open Note
 
 
 module CommandService =

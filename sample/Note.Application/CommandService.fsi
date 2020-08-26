@@ -2,7 +2,8 @@ namespace Note.Application
 
 open System
 open UniStream.Domain
-open Note.Domain
+open Note
+open Note.Contract
 
 
 /// <summary>命令服务模块
@@ -24,8 +25,8 @@ module CommandService =
         user: string ->
         aggKey: string ->
         traceId: string ->
-        cmd: CreateActorCommand ->
-        Async<ActorValue>
+        cmd: CreateActor ->
+        Async<Actor.Value>
 
     /// <summary>创建Note
     /// </summary>
@@ -39,8 +40,8 @@ module CommandService =
         user: string ->
         aggKey: string ->
         traceId: string ->
-        cmd: CreateNoteCommand ->
-        Async<NoteValue>
+        cmd: CreateNote ->
+        Async<Note.Value>
 
     /// <summary>改变Note
     /// </summary>
@@ -54,8 +55,8 @@ module CommandService =
         user: string ->
         aggKey: string ->
         traceId: string ->
-        cmd: ChangeNoteCommand ->
-        Async<NoteValue>
+        cmd: ChangeNote ->
+        Async<Note.Value>
 
     /// <summary>附加事件到NoteObserver
     /// </summary>

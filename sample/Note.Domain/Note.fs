@@ -1,16 +1,13 @@
-namespace Note.Domain
+namespace Note
 
 open UniStream.Domain
+open Note.Contract
 
 
-type CreateNoteCommand = { Title: string; Content: string }
-
-type ChangeNoteCommand = { Content: string }
-
-type NoteValue = { Title: string; Content: string; Count: int }
-
+[<CLIMutable>]
 type NoteCreated = { Title: string; Content: string }
 
+[<CLIMutable>]
 type NoteChanged = { Content: string }
 
 
@@ -19,10 +16,15 @@ module Note =
     let noteCreated = typeof<NoteCreated>.FullName
     let noteChanged = typeof<NoteChanged>.FullName
 
+    type Value =
+        { Title: string
+          Content: string
+          Count: int }
+
     type T =
         | Init
-        | Active of NoteValue
-        | Close of NoteValue
+        | Active of Value
+        | Close of Value
 
     let applyNoteCreated (ev: NoteCreated) =
         { Title = ev.Title; Content = ev.Content; Count = 0 }
@@ -38,14 +40,14 @@ module Note =
             Delta.deserialize<NoteChanged> data |> applyNoteChanged note |> Active
         | _ -> failwithf "领域事件类型为%s。" evType
 
-    let createNote (cv: CreateNoteCommand) agg =
+    let createNote (cv: CreateNote) agg =
         match agg with
         | Init ->
             let ev = { Title = cv.Title; Content = cv.Content }
             seq { noteCreated, Delta.serialize ev }, Active <| applyNoteCreated ev
         | _ -> failwith "只有初始状态才能创建Note。"
 
-    let changeNote (cv: ChangeNoteCommand) agg =
+    let changeNote (cv: ChangeNote) agg =
         match agg with
         | Active note ->
             let ev = { Content = cv.Content }

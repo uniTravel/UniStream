@@ -1,18 +1,25 @@
-namespace Note.Domain
+namespace Note
 
 open UniStream.Domain
 
 
+[<CLIMutable>]
 type Created = { Title: string; Content: string }
 
+[<CLIMutable>]
 type Changed = { Content: string }
 
 
 module NoteObserver =
 
+    type Value =
+        { Title: string
+          Content: string
+          Count: int }
+
     type T =
         | Init
-        | Active of NoteValue
+        | Active of Value
 
     let applyNoteCreated agg (ev: Created) =
         match agg with

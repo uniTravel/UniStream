@@ -2,7 +2,7 @@ module Note.Tests.Batch
 
 open System
 open Expecto
-open Note.Domain
+open Note.Contract
 
 
 [<Tests>]
@@ -10,7 +10,7 @@ let tests =
     let aggId = Guid.NewGuid().ToString()
     testSequenced <| testList "可变聚合批处理" [
         testCase "给定聚合ID，创建Note" <| fun _ ->
-            let c : CreateNoteCommand = { Title = "title"; Content = "initial content" }
+            let c = { Title = "title"; Content = "initial content" }
             let r = app.BatchCreate "test" aggId (Guid.NewGuid().ToString()) c |> Async.RunSynchronously
             Expect.equal r.Content c.Content "返回值错误。"
         testCase "连续修改Note" <| fun _ ->
