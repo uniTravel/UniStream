@@ -5,10 +5,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="Common.fsi" />
-    <Compile Include="Common.fs" />
     <Compile Include="DomainEvent.fsi" />
     <Compile Include="DomainEvent.fs" />
+    <Compile Include="EventSubscriber.fsi" />
+    <Compile Include="EventSubscriber.fs" />
+    <Compile Include="EventFilter.fsi" />
+    <Compile Include="EventFilter.fs" />
     <Compile Include="DomainCommand.fsi" />
     <Compile Include="DomainCommand.fs" />
     <Compile Include="DomainLog.fsi" />

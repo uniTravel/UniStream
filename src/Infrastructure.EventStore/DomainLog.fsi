@@ -14,7 +14,7 @@ module DomainLog =
     /// <para>Stream名称：领域上下文-用户。</para>
     /// </summary>
     /// <param name="client">EventStore客户端。</param>
-    /// <param name="ctx">带连字符‘-’的领域上下文。</param>
+    /// <param name="ctx">领域上下文。</param>
     /// <param name="user">用户。</param>
     /// <param name="category">领域日志类别。</param>
     /// <param name="data">领域日志数据。</param>

@@ -31,6 +31,5 @@ let domainCommand (app: AppService) name =
     ]
     |> testLabel "EventStore"
 
-
 [<Tests>]
 let defaultTests = domainCommand EventStoreConfig.app "Grpc客户端"

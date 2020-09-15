@@ -88,7 +88,7 @@ module Observer =
                         get channel
                         return! loop snapUsage <| aggKey :: cacheUsage
                     else
-                        let (_, get, agent),snapshot, snapUsage = init aggKey snapUsage
+                        let (_, get, agent), snapshot, snapUsage = init aggKey snapUsage
                         agent.Post <| Observed.Init snapshot
                         get channel
                         return! loop snapUsage <| aggKey :: cacheUsage

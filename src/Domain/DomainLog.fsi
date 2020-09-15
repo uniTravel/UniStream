@@ -14,7 +14,7 @@ module DomainLog =
 
     /// <summary>创建领域日志记录器
     /// </summary>
-    /// <param name="aggType">聚合类型全名。</param>
+    /// <param name="aggType">聚合类型。</param>
     /// <param name="logFunc">领域日志流存储函数。</param>
     val logger :
         aggType: string ->

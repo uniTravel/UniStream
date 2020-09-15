@@ -12,6 +12,8 @@
     <Compile Include="Contract.fs" />
     <Compile Include="AppService.fs" />
     <Compile Include="DomainEventTests.fs" />
+    <Compile Include="EventSubscribeTests.fs" />
+    <Compile Include="EventFilterTests.fs" />
     <Compile Include="DomainCommandTests.fs" />
     <Compile Include="Main.fs" />
     <None Include="paket.references" />

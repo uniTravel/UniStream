@@ -1,9 +1,11 @@
 namespace Infrastructure.EventStore.Tests
 
 open System
+open System.Linq
 open System.Net.Http
 open EventStore.Client
 open UniStream.Infrastructure.EventStore
+open System.Text
 
 
 type AppService (ses: EventStoreClientSettings, scs: EventStoreClientSettings, sld: EventStoreClientSettings, slg: EventStoreClientSettings) =
@@ -37,7 +39,13 @@ type AppService (ses: EventStoreClientSettings, scs: EventStoreClientSettings, s
 
     member _.Writer = DomainEvent.write es
 
-    member _.Filter = DomainEvent.filter es
+    member _.Subscriber = EventSubscriber.create es
+
+    member _.Filter = EventFilter.create es
+
+    member _.Position () =
+        let r = es.ReadAllAsync(Direction.Backwards, Position.End, 1L).ToEnumerable().FirstOrDefault()
+        r.OriginalPosition.Value
 
     member _.Domain = DomainLog.write ld
 
@@ -55,5 +63,6 @@ module EventStoreConfig =
         let scs = EventStoreClientSettings()
         let sld = EventStoreClientSettings()
         let slg = EventStoreClientSettings()
+        ses.DefaultCredentials <- UserCredentials ("admin", "changeit")
         scs.DefaultCredentials <- UserCredentials ("admin", "changeit")
         AppService (ses, scs, sld, slg)

@@ -25,7 +25,7 @@ module Config =
 
         /// <summary>领域事件流存储函数
         /// </summary>
-        /// <param name="aggType">带连字符‘-’的聚合类型。</param>
+        /// <param name="aggType">聚合类型。</param>
         /// <param name="aggKey">聚合键，源自GUID或者业务主键。</param>
         /// <param name="version">事件版本。</param>
         /// <param name="eData">事件数据。</param>
