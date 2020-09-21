@@ -23,7 +23,6 @@ module EventFilter =
     /// <summary>订阅领域事件流
     /// <para>按条件过滤出领域事件流。</para>
     /// </summary>
-    /// <param name="client">EventStore客户端。</param>
     /// <param name="filter">过滤条件。</param>
     /// <param name="positon">订阅的起始位置。</param>
     /// <param name="handler">领域事件处理函数。</param>

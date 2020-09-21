@@ -10,8 +10,8 @@ open EventStore.Client
 module DomainCommand =
 
     let inline launch< ^c, ^v when ^c : (static member FullName : string)>
-        (client: EventStoreClient) user correlationId (cmd: ^c) = async {
-        let result = TaskCompletionSource<Result< ^v, string>>()
+        (client: EventStoreClient) (timeout: int) user correlationId (cmd: ^c) = async {
+        let result = TaskCompletionSource< ^v>()
         let cvType = (^c : (static member FullName : string)())
         let traceId = Uuid.NewUuid()
         let data = JsonSerializer.SerializeToUtf8Bytes cmd |> ReadOnlyMemory
@@ -20,35 +20,15 @@ module DomainCommand =
         use! sub =
             client.SubscribeToStreamAsync (traceId.ToString(),
                 (fun sub e ct ->
-                    result.TrySetResult <| Ok (JsonSerializer.Deserialize< ^v> e.Event.Data.Span) |> ignore
+                    result.TrySetResult <| JsonSerializer.Deserialize< ^v> e.Event.Data.Span |> ignore
                     Task.CompletedTask),
                 false,
                 (fun sub r ex ->
                     let reason = Enum.GetName (typeof<SubscriptionDroppedReason>, r)
-                    result.TrySetResult <| Error reason |> ignore)
+                    result.TrySetException (exn reason) |> ignore)
             ) |> Async.AwaitTask
         do! client.AppendToStreamAsync (cvType, StreamState.Any, seq { eventData }) |> Async.AwaitTask |> Async.Ignore
+        let delay = Task.Delay timeout
+        let task = Task.WhenAny (result.Task, delay) |> Async.AwaitTask |> Async.RunSynchronously
+        if task = delay then result.TrySetException (TimeoutException()) |> ignore
         return! result.Task |> Async.AwaitTask }
-
-    let inline subscribe< ^c, ^v when ^c : (static member FullName : string)>
-        (client: EventStoreClient) (subClient: EventStorePersistentSubscriptionsClient) handler = async {
-        let dropped = TaskCompletionSource<SubscriptionDroppedReason * exn>()
-        let cvType = (^c : (static member FullName : string)())
-        use! sub =
-            subClient.SubscribeAsync (cvType, cvType,
-                (fun sub e r ct ->
-                    let cvType = e.Event.EventStreamId
-                    let traceId = e.Event.EventId.ToString()
-                    let user = e.Event.EventType
-                    let metadata = e.Event.Metadata.ToArray() |> Encoding.ASCII.GetString
-                    let correlationId = metadata.[19..metadata.Length - 3]
-                    let callback (v: ^v) =
-                        let data = JsonSerializer.SerializeToUtf8Bytes v |> ReadOnlyMemory
-                        let eventData = EventData (Uuid.NewUuid(), cvType, data)
-                        client.AppendToStreamAsync (traceId, StreamState.NoStream, seq { eventData })
-                        |> Async.AwaitTask |> Async.Ignore |> Async.Start
-                    handler cvType traceId user correlationId e.Event.Data callback |> Async.Start
-                    Task.CompletedTask),
-                (fun sub r ex -> dropped.SetResult (r, ex))
-            ) |> Async.AwaitTask
-        return! dropped.Task |> Async.AwaitTask }

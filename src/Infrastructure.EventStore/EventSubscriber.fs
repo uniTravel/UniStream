@@ -53,8 +53,7 @@ module EventSubscriber =
                         let version = e.Event.EventNumber.ToUInt64()
                         match handler aggKey e.Event.EventType version e.Event.Data |> Async.Catch |> Async.RunSynchronously with
                         | Choice1Of2 () -> checkpoint := e.OriginalEventNumber; Task.CompletedTask
-                        | Choice2Of2 ex -> Task.FromException ex
-                    ),
+                        | Choice2Of2 ex -> Task.FromException ex),
                     false,
                     (fun sub r ex ->
                         match r with

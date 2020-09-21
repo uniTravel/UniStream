@@ -55,4 +55,4 @@ let domainEvent (app: AppService) name =
     |> testLabel "EventStore"
 
 [<Tests>]
-let defaultTests = domainEvent EventStoreConfig.app "Grpc客户端"
+let defaultTests = domainEvent app "Grpc客户端"

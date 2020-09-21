@@ -11,6 +11,8 @@
     <Compile Include="EventSubscriber.fs" />
     <Compile Include="EventFilter.fsi" />
     <Compile Include="EventFilter.fs" />
+    <Compile Include="CommandSubscriber.fsi" />
+    <Compile Include="CommandSubscriber.fs" />
     <Compile Include="DomainCommand.fsi" />
     <Compile Include="DomainCommand.fs" />
     <Compile Include="DomainLog.fsi" />

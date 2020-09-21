@@ -19,30 +19,16 @@ module DomainCommand =
     /// <typeparam name="^c">领域命令类型。</typeparam>
     /// <typeparam name="^v">领域命令响应类型。</typeparam>
     /// <param name="client">EventStore客户端。</param>
+    /// <param name="timeout">以毫秒计的等待领域命令结果超时。</param>
     /// <param name="user">用户。</param>
     /// <param name="correlationId">关联ID：聚合命令为聚合键；流程命令为客户端标识。</param>
     /// <param name="cmd">领域命令。</param>
     /// <returns>聚合命令的执行结果。</returns>
     val inline launch :
         client: EventStoreClient ->
+        timeout: int ->
         user: string ->
         correlationId: string ->
         cmd: ^c ->
-        Async<Result< ^v, string>>
-        when ^c : (static member FullName : string)
-
-    /// <summary>连接到领域命令流服务端订阅
-    /// <para>订阅实例在服务端，支持多节点的消费群组连接，用以并行消费。</para>
-    /// <para>领域命令值全名作为Stream及消费群组名称。</para>
-    /// </summary>
-    /// <typeparam name="^c">领域命令类型。</typeparam>
-    /// <typeparam name="^v">领域命令响应类型。</typeparam>
-    /// <param name="client">EventStore客户端。</param>
-    /// <param name="subClient">EventStore持久化订阅客户端。</param>
-    /// <param name="handler">领域命令处理函数。</param>
-    val inline subscribe< ^c, ^v> :
-        client: EventStoreClient ->
-        subClient: EventStorePersistentSubscriptionsClient ->
-        handler: (string -> string -> string -> string -> ReadOnlyMemory<byte> -> (^v -> unit) -> Async<unit>) ->
-        Async<SubscriptionDroppedReason * exn>
+        Async< ^v>
         when ^c : (static member FullName : string)

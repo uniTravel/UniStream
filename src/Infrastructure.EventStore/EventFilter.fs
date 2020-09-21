@@ -50,8 +50,7 @@ module EventFilter =
                         let aggKey = streamName.[idx + 1..]
                         match handler aggKey e.Event.EventType version e.Event.Data |> Async.Catch |> Async.RunSynchronously with
                         | Choice1Of2 () -> position := e.OriginalPosition.Value; Task.CompletedTask
-                        | Choice2Of2 ex -> Task.FromException ex
-                    ),
+                        | Choice2Of2 ex -> Task.FromException ex),
                     false,
                     (fun sub r ex ->
                         match r with

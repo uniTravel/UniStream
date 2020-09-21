@@ -15,6 +15,7 @@
     <Compile Include="EventSubscribeTests.fs" />
     <Compile Include="EventFilterTests.fs" />
     <Compile Include="DomainCommandTests.fs" />
+    <Compile Include="CommandSubscribeTests.fs" />
     <Compile Include="Main.fs" />
     <None Include="paket.references" />
   </ItemGroup>

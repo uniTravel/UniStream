@@ -2,10 +2,10 @@ namespace Infrastructure.EventStore.Tests
 
 open System
 open System.Linq
+open System.Text
 open System.Net.Http
 open EventStore.Client
 open UniStream.Infrastructure.EventStore
-open System.Text
 
 
 type AppService (ses: EventStoreClientSettings, scs: EventStoreClientSettings, sld: EventStoreClientSettings, slg: EventStoreClientSettings) =
@@ -39,23 +39,24 @@ type AppService (ses: EventStoreClientSettings, scs: EventStoreClientSettings, s
 
     member _.Writer = DomainEvent.write es
 
-    member _.Subscriber = EventSubscriber.create es
+    member _.EventSubscriber = EventSubscriber.create es
 
-    member _.Filter = EventFilter.create es
+    member _.EventFilter = EventFilter.create es
 
     member _.Position () =
         let r = es.ReadAllAsync(Direction.Backwards, Position.End, 1L).ToEnumerable().FirstOrDefault()
         r.OriginalPosition.Value
 
+    member _.CommandSubscriber = CommandSubscriber.create cs ps
+
     member _.Domain = DomainLog.write ld
 
     member _.Diagnose = DiagnoseLog.write lg
 
-    member _.LaunchCreateNote = DomainCommand.launch<CreateNote, Note> cs
-
-    member _.SubscribeCreateNote = DomainCommand.subscribe<CreateNote, Note> cs ps
+    member _.CreateNote = DomainCommand.launch<CreateNote, Note> cs 300
 
 
+[<AutoOpen>]
 module EventStoreConfig =
 
     let app =
@@ -66,3 +67,8 @@ module EventStoreConfig =
         ses.DefaultCredentials <- UserCredentials ("admin", "changeit")
         scs.DefaultCredentials <- UserCredentials ("admin", "changeit")
         AppService (ses, scs, sld, slg)
+
+    let createEvents count =
+        seq { for i in 1 .. count ->
+                let e = Encoding.UTF8.GetBytes ("test" + i.ToString()) |> ReadOnlyMemory
+                "Changed", e, Nullable() }
