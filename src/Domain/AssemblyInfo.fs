@@ -7,9 +7,9 @@ open System.Runtime.CompilerServices
 [<assembly: AssemblyDescriptionAttribute("Lightweight framework for CQRS")>]
 [<assembly: AssemblyProductAttribute("UniStream")>]
 [<assembly: AssemblyCompanyAttribute("Eric")>]
-[<assembly: AssemblyVersionAttribute("0.8.1")>]
-[<assembly: AssemblyFileVersionAttribute("0.8.1")>]
-[<assembly: AssemblyInformationalVersionAttribute("0.8.1")>]
+[<assembly: AssemblyVersionAttribute("0.8.2")>]
+[<assembly: AssemblyFileVersionAttribute("0.8.2")>]
+[<assembly: AssemblyInformationalVersionAttribute("0.8.2")>]
 [<assembly: InternalsVisibleToAttribute("Note.Tests")>]
 do ()
 
@@ -18,7 +18,7 @@ module internal AssemblyVersionInformation =
     let [<Literal>] AssemblyDescription = "Lightweight framework for CQRS"
     let [<Literal>] AssemblyProduct = "UniStream"
     let [<Literal>] AssemblyCompany = "Eric"
-    let [<Literal>] AssemblyVersion = "0.8.1"
-    let [<Literal>] AssemblyFileVersion = "0.8.1"
-    let [<Literal>] AssemblyInformationalVersion = "0.8.1"
+    let [<Literal>] AssemblyVersion = "0.8.2"
+    let [<Literal>] AssemblyFileVersion = "0.8.2"
+    let [<Literal>] AssemblyInformationalVersion = "0.8.2"
     let [<Literal>] InternalsVisibleTo = "Note.Tests"
