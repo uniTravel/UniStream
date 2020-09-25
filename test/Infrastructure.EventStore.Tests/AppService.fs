@@ -49,10 +49,6 @@ type AppService (ses: EventStoreClientSettings, scs: EventStoreClientSettings, s
 
     member _.CommandSubscriber = CommandSubscriber.create cs ps
 
-    member _.Domain = DomainLog.write ld
-
-    member _.Diagnose = DiagnoseLog.write lg
-
     member _.CreateNote = DomainCommand.launch<CreateNote, Note> cs 300
 
 

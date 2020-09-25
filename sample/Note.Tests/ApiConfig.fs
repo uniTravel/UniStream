@@ -35,37 +35,33 @@ let clg = new EventStoreClient (slg)
 
 let reader = DomainEvent.get ces
 let writer = DomainEvent.write ces
-let ld = DomainLog.write cld
-let lg = DiagnoseLog.write clg
 
 [<Sealed>]
 type NoteService
         (reader: string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>,
-         writer: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>,
-         ld: string -> string -> string -> ReadOnlyMemory<byte> -> Async<unit>,
-         lg: string -> string -> ReadOnlyMemory<byte> -> Async<unit>) =
+         writer: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) =
 
-    let actor = Immutable.create <| Config.Immutable (writer, ld "NoteApp", lg "NoteApp")
-    let note1 = Mutable.create <| Config.Mutable (reader, writer, ld "NoteApp", lg "NoteApp")
-    let note2 = Mutable.create <| Config.Mutable (reader, writer, ld "NoteApp", lg "NoteApp", ?batch = Some 7u)
-    let obs = Observer.create <| Config.Observer (reader, lg "NoteApp")
+    let actor = Immutable.create <| Config.Immutable writer
+    let note1 = Mutable.create <| Config.Mutable (reader, writer)
+    let note2 = Mutable.create <| Config.Mutable (reader, writer, ?batch = Some 7u)
+    let obs = Observer.create <| Config.Observer reader
 
-    member _.CreateActor user aggKey traceId cmd =
-        CommandService.createActor actor user aggKey traceId cmd
+    member _.CreateActor aggKey traceId cmd =
+        CommandService.createActor actor aggKey traceId cmd
 
-    member _.CreateNote user aggKey traceId cmd =
-        CommandService.createNote note1 user aggKey traceId cmd
+    member _.CreateNote aggKey traceId cmd =
+        CommandService.createNote note1 aggKey traceId cmd
 
-    member _.ChangeNote user aggKey traceId cmd =
-        CommandService.changeNote note1 user aggKey traceId cmd
+    member _.ChangeNote aggKey traceId cmd =
+        CommandService.changeNote note1 aggKey traceId cmd
 
-    member _.BatchCreate user aggKey traceId cmd =
-        CommandService.createNote note2 user aggKey traceId cmd
+    member _.BatchCreate aggKey traceId cmd =
+        CommandService.createNote note2 aggKey traceId cmd
 
-    member _.BatchChange user aggKey traceId cmd =
-        CommandService.changeNote note2 user aggKey traceId cmd
+    member _.BatchChange aggKey traceId cmd =
+        CommandService.changeNote note2 aggKey traceId cmd
 
     member _.AppendNote aggKey number evType data =
         CommandService.appendNote obs aggKey number evType data
 
-let app = NoteService (reader, writer, ld, lg)
+let app = NoteService (reader, writer)

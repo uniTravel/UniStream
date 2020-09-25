@@ -7,10 +7,6 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Exceptions.fsi" />
     <Compile Include="Exceptions.fs" />
-    <Compile Include="DomainLog.fsi" />
-    <Compile Include="DomainLog.fs" />
-    <Compile Include="DiagnoseLog.fsi" />
-    <Compile Include="DiagnoseLog.fs" />
     <Compile Include="Delta.fsi" />
     <Compile Include="Delta.fs" />
     <Compile Include="Command.fsi" />

@@ -21,8 +21,8 @@ type private JobAttribute () =
 
 [<Job>]
 type Basic () =
-    let reader, writer, ld, lg = App.config()
-    let basic = BasicService (reader, writer, ld, lg)
+    let reader, writer = App.config()
+    let basic = BasicService (reader, writer)
 
     [<DefaultValue>] val mutable AggId: string
 
@@ -34,7 +34,7 @@ type Basic () =
         let traceId = Guid.NewGuid().ToString()
         self.AggId <- Guid.NewGuid().ToString()
         let command : CreateNoteCommand = { Title = "title"; Content = "initial content" }
-        basic.CreateNote "benchmark" self.AggId traceId command |> Async.RunSynchronously |> ignore
+        basic.CreateNote self.AggId traceId command |> Async.RunSynchronously |> ignore
         let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
         seq { "NoteCreated", Delta.serialize command, metadata }
         |> writer "Benchmark.Direct.Note-" self.AggId UInt64.MaxValue |> Async.RunSynchronously
@@ -42,7 +42,7 @@ type Basic () =
     [<Benchmark>]
     member self.Write () =
         seq { 0 .. self.count - 1 }
-        |> Seq.map (fun i -> basic.ChangeNote "benchmark" self.AggId (Guid.NewGuid().ToString()) { Content = "changed content" })
+        |> Seq.map (fun i -> basic.ChangeNote self.AggId (Guid.NewGuid().ToString()) { Content = "changed content" })
         |> Async.Parallel
         |> Async.RunSynchronously
 
@@ -59,8 +59,8 @@ type Basic () =
 
 [<Job>]
 type Batch () =
-    let reader, writer, ld, lg = App.config()
-    let batch = BatchService (reader, writer, ld, lg)
+    let reader, writer = App.config()
+    let batch = BatchService (reader, writer)
 
     [<DefaultValue>] val mutable AggId: string
 
@@ -72,7 +72,7 @@ type Batch () =
         let traceId = Guid.NewGuid().ToString()
         self.AggId <- Guid.NewGuid().ToString()
         let command : CreateNoteCommand = { Title = "title"; Content = "initial content" }
-        batch.CreateNote "benchmark" self.AggId traceId command |> Async.RunSynchronously |> ignore
+        batch.CreateNote self.AggId traceId command |> Async.RunSynchronously |> ignore
         let metadata = Encoding.ASCII.GetBytes ("{\"TraceId\":\"" + traceId + "\"}") |> ReadOnlyMemory |> Nullable
         seq { "NoteCreated", Delta.serialize command, metadata }
         |> writer "Benchmark.Direct.Note-" self.AggId UInt64.MaxValue |> Async.RunSynchronously
@@ -80,7 +80,7 @@ type Batch () =
     [<Benchmark>]
     member self.Write () =
         seq { 0 .. self.count - 1 }
-        |> Seq.map (fun i -> batch.ChangeNote "benchmark" self.AggId (Guid.NewGuid().ToString()) { Content = "changed content" })
+        |> Seq.map (fun i -> batch.ChangeNote self.AggId (Guid.NewGuid().ToString()) { Content = "changed content" })
         |> Async.Parallel
         |> Async.RunSynchronously
 
@@ -97,8 +97,8 @@ type Batch () =
 
 [<Job>]
 type Parallel () =
-    let reader, writer, ld, lg = App.config()
-    let basic = BasicService (reader, writer, ld, lg)
+    let reader, writer = App.config()
+    let basic = BasicService (reader, writer)
 
     [<Params(50, 300)>]
     member val public count = 0 with get, set
@@ -110,9 +110,9 @@ type Parallel () =
             let aggId = Guid.NewGuid().ToString()
             let traceId = Guid.NewGuid().ToString()
             let command : CreateNoteCommand = { Title = "title"; Content = "initial content" }
-            let! note = basic.CreateNote "benchmark" aggId traceId command
+            let! note = basic.CreateNote aggId traceId command
             let traceId = Guid.NewGuid().ToString()
-            let! note = basic.ChangeNote "benchmark" aggId traceId { Content = "changed content" }
+            let! note = basic.ChangeNote aggId traceId { Content = "changed content" }
             () })
         |> Async.Parallel
         |> Async.RunSynchronously
@@ -136,8 +136,8 @@ type Parallel () =
 
 [<Job>]
 type Immute () =
-    let reader, writer, ld, lg = App.config()
-    let imute = ImmuteService (reader, writer, ld, lg)
+    let reader, writer = App.config()
+    let imute = ImmuteService (reader, writer)
 
     [<Params(100, 2000)>]
     member val public count = 0 with get, set
@@ -149,7 +149,7 @@ type Immute () =
             let aggId = Guid.NewGuid().ToString()
             let traceId = Guid.NewGuid().ToString()
             let command : CreateActorCommand = { Name = "actor" }
-            let! note = imute.CreateActor "benchmark" aggId traceId command
+            let! note = imute.CreateActor aggId traceId command
             () })
         |> Async.Parallel
         |> Async.RunSynchronously

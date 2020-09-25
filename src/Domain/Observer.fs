@@ -13,11 +13,10 @@ module Observer =
         | Get of string * AsyncReplyChannel<Result<'agg, string>>
 
     type T<'agg> =
-        { DiagnoseLog: DiagnoseLog.T
-          Agent: MailboxProcessor<Msg<'agg>> }
+        { Agent: MailboxProcessor<Msg<'agg>> }
 
     let inline agent< ^agg when ^agg : (static member Initial : ^agg) and ^agg : (member ApplyEvent : (string -> ReadOnlyMemory<byte> -> ^agg))>
-        (cfg: Config.Observer) (lg: DiagnoseLog.T) aggType =
+        (cfg: Config.Observer) aggType =
         let snapshots = Dictionary<string, ^agg * uint64 * uint64>(cfg.Capacity)
         let caches =
             Dictionary<string,
@@ -42,7 +41,7 @@ module Observer =
                 else ValueNone, snapUsage
             let shot = match cfg.Scavenge with | 0u -> None | _ -> Some <| shot cfg.Threshold aggKey
             let fty =
-                let agent = Observed.agent lg reader aggKey shot
+                let agent = Observed.agent reader shot
                 Observed.append agent, Observed.get agent, agent
             caches.Add (aggKey, fty)
             fty, snapshot, snapUsage
@@ -62,24 +61,20 @@ module Observer =
                 | Refresh ->
                     let usage = List.distinct cacheUsage
                     if caches.Count > cfg.Capacity - 1000 then
-                        lg.Trace "Start refresh cache."
                         let usage = List.truncate cfg.Keep usage
                         Seq.except usage caches.Keys
                         |> Seq.iter (fun id ->
                             let _, _, fty = caches.[id]
                             (fty :> IDisposable).Dispose()
                             caches.Remove id |> ignore)
-                        lg.Trace "Refresh cache finished."
                         return! loop snapUsage usage
                     else return! loop snapUsage usage
                 | Scavenge ->
                     let usage = List.distinct snapUsage
                     if snapshots.Count > cfg.Capacity - 1000 then
-                        lg.Trace "Start scavenge snapshot."
                         let usage = List.truncate cfg.Keep usage
                         Seq.except usage snapshots.Keys
                         |> Seq.iter (snapshots.Remove >> ignore)
-                        lg.Trace "Scavenge snapshot finished."
                         return! loop usage cacheUsage
                     else return! loop usage cacheUsage
                 | Get (aggKey, channel) ->
@@ -105,12 +100,11 @@ module Observer =
             timer.Elapsed.Add handler
             async { timer.Start() }
         let aggType = typeof< ^agg>.DeclaringType.FullName
-        let lg = DiagnoseLog.logger aggType cfg.LgFunc
         let aggType = aggType + "-"
-        let agent = agent< ^agg> cfg lg aggType
+        let agent = agent< ^agg> cfg aggType
         Async.Start <| createTimer (cfg.Refresh * 60u * 1000u) (fun _ -> agent.Post Refresh)
         if cfg.Scavenge > 0u then Async.Start <| createTimer (cfg.Scavenge * 60u * 60u * 1000u) (fun _ -> agent.Post Scavenge)
-        { DiagnoseLog = lg; Agent = agent }
+        { Agent = agent }
 
     let inline append (aggregator: T< ^agg>) aggKey number evType data = async {
         aggregator.Agent.Post <| Append (aggKey, number, evType, data) }

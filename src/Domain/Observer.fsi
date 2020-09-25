@@ -24,11 +24,9 @@ module Observer =
     /// <summary>观察者聚合器
     /// </summary>
     /// <typeparam name="'agg">聚合类型。</typeparam>
-    /// <param name="DiagnoseLog">诊断日志记录器。</param>
     /// <param name="Agent">聚合器代理。</param>
     type T<'agg> =
-        { DiagnoseLog: DiagnoseLog.T
-          Agent: MailboxProcessor<Msg<'agg>> }
+        { Agent: MailboxProcessor<Msg<'agg>> }
 
     /// <summary>创建观察者聚合器
     /// </summary>

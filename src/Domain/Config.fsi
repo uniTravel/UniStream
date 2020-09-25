@@ -16,12 +16,8 @@ module Config =
         /// <summary>构造函数
         /// </summary>
         /// <param name="esFunc">领域事件流存储函数。</param>
-        /// <param name="ldFunc">领域日志流存储函数。</param>
-        /// <param name="lgFunc">诊断日志流存储函数。</param>
         new :
-            esFunc: (string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) *
-            ldFunc: (string -> string -> ReadOnlyMemory<byte> -> Async<unit>) *
-            lgFunc: (string -> ReadOnlyMemory<byte> -> Async<unit>) -> Immutable
+            esFunc: (string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) -> Immutable
 
         /// <summary>领域事件流存储函数
         /// </summary>
@@ -34,26 +30,6 @@ module Config =
             aggKey: string ->
             version: uint64 ->
             eData: (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq ->
-            Async<unit>
-
-        /// <summary>领域日志流存储函数
-        /// </summary>
-        /// <param name="user">用户。</param>
-        /// <param name="category">领域日志类别。</param>
-        /// <param name="data">领域日志数据。</param>
-        member LdFunc :
-            user: string ->
-            category: string ->
-            data: ReadOnlyMemory<byte> ->
-            Async<unit>
-
-        /// <summary>诊断日志流存储函数
-        /// </summary>
-        /// <param name="aggType">聚合类型。</param>
-        /// <param name="data">诊断日志数据。</param>
-        member LgFunc :
-            aggType: string ->
-            data: ReadOnlyMemory<byte> ->
             Async<unit>
 
 
@@ -70,8 +46,6 @@ module Config =
         /// </summary>
         /// <param name="get">从某个版本开始为聚合获取领域事件的函数。</param>
         /// <param name="esFunc">领域事件流存储函数。</param>
-        /// <param name="ldFunc">领域日志流存储函数。</param>
-        /// <param name="lgFunc">诊断日志流存储函数。</param>
         /// <param name="?capacity">缓存与快照的容量，缺省为10000。</param>
         /// <param name="?keep">清理缓存/快照后保留的数量，缺省为3000。</param>
         /// <param name="?refresh">刷新聚合缓存的间隔秒数，缺省为15秒。</param>
@@ -81,8 +55,6 @@ module Config =
         new :
             get: (string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>) *
             esFunc: (string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) *
-            ldFunc: (string -> string -> ReadOnlyMemory<byte> -> Async<unit>) *
-            lgFunc: (string -> ReadOnlyMemory<byte> -> Async<unit>) *
             ?capacity: int *
             ?keep: int *
             ?refresh: uint *
@@ -112,26 +84,6 @@ module Config =
             aggKey: string ->
             version: uint64 ->
             eData: (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq ->
-            Async<unit>
-
-        /// <summary>领域日志流存储函数
-        /// </summary>
-        /// <param name="user">用户。</param>
-        /// <param name="category">领域日志类别。</param>
-        /// <param name="data">领域日志数据。</param>
-        member LdFunc :
-            user: string ->
-            category: string ->
-            data: ReadOnlyMemory<byte> ->
-            Async<unit>
-
-        /// <summary>诊断日志流存储函数
-        /// </summary>
-        /// <param name="aggType">聚合类型。</param>
-        /// <param name="data">诊断日志数据。</param>
-        member LgFunc :
-            aggType: string ->
-            data: ReadOnlyMemory<byte> ->
             Async<unit>
 
         /// <summary>缓存与快照的容量
@@ -173,7 +125,6 @@ module Config =
         /// <summary>构造函数
         /// </summary>
         /// <param name="get">从某个版本开始为聚合获取领域事件的函数。</param>
-        /// <param name="lgFunc">诊断日志流存储函数。</param>
         /// <param name="?capacity">缓存与快照的容量，缺省为10000。</param>
         /// <param name="?keep">清理缓存/快照后保留的数量，缺省为5000。</param>
         /// <param name="?refresh">刷新聚合缓存的间隔分钟数，缺省为30分钟。</param>
@@ -181,7 +132,6 @@ module Config =
         /// <param name="?threshold">快照间隔，缺省为1000。</param>
         new :
             get: (string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>) *
-            lgFunc: (string -> ReadOnlyMemory<byte> -> Async<unit>) *
             ?capacity: int *
             ?keep: int *
             ?refresh: uint *
@@ -198,15 +148,6 @@ module Config =
             aggKey: string ->
             version: uint64 ->
             Async<(uint64 * string * ReadOnlyMemory<byte>) seq>
-
-        /// <summary>诊断日志流存储函数
-        /// </summary>
-        /// <param name="aggType">聚合类型。</param>
-        /// <param name="data">诊断日志数据。</param>
-        member LgFunc :
-            aggType: string ->
-            data: ReadOnlyMemory<byte> ->
-            Async<unit>
 
         /// <summary>缓存与快照的容量
         /// </summary>

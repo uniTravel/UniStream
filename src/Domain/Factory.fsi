@@ -22,14 +22,12 @@ module internal Factory =
     /// <summary>执行领域命令
     /// </summary>
     /// <typeparam name="^agg">聚合类型。</typeparam>
-    /// <param name="lg">诊断日志记录器。</param>
     /// <param name="writer">基于特定聚合，领域事件流存储函数。</param>
     /// <param name="agg">聚合。</param>
     /// <param name="version">聚合版本。</param>
     /// <param name="cmd">领域命令。</param>
     /// <returns>聚合及存储的领域事件数量。</returns>
     val inline private build :
-        lg: DiagnoseLog.T ->
         writer: (uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) ->
         agg: ^agg ->
         version: uint64 ->
@@ -39,14 +37,12 @@ module internal Factory =
     /// <summary>批量执行领域命令
     /// </summary>
     /// <typeparam name="^agg">聚合类型。</typeparam>
-    /// <param name="lg">诊断日志记录器。</param>
     /// <param name="writer">基于特定聚合，领域事件流存储函数。</param>
     /// <param name="agg">聚合。</param>
     /// <param name="version">聚合版本。</param>
     /// <param name="cmds">领域命令列表。</param>
     /// <returns>聚合及存储的领域事件数量。</returns>
     val inline private batch :
-        lg: DiagnoseLog.T ->
         writer: (uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) ->
         agg: ^agg ->
         version: uint64 ->
@@ -57,12 +53,10 @@ module internal Factory =
     /// <para>单纯从存储获取领域事件集合。</para>
     /// </summary>
     /// <typeparam name="^agg">聚合类型。</typeparam>
-    /// <param name="lg">诊断日志记录器。</param>
     /// <param name="reader">基于特定聚合，从某个版本开始获取领域事件的函数。</param>
     /// <param name="snapshot">或有的聚合快照。</param>
     /// <returns>聚合及相应版本。</returns>
     val inline private raw :
-        lg: DiagnoseLog.T ->
         reader: (uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>) ->
         snapshot: (^agg * uint64) voption ->
         Async< ^agg * uint64>
@@ -73,14 +67,12 @@ module internal Factory =
     /// <para>从存储获取领域事件集合，并应用一条领域命令。</para>
     /// </summary>
     /// <typeparam name="^agg">聚合类型。</typeparam>
-    /// <param name="lg">诊断日志记录器。</param>
     /// <param name="reader">基于特定聚合，从某个版本开始获取领域事件的函数。</param>
     /// <param name="writer">基于特定聚合，领域事件流存储函数。</param>
     /// <param name="snapshot">或有的聚合快照。</param>
     /// <param name="cmd">领域命令。</param>
     /// <returns>聚合及相应版本。</returns>
     val inline private init :
-        lg: DiagnoseLog.T ->
         reader: (uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>) ->
         writer: (uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) ->
         snapshot: (^agg * uint64) voption ->
@@ -109,16 +101,12 @@ module Basic =
     /// <summary>创建基本聚合工厂代理
     /// </summary>
     /// <typeparam name="^agg">聚合类型。</typeparam>
-    /// <param name="lg">诊断日志记录器。</param>
     /// <param name="reader">基于特定聚合，从某个版本开始获取领域事件的函数。</param>
     /// <param name="writer">基于特定聚合，领域事件流存储函数。</param>
-    /// <param name="aggKey">聚合键，源自GUID或者业务主键。</param>
     /// <param name="shot">或有的异步生成快照函数。</param>
     val inline internal agent :
-        lg: DiagnoseLog.T ->
         reader: (uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>) ->
         writer: (uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) ->
-        aggKey: string ->
         shot: (^agg -> uint64 -> Async<unit>) option ->
         MailboxProcessor<Msg< ^agg>>
         when ^agg : (static member Initial : ^agg)
@@ -171,18 +159,14 @@ module Batched =
     /// <summary>创建批处理聚合工厂代理
     /// </summary>
     /// <typeparam name="^agg">聚合类型。</typeparam>
-    /// <param name="lg">诊断日志记录器。</param>
     /// <param name="reader">基于特定聚合，从某个版本开始获取领域事件的函数。</param>
     /// <param name="writer">基于特定聚合，领域事件流存储函数。</param>
     /// <param name="interval">批处理间隔毫秒数。</param>
-    /// <param name="aggKey">聚合键，源自GUID或者业务主键。</param>
     /// <param name="shot">或有的异步生成快照函数。</param>
     val inline internal agent :
-        lg: DiagnoseLog.T ->
         reader: (uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>) ->
         writer: (uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) ->
         interval: float ->
-        aggKey: string ->
         shot: (^agg -> uint64 -> Async<unit>) option ->
         MailboxProcessor<Msg< ^agg>>
         when ^agg : (static member Initial : ^agg)
@@ -233,14 +217,10 @@ module Observed =
     /// <summary>创建观察聚合工厂代理
     /// </summary>
     /// <typeparam name="^agg">聚合类型。</typeparam>
-    /// <param name="lg">诊断日志记录器。</param>
     /// <param name="reader">基于特定聚合，从某个版本开始获取领域事件的函数。</param>
-    /// <param name="aggKey">聚合键，源自GUID或者业务主键。</param>
     /// <param name="shot">或有的异步生成快照函数。</param>
     val inline internal agent :
-        lg: DiagnoseLog.T ->
         reader: (uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>) ->
-        aggKey: string ->
         shot: (^agg -> uint64 -> Async<unit>) option ->
         MailboxProcessor<Msg< ^agg>>
         when ^agg : (static member Initial : ^agg)

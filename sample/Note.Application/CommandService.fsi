@@ -15,14 +15,12 @@ module CommandService =
     /// <summary>创建Actor
     /// </summary>
     /// <param name="actor">Actor聚合。</param>
-    /// <param name="user">用户。</param>
     /// <param name="aggKey">聚合键。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="cmd">领域命令。</param>
     /// <returns>聚合值。</returns>
     val createActor :
         actor: Immutable.T<Actor.T> ->
-        user: string ->
         aggKey: string ->
         traceId: string ->
         cmd: CreateActor ->
@@ -31,13 +29,11 @@ module CommandService =
     /// <summary>创建Note
     /// </summary>
     /// <param name="note">Note聚合。</param>
-    /// <param name="user">用户。</param>
     /// <param name="aggKey">聚合键。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="cmd">领域命令。</param>
     val createNote :
         note: Mutable.T<Note.T> ->
-        user: string ->
         aggKey: string ->
         traceId: string ->
         cmd: CreateNote ->
@@ -46,13 +42,11 @@ module CommandService =
     /// <summary>改变Note
     /// </summary>
     /// <param name="note">Note聚合。</param>
-    /// <param name="user">用户。</param>
     /// <param name="aggKey">聚合键。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="cmd">领域命令。</param>
     val changeNote :
         note: Mutable.T<Note.T> ->
-        user: string ->
         aggKey: string ->
         traceId: string ->
         cmd: ChangeNote ->

@@ -29,56 +29,48 @@ module App =
         let clg = new EventStoreClient (slg)
         let reader = DomainEvent.get ces
         let writer = DomainEvent.write ces
-        let ld = DomainLog.write cld
-        let lg = DiagnoseLog.write clg
-        reader, writer, ld, lg
+        reader, writer
 
 
 [<Sealed>]
 type ImmuteService
         (reader: string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>,
-         writer: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>,
-         ld: string -> string -> string -> ReadOnlyMemory<byte> -> Async<unit>,
-         lg: string -> string -> ReadOnlyMemory<byte> -> Async<unit>) =
+         writer: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) =
 
-    let actor : Immutable.T<Actor.T> = Immutable.create <| Config.Immutable (writer, ld "NoteApp", lg "NoteApp")
+    let actor : Immutable.T<Actor.T> = Immutable.create <| Config.Immutable writer
 
-    member _.CreateActor user aggId traceId cv =
+    member _.CreateActor aggId traceId cv =
         let command = CreateActor.create cv
-        Immutable.apply actor user aggId traceId command
+        Immutable.apply actor aggId traceId command
 
 
 [<Sealed>]
 type BasicService
         (reader: string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>,
-         writer: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>,
-         ld: string -> string -> string -> ReadOnlyMemory<byte> -> Async<unit>,
-         lg: string -> string -> ReadOnlyMemory<byte> -> Async<unit>) =
+         writer: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) =
 
-    let note : Mutable.T<Note.T> = Mutable.create <| Config.Mutable (reader, writer, ld "NoteApp", lg "NoteApp")
+    let note : Mutable.T<Note.T> = Mutable.create <| Config.Mutable (reader, writer)
 
-    member _.CreateNote user aggId traceId cv =
+    member _.CreateNote aggId traceId cv =
         let command = CreateNote.create cv
-        Mutable.apply note user aggId traceId command
+        Mutable.apply note aggId traceId command
 
-    member _.ChangeNote user aggId traceId cv =
+    member _.ChangeNote aggId traceId cv =
         let command = ChangeNote.create cv
-        Mutable.apply note user aggId traceId command
+        Mutable.apply note aggId traceId command
 
 
 [<Sealed>]
 type BatchService
         (reader: string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>,
-         writer: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>,
-         ld: string -> string -> string -> ReadOnlyMemory<byte> -> Async<unit>,
-         lg: string -> string -> ReadOnlyMemory<byte> -> Async<unit>) =
+         writer: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) =
 
-    let note : Mutable.T<Note.T> = Mutable.create <| Config.Mutable (reader, writer, ld "NoteApp", lg "NoteApp", ?batch = Some 7u)
+    let note : Mutable.T<Note.T> = Mutable.create <| Config.Mutable (reader, writer, ?batch = Some 7u)
 
-    member _.CreateNote user aggId traceId cv =
+    member _.CreateNote aggId traceId cv =
         let command = CreateNote.create cv
-        Mutable.apply note user aggId traceId command
+        Mutable.apply note aggId traceId command
 
-    member _.ChangeNote user aggId traceId cv =
+    member _.ChangeNote aggId traceId cv =
         let command = ChangeNote.create cv
-        Mutable.apply note user aggId traceId command
+        Mutable.apply note aggId traceId command

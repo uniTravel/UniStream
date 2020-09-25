@@ -1,0 +1,9 @@
+Logary
+Logary.Targets.ElasticSearch
+
+group Test
+    FSharp.Core
+    Expecto
+    Expecto.BenchmarkDotNet
+    Expecto.FsCheck
+    Expecto.Hopac

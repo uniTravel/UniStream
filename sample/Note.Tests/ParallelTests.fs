@@ -11,9 +11,9 @@ let task count =
         let aggId = Guid.NewGuid().ToString()
         let traceId = Guid.NewGuid().ToString()
         let command = { Title = "title"; Content = "initial content" }
-        let! note = app.CreateNote "benchmark" aggId traceId command
+        let! note = app.CreateNote aggId traceId command
         let traceId = Guid.NewGuid().ToString()
-        let! note = app.ChangeNote "benchmark" aggId traceId { Content = "changed content" }
+        let! note = app.ChangeNote aggId traceId { Content = "changed content" }
         () })
 
 [<Tests>]

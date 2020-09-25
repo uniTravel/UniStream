@@ -13,14 +13,12 @@ module Mutable =
         | Get of string * AsyncReplyChannel<Result<'agg, string>>
 
     type T<'agg> =
-        { DomainLog: DomainLog.T
-          DiagnoseLog: DiagnoseLog.T
-          Agent: MailboxProcessor<Msg<'agg>> }
+        { Agent: MailboxProcessor<Msg<'agg>> }
 
     let inline agent< ^agg when ^agg : (static member Initial : ^agg)
             and ^agg : (member ApplyEvent : (string -> ReadOnlyMemory<byte> -> ^agg))
             and ^agg : (member Closed : bool)>
-        (cfg: Config.Mutable) (lg: DiagnoseLog.T) aggType =
+        (cfg: Config.Mutable) aggType =
         let snapshots = Dictionary<string, ^agg * uint64 * uint64>(cfg.Capacity)
         let caches =
             Dictionary<string,
@@ -56,12 +54,12 @@ module Mutable =
                         let post, get, agent =
                             match cfg.Batch with
                             | 0u ->
-                                let agent = Basic.agent lg reader writer aggKey shot
+                                let agent = Basic.agent reader writer shot
                                 agent.Post <| Basic.Init (traceId, apply, snapshot, channel)
                                 Basic.post agent, Basic.get agent, agent :> IDisposable
                             | batch ->
                                 let interval = float batch
-                                let agent = Batched.agent lg reader writer interval aggKey shot
+                                let agent = Batched.agent reader writer interval shot
                                 agent.Post <| Batched.Init (traceId, apply, snapshot, channel)
                                 Batched.post agent, Batched.get agent, agent :> IDisposable
                         caches.Add (aggKey, (post, get, agent))
@@ -69,24 +67,20 @@ module Mutable =
                 | Refresh ->
                     let usage = List.distinct cacheUsage
                     if caches.Count > cfg.Capacity - 1000 then
-                        lg.Trace "Start refresh cache."
                         let usage = List.truncate cfg.Keep usage
                         Seq.except usage caches.Keys
                         |> Seq.iter (fun id ->
                             let _, _, fty = caches.[id]
                             fty.Dispose()
                             caches.Remove id |> ignore)
-                        lg.Trace "Refresh cache finished."
                         return! loop snapUsage usage
                     else return! loop snapUsage usage
                 | Scavenge ->
                     let usage = List.distinct snapUsage
                     if snapshots.Count > cfg.Capacity - 1000 then
-                        lg.Trace "Start scavenge snapshot."
                         let usage = List.truncate cfg.Keep usage
                         Seq.except usage snapshots.Keys
                         |> Seq.iter (snapshots.Remove >> ignore)
-                        lg.Trace "Scavenge snapshot finished."
                         return! loop usage cacheUsage
                     else return! loop usage cacheUsage
                 | Get (aggKey, channel) ->
@@ -107,24 +101,18 @@ module Mutable =
             timer.Elapsed.Add handler
             async { timer.Start() }
         let aggType = typeof< ^agg>.DeclaringType.FullName
-        let ld = DomainLog.logger aggType cfg.LdFunc
-        let lg = DiagnoseLog.logger aggType cfg.LgFunc
         let aggType = aggType + "-"
-        let agent = agent< ^agg> cfg lg aggType
+        let agent = agent< ^agg> cfg aggType
         Async.Start <| createTimer (cfg.Refresh * 1000u) (fun _ -> agent.Post Refresh)
         if cfg.Scavenge > 0u then Async.Start <| createTimer (cfg.Scavenge * 60u * 60u * 1000u) (fun _ -> agent.Post Scavenge)
-        { DomainLog = ld; DiagnoseLog = lg; Agent = agent }
+        { Agent = agent }
 
-    let inline apply { DomainLog = ld; Agent = agent } user aggKey traceId cmd = async {
-        let cvType = (^c : (static member FullName : string)())
+    let inline apply { Agent = agent } aggKey traceId cmd = async {
         let apply = (^c : (member Apply : (^agg -> (string * ReadOnlyMemory<byte>) seq * ^agg)) cmd)
-        ld.Process user cvType aggKey traceId "Start execute command."
         match! agent.PostAndAsyncReply <| fun channel -> Apply (aggKey, traceId, apply, channel) with
         | Ok agg ->
-            ld.Success user cvType aggKey traceId "Execute command success."
             return (^agg : (member Value: ^v) agg)
         | Error err ->
-            ld.Fail user cvType aggKey traceId "Execute command failed: %s" err
             return failwithf "Execute command failed: %s" err }
 
     let inline get { Agent = agent } aggKey = async {

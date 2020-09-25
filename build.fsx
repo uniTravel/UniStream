@@ -54,6 +54,15 @@ Target.create "Infrastructure.EventStore.Test" (fun _ ->
     !! "test/Infrastructure.EventStore.Tests/*.fsproj"
     |> Seq.iter (DotNet.build (fun b -> { b with Configuration = DotNet.BuildConfiguration.Debug })))
 
+Target.create "Domain.Test" (fun _ ->
+    !! "test/Domain.Tests/bin"
+    ++ "test/Domain.Tests/obj"
+    ++ "src/Domain/bin"
+    ++ "src/Domain/obj"
+    |> Shell.cleanDirs
+    !! "test/Domain.Tests/*.fsproj"
+    |> Seq.iter (DotNet.build (fun b -> { b with Configuration = DotNet.BuildConfiguration.Debug })))
+
 Target.create "AssemblyInfo" (fun _ ->
     !! "src/**/*.fsproj"
     |> Seq.iter genAssemblyInfo)

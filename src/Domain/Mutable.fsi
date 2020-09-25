@@ -23,13 +23,9 @@ module Mutable =
     /// <summary>可变聚合器
     /// </summary>
     /// <typeparam name="'agg">聚合类型。</typeparam>
-    /// <param name="DomainLog">领域日志记录器。</param>
-    /// <param name="DiagnoseLog">诊断日志记录器。</param>
     /// <param name="Agent">聚合器代理。</param>
     type T<'agg> =
-        { DomainLog: DomainLog.T
-          DiagnoseLog: DiagnoseLog.T
-          Agent: MailboxProcessor<Msg<'agg>> }
+        { Agent: MailboxProcessor<Msg<'agg>> }
 
     /// <summary>创建可变聚合器
     /// </summary>
@@ -48,19 +44,16 @@ module Mutable =
     /// <typeparam name="^v">聚合值类型。</typeparam>
     /// <typeparam name="^c">领域命令类型。</typeparam>
     /// <param name="aggregator">聚合器。</param>
-    /// <param name="user">用户。</param>
     /// <param name="aggKey">聚合键，源自GUID或者业务主键。</param>
     /// <param name="traceId">跟踪ID。</param>
     /// <param name="cmd">领域命令。</param>
     val inline apply :
         aggregator: T< ^agg> ->
-        user: string ->
         aggKey: string ->
         traceId: string ->
         cmd: ^c ->
         Async< ^v>
         when ^agg : (member Value : ^v)
-        and ^c : (static member FullName : string)
         and ^c : (member Apply : (^agg -> (string * ReadOnlyMemory<byte>) seq * ^agg))
 
     /// <summary>取出当前聚合

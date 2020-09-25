@@ -15,10 +15,6 @@
     <Compile Include="CommandSubscriber.fs" />
     <Compile Include="DomainCommand.fsi" />
     <Compile Include="DomainCommand.fs" />
-    <Compile Include="DomainLog.fsi" />
-    <Compile Include="DomainLog.fs" />
-    <Compile Include="DiagnoseLog.fsi" />
-    <Compile Include="DiagnoseLog.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
