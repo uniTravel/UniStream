@@ -1,3 +1,5 @@
+Logary
+
 group Test
     FSharp.Core
     BenchmarkDotNet

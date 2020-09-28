@@ -9,6 +9,7 @@
     <Compile Include="Collections.fs" />
     <Compile Include="Lookup.fs" />
     <Compile Include="Pipeline.fs" />
+    <Compile Include="Fibonacci.fs" />
     <Compile Include="Main.fs" />
     <None Include="paket.references" />
   </ItemGroup>

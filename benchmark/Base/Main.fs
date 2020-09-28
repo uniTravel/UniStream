@@ -12,6 +12,7 @@ module Main =
             typeof<Collections>
             typeof<Lookup>
             typeof<Pipeline>
+            typeof<Fibonacci>
         |]
         switch.Run argv |> ignore
         0
