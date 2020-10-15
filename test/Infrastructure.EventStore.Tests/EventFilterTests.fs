@@ -25,7 +25,7 @@ let filter (app: AppService) name =
             f position completed reached delay count
         yield! testFixture withArgs [
             "正常订阅", fun position completed reached delay count ->
-                let handler aggKey evType version data = async {
+                let handler aggKey version evType data = async {
                     count := !count + 1
                     if !count = 5 then completed.SetResult true
                     if !count = 6 then reached.SetResult true }
@@ -38,7 +38,7 @@ let filter (app: AppService) name =
                 Expect.equal task delay "执行了不该执行的任务"
                 EventFilter.unsub filter option |> Async.RunSynchronously
             "处理过程会出错", fun position completed reached delay count ->
-                let handler aggKey evType version data = async {
+                let handler aggKey version evType data = async {
                     count := !count + 1
                     if !count = 2 then failwith "Error"
                     if !count = 6 then completed.SetResult true
@@ -53,7 +53,7 @@ let filter (app: AppService) name =
                 EventFilter.unsub filter option |> Async.RunSynchronously
             "处理过程中退订", fun position completed reached delay count ->
                 let hook = TaskCompletionSource<unit>()
-                let handler aggKey evType version data = async {
+                let handler aggKey version evType data = async {
                     count := !count + 1
                     if !count = 2 then hook.SetResult (); Threading.Thread.Sleep 2
                     if !count = 2 then completed.SetResult true
@@ -69,7 +69,7 @@ let filter (app: AppService) name =
                 Expect.equal task delay "执行了不该执行的任务"
             "处理过程会出错，然后退订", fun position completed reached delay count ->
                 let hook = TaskCompletionSource<unit>()
-                let handler aggKey evType version data = async {
+                let handler aggKey version evType data = async {
                     count := !count + 1
                     if !count = 1 then failwith "Error"
                     if !count = 3 then hook.SetResult (); Threading.Thread.Sleep 2

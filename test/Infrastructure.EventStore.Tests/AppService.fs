@@ -3,33 +3,15 @@ namespace Infrastructure.EventStore.Tests
 open System
 open System.Linq
 open System.Text
-open System.Net.Http
 open EventStore.Client
 open UniStream.Infrastructure.EventStore
 
 
-type AppService (ses: EventStoreClientSettings, scs: EventStoreClientSettings, sld: EventStoreClientSettings, slg: EventStoreClientSettings) =
-
-    let createHttpMessageHandler () =
-        let handler = new HttpClientHandler()
-        handler.ServerCertificateCustomValidationCallback <- fun _ _ _ _ -> true
-        handler :> HttpMessageHandler
-
-    do
-        ses.CreateHttpMessageHandler <- fun () -> createHttpMessageHandler()
-        scs.CreateHttpMessageHandler <- fun () -> createHttpMessageHandler()
-        sld.CreateHttpMessageHandler <- fun () -> createHttpMessageHandler()
-        slg.CreateHttpMessageHandler <- fun () -> createHttpMessageHandler()
-        ses.ConnectivitySettings.Address <- Uri "https://localhost:9011"
-        scs.ConnectivitySettings.Address <- Uri "https://localhost:9016"
-        sld.ConnectivitySettings.Address <- Uri "https://localhost:9012"
-        slg.ConnectivitySettings.Address <- Uri "https://localhost:9013"
+type AppService (ses: EventStoreClientSettings, scs: EventStoreClientSettings) =
 
     let es = new EventStoreClient (ses)
     let cs = new EventStoreClient (scs)
     let ps = new EventStorePersistentSubscriptionsClient(scs)
-    let ld = new EventStoreClient (sld)
-    let lg = new EventStoreClient (slg)
 
     do
         cs.SoftDeleteAsync ("Note.CreateNote", StreamState.Any) |> Async.AwaitTask |> Async.RunSynchronously |> ignore
@@ -56,13 +38,13 @@ type AppService (ses: EventStoreClientSettings, scs: EventStoreClientSettings, s
 module EventStoreConfig =
 
     let app =
-        let ses = EventStoreClientSettings()
-        let scs = EventStoreClientSettings()
-        let sld = EventStoreClientSettings()
-        let slg = EventStoreClientSettings()
+        let ces = "esdb://localhost:9011?tls=true&tlsVerifyCert=false"
+        let ccs = "esdb://localhost:9012?tls=true&tlsVerifyCert=false"
+        let ses = EventStoreClientSettings.Create ces
+        let scs = EventStoreClientSettings.Create ccs
         ses.DefaultCredentials <- UserCredentials ("admin", "changeit")
         scs.DefaultCredentials <- UserCredentials ("admin", "changeit")
-        AppService (ses, scs, sld, slg)
+        AppService (ses, scs)
 
     let createEvents count =
         seq { for i in 1 .. count ->

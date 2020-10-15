@@ -21,7 +21,7 @@ module EventSubscriber =
     val create :
         client: EventStoreClient ->
         aggType: string ->
-        handler: (string -> string -> uint64 -> ReadOnlyMemory<byte> -> Async<unit>) ->
+        handler: (string -> uint64 -> string -> ReadOnlyMemory<byte> -> Async<unit>) ->
         T
 
     /// <summary>订阅领域事件流

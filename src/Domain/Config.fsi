@@ -125,6 +125,7 @@ module Config =
         /// <summary>构造函数
         /// </summary>
         /// <param name="get">从某个版本开始为聚合获取领域事件的函数。</param>
+        /// <param name="targetAgg">被观察聚合的类型。</param>
         /// <param name="?capacity">缓存与快照的容量，缺省为10000。</param>
         /// <param name="?keep">清理缓存/快照后保留的数量，缺省为5000。</param>
         /// <param name="?refresh">刷新聚合缓存的间隔分钟数，缺省为30分钟。</param>
@@ -132,6 +133,7 @@ module Config =
         /// <param name="?threshold">快照间隔，缺省为1000。</param>
         new :
             get: (string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>) *
+            targetAgg: string *
             ?capacity: int *
             ?keep: int *
             ?refresh: uint *
@@ -148,6 +150,10 @@ module Config =
             aggKey: string ->
             version: uint64 ->
             Async<(uint64 * string * ReadOnlyMemory<byte>) seq>
+
+        /// <summary>被观察聚合的类型
+        /// </summary>
+        member TargetAgg : string
 
         /// <summary>缓存与快照的容量
         /// </summary>

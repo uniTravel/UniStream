@@ -30,7 +30,7 @@ module EventFilter =
         T ->
         filter: SubscriptionFilterOptions ->
         position: Position ->
-        handler: (string -> string -> uint64 -> ReadOnlyMemory<byte> -> Async<unit>) ->
+        handler: (string -> uint64 -> string -> ReadOnlyMemory<byte> -> Async<unit>) ->
         Async<unit>
 
     /// <summary>退订领域事件流

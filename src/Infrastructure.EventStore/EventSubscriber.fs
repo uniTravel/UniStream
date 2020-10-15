@@ -17,7 +17,7 @@ module EventSubscriber =
         { Client: EventStoreClient
           AggType: string
           Subs: Dictionary<string, StreamSubscription>
-          Handler: string -> string -> uint64 -> ReadOnlyMemory<byte> -> Async<unit>
+          Handler: string -> uint64 -> string -> ReadOnlyMemory<byte> -> Async<unit>
           Agent: MailboxProcessor<Msg> }
 
     let agent (subs: Dictionary<string, StreamSubscription>) =
@@ -51,7 +51,7 @@ module EventSubscriber =
                     !checkpoint,
                     (fun sub (e: ResolvedEvent) ct ->
                         let version = e.Event.EventNumber.ToUInt64()
-                        match handler aggKey e.Event.EventType version e.Event.Data |> Async.Catch |> Async.RunSynchronously with
+                        match handler aggKey version e.Event.EventType e.Event.Data |> Async.Catch |> Async.RunSynchronously with
                         | Choice1Of2 () -> checkpoint := e.OriginalEventNumber; Task.CompletedTask
                         | Choice2Of2 ex -> Task.FromException ex),
                     false,

@@ -435,3 +435,4 @@ $RECYCLE.BIN/
 paket.lock
 .ionide
 .fake
+certs/*
