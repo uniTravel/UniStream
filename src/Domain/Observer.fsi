@@ -11,10 +11,10 @@ module Observer =
 
     /// <summary>观察者聚合器消息类型
     /// </summary>
-    /// <param name="Append">附加领域事件：聚合键*领域事件版本*领域事件类型*领域事件数据。</param>
-    /// <param name="Refresh">刷新缓存。</param>
-    /// <param name="Scavenge">清扫快照。</param>
-    /// <param name="Get">取出当前聚合。</param>
+    /// <typeparam name="Append">附加领域事件：聚合键*领域事件版本*领域事件类型*领域事件数据。</typeparam>
+    /// <typeparam name="Refresh">刷新缓存。</typeparam>
+    /// <typeparam name="Scavenge">清扫快照。</typeparam>
+    /// <typeparam name="Get">取出当前聚合。</typeparam>
     type Msg<'agg> =
         | Append of string * uint64 * string * ReadOnlyMemory<byte>
         | Refresh
@@ -24,7 +24,7 @@ module Observer =
     /// <summary>观察者聚合器
     /// </summary>
     /// <typeparam name="'agg">聚合类型。</typeparam>
-    /// <param name="Agent">聚合器代理。</param>
+    /// <typeparam name="Agent">聚合器代理。</typeparam>
     type T<'agg> =
         { Agent: MailboxProcessor<Msg<'agg>> }
 

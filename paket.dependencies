@@ -10,25 +10,7 @@ nuget EventStore.Client.Grpc.ProjectionManagement
 nuget EventStore.Client.Grpc.PersistentSubscriptions
 nuget EventStore.Client.Grpc.Operations
 nuget EventStore.Client.Grpc.UserManagement
-
-group Test
-    framework auto-detect
-    source https://api.nuget.org/v3/index.json
-
-    nuget Expecto
-    nuget Expecto.BenchmarkDotNet
-    nuget Expecto.FsCheck
-    nuget Expecto.Hopac
-
-
-group Build
-    source https://api.nuget.org/v3/index.json
-
-    nuget Fake.Core.Target
-    nuget Fake.Core.Process
-    nuget Fake.DotNet.Cli
-    nuget Fake.Core.ReleaseNotes
-    nuget Fake.DotNet.AssemblyInfoFile
-    nuget Fake.DotNet.Paket
-    nuget Fake.Core.Environment
-    nuget Fake.IO.FileSystem
+nuget Expecto
+nuget Expecto.BenchmarkDotNet
+nuget Expecto.FsCheck
+nuget Expecto.Hopac

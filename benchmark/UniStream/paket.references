@@ -1,3 +1,2 @@
-group Test
-    FSharp.Core
-    BenchmarkDotNet
+FSharp.Core
+BenchmarkDotNet

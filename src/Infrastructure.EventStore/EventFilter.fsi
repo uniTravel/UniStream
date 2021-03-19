@@ -23,9 +23,9 @@ module EventFilter =
     /// <summary>订阅领域事件流
     /// <para>按条件过滤出领域事件流。</para>
     /// </summary>
-    /// <param name="filter">过滤条件。</param>
-    /// <param name="positon">订阅的起始位置。</param>
-    /// <param name="handler">领域事件处理函数。</param>
+    /// <typeparam name="filter">过滤条件。</typeparam>
+    /// <typeparam name="positon">订阅的起始位置。</typeparam>
+    /// <typeparam name="handler">领域事件处理函数。</typeparam>
     val sub :
         T ->
         filter: SubscriptionFilterOptions ->

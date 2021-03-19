@@ -1,6 +1,5 @@
-group Test
-    FSharp.Core
-    Expecto
-    Expecto.BenchmarkDotNet
-    Expecto.FsCheck
-    Expecto.Hopac
+FSharp.Core
+Expecto
+Expecto.BenchmarkDotNet
+Expecto.FsCheck
+Expecto.Hopac

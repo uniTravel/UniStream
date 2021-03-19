@@ -46,12 +46,12 @@ module Config =
         /// </summary>
         /// <param name="get">从某个版本开始为聚合获取领域事件的函数。</param>
         /// <param name="esFunc">领域事件流存储函数。</param>
-        /// <param name="?capacity">缓存与快照的容量，缺省为10000。</param>
-        /// <param name="?keep">清理缓存/快照后保留的数量，缺省为3000。</param>
-        /// <param name="?refresh">刷新聚合缓存的间隔秒数，缺省为15秒。</param>
-        /// <param name="?batch">批处理的间隔毫秒数，自然数表示启用/0表示不启用，缺省为0。</param>
-        /// <param name="?scavenge">清扫聚合快照的间隔小时数，自然数表示启用/0表示不启用，缺省为0。</param>
-        /// <param name="?threshold">快照间隔，缺省为1000。</param>
+        /// <param name="capacity">缓存与快照的容量，缺省为10000。</param>
+        /// <param name="keep">清理缓存/快照后保留的数量，缺省为3000。</param>
+        /// <param name="refresh">刷新聚合缓存的间隔秒数，缺省为15秒。</param>
+        /// <param name="batch">批处理的间隔毫秒数，自然数表示启用/0表示不启用，缺省为0。</param>
+        /// <param name="scavenge">清扫聚合快照的间隔小时数，自然数表示启用/0表示不启用，缺省为0。</param>
+        /// <param name="threshold">快照间隔，缺省为1000。</param>
         new :
             get: (string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>) *
             esFunc: (string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) *
@@ -126,11 +126,11 @@ module Config =
         /// </summary>
         /// <param name="get">从某个版本开始为聚合获取领域事件的函数。</param>
         /// <param name="targetAgg">被观察聚合的类型。</param>
-        /// <param name="?capacity">缓存与快照的容量，缺省为10000。</param>
-        /// <param name="?keep">清理缓存/快照后保留的数量，缺省为5000。</param>
-        /// <param name="?refresh">刷新聚合缓存的间隔分钟数，缺省为30分钟。</param>
-        /// <param name="?scavenge">清扫聚合快照的间隔小时数，自然数表示启用/0表示不启用，缺省为0。</param>
-        /// <param name="?threshold">快照间隔，缺省为1000。</param>
+        /// <param name="capacity">缓存与快照的容量，缺省为10000。</param>
+        /// <param name="keep">清理缓存/快照后保留的数量，缺省为5000。</param>
+        /// <param name="refresh">刷新聚合缓存的间隔分钟数，缺省为30分钟。</param>
+        /// <param name="scavenge">清扫聚合快照的间隔小时数，自然数表示启用/0表示不启用，缺省为0。</param>
+        /// <param name="threshold">快照间隔，缺省为1000。</param>
         new :
             get: (string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>) *
             targetAgg: string *

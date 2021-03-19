@@ -10,10 +10,10 @@ module Mutable =
 
     /// <summary>可变聚合器消息类型
     /// </summary>
-    /// <param name="Apply">应用领域命令：聚合键*跟踪ID*应用领域命令的函数*返回领域命令执行结果的管道。</param>
-    /// <param name="Refresh">刷新缓存。</param>
-    /// <param name="Scavenge">清扫快照。</param>
-    /// <param name="Get">取出当前聚合。</param>
+    /// <typeparam name="Apply">应用领域命令：聚合键*跟踪ID*应用领域命令的函数*返回领域命令执行结果的管道。</typeparam>
+    /// <typeparam name="Refresh">刷新缓存。</typeparam>
+    /// <typeparam name="Scavenge">清扫快照。</typeparam>
+    /// <typeparam name="Get">取出当前聚合。</typeparam>
     type Msg<'agg> =
         | Apply of string * string * (^agg -> (string * ReadOnlyMemory<byte>) seq * ^agg) * AsyncReplyChannel<Result<'agg, string>>
         | Refresh
@@ -23,7 +23,7 @@ module Mutable =
     /// <summary>可变聚合器
     /// </summary>
     /// <typeparam name="'agg">聚合类型。</typeparam>
-    /// <param name="Agent">聚合器代理。</param>
+    /// <typeparam name="Agent">聚合器代理。</typeparam>
     type T<'agg> =
         { Agent: MailboxProcessor<Msg<'agg>> }
 

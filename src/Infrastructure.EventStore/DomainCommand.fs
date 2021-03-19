@@ -15,7 +15,7 @@ module DomainCommand =
         let cvType = (^c : (static member FullName : string)())
         let traceId = Uuid.NewUuid()
         let data = JsonSerializer.SerializeToUtf8Bytes cmd |> ReadOnlyMemory
-        let metadata = Encoding.ASCII.GetBytes ("{\"$correlationId\":\"" + correlationId + "\"}") |> ReadOnlyMemory |> Nullable
+        let metadata = Encoding.ASCII.GetBytes ("{\"$correlationId\":\"" + correlationId + "\"}") |> ReadOnlyMemory
         let eventData = EventData (traceId, user, data, metadata)
         use! sub =
             client.SubscribeToStreamAsync (traceId.ToString(),

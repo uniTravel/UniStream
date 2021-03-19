@@ -6,17 +6,17 @@ open Note
 
 module CommandService =
 
-    let createActor actor aggId traceId cmd = async {
+    let createActor actor aggKey traceId cmd = async {
         let command = CreateActor.create cmd
-        return! Immutable.apply actor aggId traceId command }
+        return! Immutable.apply actor aggKey traceId command }
 
-    let createNote note aggId traceId cmd = async {
+    let createNote note aggKey traceId cmd = async {
         let command = CreateNote.create cmd
-        return! Mutable.apply note aggId traceId command }
+        return! Mutable.apply note aggKey traceId command }
 
-    let changeNote note aggId traceId cmd = async {
+    let changeNote note aggKey traceId cmd = async {
         let command = ChangeNote.create cmd
-        return! Mutable.apply note aggId traceId command }
+        return! Mutable.apply note aggKey traceId command }
 
-    let appendNote (note: Observer.T<NoteObserver.T>) aggId number evType data = async {
-        return! Observer.append note aggId number evType data }
+    let appendNote (obs: Observer.T<NoteObserver.T>) aggKey number evType data = async {
+        return! Observer.append obs aggKey number evType data }

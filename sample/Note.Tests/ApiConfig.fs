@@ -1,7 +1,6 @@
 [<AutoOpen>]
 module Note.Tests.ApiConfig
 
-open System
 open EventStore.Client
 open UniStream.Infrastructure.EventStore
 open UniStream.Domain
@@ -22,9 +21,7 @@ let reader = DomainEvent.get ces
 let writer = DomainEvent.write ces
 
 [<Sealed>]
-type NoteService
-        (reader: string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>,
-         writer: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) =
+type NoteService (reader, writer) =
 
     let actor = Immutable.create <| Config.Immutable writer
     let note1 = Mutable.create <| Config.Mutable (reader, writer)

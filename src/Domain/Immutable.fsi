@@ -11,7 +11,7 @@ module Immutable =
     /// <summary>不可变聚合器
     /// </summary>
     /// <typeparam name="'agg">聚合类型。</typeparam>
-    /// <param name="Writer">聚合事件流存储函数。</param>
+    /// <typeparam name="Writer">聚合事件流存储函数。</typeparam>
     type T<'agg> =
         { Writer: string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit> }
 

@@ -65,7 +65,7 @@ type BatchService
         (reader: string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>,
          writer: string -> string -> uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) =
 
-    let note : Mutable.T<Note.T> = Mutable.create <| Config.Mutable (reader, writer, ?batch = Some 7u)
+    let note : Mutable.T<Note.T> = Mutable.create <| Config.Mutable (reader, writer, batch = 7u)
 
     member _.CreateNote aggId traceId cv =
         let command = CreateNote.create cv
