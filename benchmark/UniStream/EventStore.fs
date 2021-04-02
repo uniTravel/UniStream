@@ -14,7 +14,7 @@ type private JobAttribute () =
     inherit Attribute()
     let cfg =
         ManualConfig.CreateEmpty()
-            .AddJob(Job.Default.WithId("v0.8.0"))
+            .AddJob(Job.Default.WithId("v1.0.0"))
             .AddDiagnoser(MemoryDiagnoser.Default)
     interface IConfigSource with member _.Config = cfg :> IConfig
 

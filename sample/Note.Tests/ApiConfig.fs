@@ -12,8 +12,6 @@ let connes = "esdb://localhost:9011?tls=true&tlsVerifyCert=false"
 let conncs = "esdb://localhost:9012?tls=true&tlsVerifyCert=false"
 let ses = EventStoreClientSettings.Create connes
 let scs = EventStoreClientSettings.Create conncs
-ses.DefaultCredentials <- UserCredentials ("admin", "changeit")
-scs.DefaultCredentials <- UserCredentials ("admin", "changeit")
 let ces = new EventStoreClient (ses)
 let ccs = new EventStoreClient (scs)
 

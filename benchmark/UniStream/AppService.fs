@@ -9,24 +9,13 @@ open UniStream.Domain
 
 module App =
 
-    let createHttpMessageHandler () =
-        let handler = new HttpClientHandler()
-        handler.ServerCertificateCustomValidationCallback <- fun _ _ _ _ -> true
-        handler :> HttpMessageHandler
-
     let config () =
-        let ses = EventStoreClientSettings()
-        let sld = EventStoreClientSettings()
-        let slg = EventStoreClientSettings()
-        ses.CreateHttpMessageHandler <- fun () -> createHttpMessageHandler()
-        sld.CreateHttpMessageHandler <- fun () -> createHttpMessageHandler()
-        slg.CreateHttpMessageHandler <- fun () -> createHttpMessageHandler()
-        ses.ConnectivitySettings.Address <- Uri "https://localhost:9011"
-        sld.ConnectivitySettings.Address <- Uri "https://localhost:9012"
-        slg.ConnectivitySettings.Address <- Uri "https://localhost:9013"
+        let connes = "esdb://localhost:9011?tls=true&tlsVerifyCert=false"
+        let conncs = "esdb://localhost:9012?tls=true&tlsVerifyCert=false"
+        let ses = EventStoreClientSettings.Create connes
+        let scs = EventStoreClientSettings.Create conncs
         let ces = new EventStoreClient (ses)
-        let cld = new EventStoreClient (sld)
-        let clg = new EventStoreClient (slg)
+        let ccs = new EventStoreClient (scs)
         let reader = DomainEvent.get ces
         let writer = DomainEvent.write ces
         reader, writer

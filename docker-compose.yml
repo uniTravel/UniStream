@@ -16,7 +16,7 @@ services:
             - ./certs:/certs
 
     es: &template
-        image: eventstore/eventstore
+        image: eventstore/eventstore:21.2.0-bionic
         container_name: es
         environment:
             - EVENTSTORE_TRUSTED_ROOT_CERTIFICATES_PATH=/certs/ca

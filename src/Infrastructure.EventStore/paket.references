@@ -1,6 +1,0 @@
-FSharp.Core
-EventStore.Client.Grpc.Streams
-EventStore.Client.Grpc.ProjectionManagement
-EventStore.Client.Grpc.PersistentSubscriptions
-EventStore.Client.Grpc.Operations
-EventStore.Client.Grpc.UserManagement

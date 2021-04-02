@@ -38,12 +38,10 @@ type AppService (ses: EventStoreClientSettings, scs: EventStoreClientSettings) =
 module EventStoreConfig =
 
     let app =
-        let ces = "esdb://localhost:9011?tls=true&tlsVerifyCert=false"
-        let ccs = "esdb://localhost:9012?tls=true&tlsVerifyCert=false"
+        let ces = "esdb://admin:changeit@localhost:9011?tls=true&tlsVerifyCert=false"
+        let ccs = "esdb://admin:changeit@localhost:9012?tls=true&tlsVerifyCert=false"
         let ses = EventStoreClientSettings.Create ces
         let scs = EventStoreClientSettings.Create ccs
-        ses.DefaultCredentials <- UserCredentials ("admin", "changeit")
-        scs.DefaultCredentials <- UserCredentials ("admin", "changeit")
         AppService (ses, scs)
 
     let createEvents count =

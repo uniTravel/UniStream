@@ -1,19 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyName>Note.Application</AssemblyName>
     <TargetFramework>net5.0</TargetFramework>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Note.Domain\Note.Domain.fsproj">
-      <Name>Note.Domain.fsproj</Name>
-    </ProjectReference>
-  </ItemGroup>
   <ItemGroup>
     <Compile Include="CommandService.fsi" />
     <Compile Include="CommandService.fs" />
     <Compile Include="ProcessManager.fsi" />
     <Compile Include="ProcessManager.fs" />
-    <None Include="paket.references" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
+  <ItemGroup>
+    <ProjectReference Include="..\Note.Domain\Note.Domain.fsproj">
+      <Name>Note.Domain.fsproj</Name>
+    </ProjectReference>
+  </ItemGroup>
 </Project>

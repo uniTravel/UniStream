@@ -1,7 +1,0 @@
-FSharp.Core
-Logary
-Logary.Targets.ElasticSearch
-Expecto
-Expecto.BenchmarkDotNet
-Expecto.FsCheck
-Expecto.Hopac
