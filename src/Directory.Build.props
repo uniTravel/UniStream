@@ -1,0 +1,6 @@
+<Project>
+    <PropertyGroup Label="创建NuGet包">
+        <Authors>Eric</Authors>
+        <Company>UniCloud</Company>
+    </PropertyGroup>
+</Project>

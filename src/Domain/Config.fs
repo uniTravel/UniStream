@@ -45,7 +45,7 @@ module Config =
     [<Sealed>]
     type Observer
         (get: string -> string -> uint64 -> Async<(uint64 * string * ReadOnlyMemory<byte>) seq>,
-         ?capacity, ?keep, ?refresh, ?scavenge, ?threshold) =
+         targetAgg: string, ?capacity, ?keep, ?refresh, ?scavenge, ?threshold) =
         let capacity = defaultArg capacity 10000
         let keep = defaultArg keep 5000
         let refresh = defaultArg refresh 30u
@@ -60,6 +60,7 @@ module Config =
                 invalidArg "scavenge" "Interval for scavenge observer aggregator's snapshot must be 0 or between 24~72 hours."
 
         member _.Get aggType aggKey version = get aggType aggKey version
+        member _.TargetAgg = targetAgg
         member _.Capacity = capacity
         member _.Keep = keep
         member _.Refresh = refresh

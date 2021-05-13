@@ -1,8 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="ApiConfig.fs" />
+    <Compile Include="ImmutableTests.fs" />
+    <Compile Include="BasicTests.fs" />
+    <Compile Include="BatchTests.fs" />
+    <Compile Include="ParallelTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Note.Application\Note.Application.fsproj">
       <Name>Note.Application.fsproj</Name>
@@ -12,13 +21,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ApiConfig.fs" />
-    <Compile Include="ImmutableTests.fs" />
-    <Compile Include="BasicTests.fs" />
-    <Compile Include="BatchTests.fs" />
-    <Compile Include="ParallelTests.fs" />
-    <Compile Include="Main.fs" />
-    <None Include="paket.references" />
+    <PackageReference Include="Expecto" Version="9.0.2" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

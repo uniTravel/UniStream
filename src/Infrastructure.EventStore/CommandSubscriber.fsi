@@ -12,9 +12,9 @@ module CommandSubscriber =
 
     /// <summary>领域命令订阅者消息类型
     /// </summary>
-    /// <param name="Sub">订阅：订阅群组*持久化订阅。</param>
-    /// <param name="Resub">重订。</param>
-    /// <param name="Unsub">退订。</param>
+    /// <typeparam name="Sub">订阅：订阅群组*持久化订阅。</typeparam>
+    /// <typeparam name="Resub">重订。</typeparam>
+    /// <typeparam name="Unsub">退订。</typeparam>
     type Msg =
         | Sub of string * PersistentSubscription
         | Resub of string * PersistentSubscription
@@ -22,10 +22,10 @@ module CommandSubscriber =
 
     /// <summary>领域命令订阅者
     /// </summary>
-    /// <param name="Client">EventStore客户端。</param>
-    /// <param name="subClient">EventStore持久化订阅客户端。</param>
-    /// <param name="Subs">领域命令订阅者集合。</param>
-    /// <param name="Agent">领域命令订阅者代理。</param>
+    /// <typeparam name="Client">EventStore客户端。</typeparam>
+    /// <typeparam name="subClient">EventStore持久化订阅客户端。</typeparam>
+    /// <typeparam name="Subs">领域命令订阅者集合。</typeparam>
+    /// <typeparam name="Agent">领域命令订阅者代理。</typeparam>
     type T =
         { Client: EventStoreClient
           SubClient: EventStorePersistentSubscriptionsClient

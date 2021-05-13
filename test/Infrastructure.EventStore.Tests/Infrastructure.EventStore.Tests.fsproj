@@ -1,13 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\Infrastructure.EventStore\Infrastructure.EventStore.fsproj">
-      <Name>Infrastructure.EventStore.fsproj</Name>
-    </ProjectReference>
-  </ItemGroup>
   <ItemGroup>
     <Compile Include="Contract.fs" />
     <Compile Include="AppService.fs" />
@@ -17,7 +13,11 @@
     <Compile Include="DomainCommandTests.fs" />
     <Compile Include="CommandSubscribeTests.fs" />
     <Compile Include="Main.fs" />
-    <None Include="paket.references" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Infrastructure.EventStore\Infrastructure.EventStore.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Expecto" Version="9.0.2" />
+  </ItemGroup>
 </Project>

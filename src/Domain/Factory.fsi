@@ -25,13 +25,13 @@ module internal Factory =
     /// <param name="writer">基于特定聚合，领域事件流存储函数。</param>
     /// <param name="agg">聚合。</param>
     /// <param name="version">聚合版本。</param>
-    /// <param name="cmd">领域命令。</param>
+    /// <param name="apply">领域命令。</param>
     /// <returns>聚合及存储的领域事件数量。</returns>
     val inline private build :
         writer: (uint64 -> (string * ReadOnlyMemory<byte> * Nullable<ReadOnlyMemory<byte>>) seq -> Async<unit>) ->
         agg: ^agg ->
         version: uint64 ->
-        cmd:((^agg -> (string * ReadOnlyMemory<byte>) seq * ^agg) * Nullable<ReadOnlyMemory<byte>> * AsyncReplyChannel<Result<'agg, string>>) ->
+        apply:((^agg -> (string * ReadOnlyMemory<byte>) seq * ^agg) * Nullable<ReadOnlyMemory<byte>> * AsyncReplyChannel<Result<'agg, string>>) ->
         Async< ^agg * int>
 
     /// <summary>批量执行领域命令
@@ -90,9 +90,9 @@ module Basic =
     /// <summary>基本聚合工厂消息类型
     /// </summary>
     /// <typeparam name="'agg">聚合类型。</typeparam>
-    /// <param name="Init">初始化领域：跟踪ID*应用领域命令的函数*或有的聚合快照*返回聚合的管道。</param>
-    /// <param name="Post">推送领域命令：跟踪ID*应用领域命令的函数*返回聚合的管道。</param>
-    /// <param name="Get">取出当前聚合。</param>
+    /// <typeparam name="Init">初始化领域：跟踪ID*应用领域命令的函数*或有的聚合快照*返回聚合的管道。</typeparam>
+    /// <typeparam name="Post">推送领域命令：跟踪ID*应用领域命令的函数*返回聚合的管道。</typeparam>
+    /// <typeparam name="Get">取出当前聚合。</typeparam>
     type Msg<'agg> =
         | Init of string * ('agg -> (string * ReadOnlyMemory<byte>) seq * 'agg) * (^agg * uint64) voption * AsyncReplyChannel<Result<'agg, string>>
         | Post of string * ('agg -> (string * ReadOnlyMemory<byte>) seq * 'agg) * AsyncReplyChannel<Result<'agg, string>>
@@ -146,10 +146,10 @@ module Batched =
     /// <summary>批处理聚合工厂消息类型
     /// </summary>
     /// <typeparam name="'agg">聚合类型。</typeparam>
-    /// <param name="Init">初始化领域：跟踪ID*应用领域命令的函数*或有的聚合快照*返回聚合的管道。</param>
-    /// <param name="Add">添加领域命令：跟踪ID*应用领域命令的函数*返回聚合的管道。</param>
-    /// <param name="Launch">启动批处理。</param>
-    /// <param name="Get">取出当前聚合。</param>
+    /// <typeparam name="Init">初始化领域：跟踪ID*应用领域命令的函数*或有的聚合快照*返回聚合的管道。</typeparam>
+    /// <typeparam name="Add">添加领域命令：跟踪ID*应用领域命令的函数*返回聚合的管道。</typeparam>
+    /// <typeparam name="Launch">启动批处理。</typeparam>
+    /// <typeparam name="Get">取出当前聚合。</typeparam>
     type Msg<'agg> =
         | Init of string * ('agg -> (string * ReadOnlyMemory<byte>) seq * 'agg) * (^agg * uint64) voption * AsyncReplyChannel<Result<'agg, string>>
         | Add of string * ('agg -> (string * ReadOnlyMemory<byte>) seq * 'agg) * AsyncReplyChannel<Result<'agg, string>>
@@ -206,9 +206,9 @@ module Observed =
     /// <summary>观察聚合工厂消息类型
     /// </summary>
     /// <typeparam name="'agg">聚合类型。</typeparam>
-    /// <param name="Init">初始化领域：或有的聚合快照。</param>
-    /// <param name="Append">附加领域事件：领域事件版本*领域事件类型*领域事件数据。</param>
-    /// <param name="Get">取出当前聚合。</param>
+    /// <typeparam name="Init">初始化领域：或有的聚合快照。</typeparam>
+    /// <typeparam name="Append">附加领域事件：领域事件版本*领域事件类型*领域事件数据。</typeparam>
+    /// <typeparam name="Get">取出当前聚合。</typeparam>
     type Msg<'agg> =
         | Init of (^agg * uint64) voption
         | Append of uint64 * string * ReadOnlyMemory<byte>

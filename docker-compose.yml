@@ -1,21 +1,56 @@
-version: '3'
+version: '3.5'
+
 services:
-    es:
+    setup:
+        image: eventstore/es-gencert-cli
+        container_name: setup
+        entrypoint: bash
+        user: "1000:1000"
+        command: >
+            -c "mkdir -p ./certs && cd /certs
+            && es-gencert-cli create-ca
+            && es-gencert-cli create-node -out ./es --dns-names es.unitravel
+            && es-gencert-cli create-node -out ./cs --dns-names cs.unitravel
+            && find . -type f -print0 | xargs -0 chmod 666"
+        volumes:
+            - ./certs:/certs
+
+    es: &template
+        image: eventstore/eventstore:21.2.0-bionic
         container_name: es
-        image: eventstore/eventstore
-        ports:
-            - "9011:2113"
-            - "4011:1113"
         environment:
+            - EVENTSTORE_TRUSTED_ROOT_CERTIFICATES_PATH=/certs/ca
+            - EVENTSTORE_CERTIFICATE_FILE=/certs/es/node.crt
+            - EVENTSTORE_CERTIFICATE_PRIVATE_KEY_FILE=/certs/es/node.key
+            - EVENTSTORE_EXT_HOST_ADVERTISE_AS=es.unitravel
+            - EVENTSTORE_INT_HOST_ADVERTISE_AS=es.unitravel
+            - EVENTSTORE_ADVERTISE_HOST_TO_CLIENT_AS=localhost
+            - EVENTSTORE_ADVERTISE_HTTP_PORT_TO_CLIENT_AS=9011
+            - EVENTSTORE_ADVERTISE_TCP_PORT_TO_CLIENT_AS=4011
             - EVENTSTORE_DISABLE_HTTP_CACHING=true
-            - EVENTSTORE_DEV=true
-    cs:
-        container_name: cs
-        image: eventstore/eventstore
         ports:
-            - "9016:2113"
-            - "4016:1113"
+            - 4011:1113
+            - 9011:2113
+        volumes:
+            - ./certs:/certs
+        depends_on:
+            - setup
+        restart: always
+
+    cs:
+        <<: *template
+        container_name: cs
         environment:
+            - EVENTSTORE_TRUSTED_ROOT_CERTIFICATES_PATH=/certs/ca
+            - EVENTSTORE_CERTIFICATE_FILE=/certs/cs/node.crt
+            - EVENTSTORE_CERTIFICATE_PRIVATE_KEY_FILE=/certs/cs/node.key
+            - EVENTSTORE_EXT_HOST_ADVERTISE_AS=cs.unitravel
+            - EVENTSTORE_INT_HOST_ADVERTISE_AS=cs.unitravel
+            - EVENTSTORE_ADVERTISE_HOST_TO_CLIENT_AS=localhost
+            - EVENTSTORE_ADVERTISE_HTTP_PORT_TO_CLIENT_AS=9012
+            - EVENTSTORE_ADVERTISE_TCP_PORT_TO_CLIENT_AS=4012
             - EVENTSTORE_START_STANDARD_PROJECTIONS=true
             - EVENTSTORE_DISABLE_HTTP_CACHING=true
-            - EVENTSTORE_DEV=true
+        ports:
+            - 4012:1113
+            - 9012:2113

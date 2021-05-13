@@ -4,24 +4,14 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "EventStore.Test",
+            "label": "echo",
             "type": "shell",
-            "command": "fake build -t Infrastructure.EventStore.Test"
-        },
-        {
-            "label": "Domain.Test",
-            "type": "shell",
-            "command": "fake build -t Domain.Test"
-        },
-        {
-            "label": "Debug",
-            "type": "shell",
-            "command": "fake run"
-        },
-        {
-            "label": "Release",
-            "type": "shell",
-            "command": "fake build -t release"
+            "command": "./build.sh",
+            "options": {
+                "shell": {
+                    "executable": "wsl.exe"
+                }
+            }
         }
     ]
 }

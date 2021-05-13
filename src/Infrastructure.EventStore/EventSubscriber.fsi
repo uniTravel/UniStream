@@ -21,13 +21,13 @@ module EventSubscriber =
     val create :
         client: EventStoreClient ->
         aggType: string ->
-        handler: (string -> string -> uint64 -> ReadOnlyMemory<byte> -> Async<unit>) ->
+        handler: (string -> uint64 -> string -> ReadOnlyMemory<byte> -> Async<unit>) ->
         T
 
     /// <summary>订阅领域事件流
     /// </summary>
-    /// <param name="aggKey">聚合键，源自GUID或者业务主键。</param>
-    /// <param name="positon">订阅的起始位置。</param>
+    /// <typeparam name="aggKey">聚合键，源自GUID或者业务主键。</typeparam>
+    /// <typeparam name="positon">订阅的起始位置。</typeparam>
     val sub :
         T ->
         aggKey: string ->

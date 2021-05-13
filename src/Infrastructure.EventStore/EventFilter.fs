@@ -48,7 +48,7 @@ module EventFilter =
                         let streamName = e.Event.EventStreamId
                         let idx = streamName.IndexOf '-'
                         let aggKey = streamName.[idx + 1..]
-                        match handler aggKey e.Event.EventType version e.Event.Data |> Async.Catch |> Async.RunSynchronously with
+                        match handler aggKey version e.Event.EventType e.Event.Data |> Async.Catch |> Async.RunSynchronously with
                         | Choice1Of2 () -> position := e.OriginalPosition.Value; Task.CompletedTask
                         | Choice2Of2 ex -> Task.FromException ex),
                     false,

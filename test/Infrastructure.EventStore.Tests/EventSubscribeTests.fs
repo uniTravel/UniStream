@@ -22,7 +22,7 @@ let subscribe (app: AppService) name =
             f aggId completed reached delay count
         yield! testFixture withArgs [
             "正常订阅", fun aggId completed reached delay count ->
-                let subscriber = app.EventSubscriber "Note" <| fun aggKey evType version data -> async {
+                let subscriber = app.EventSubscriber "Note" <| fun aggKey version evType data -> async {
                     count := !count + 1
                     if !count = 4 then completed.SetResult true
                     if !count = 5 then reached.SetResult true }
@@ -33,7 +33,7 @@ let subscribe (app: AppService) name =
                 Expect.equal task delay "执行了不该执行的任务"
                 EventSubscriber.unsub subscriber aggId |> Async.RunSynchronously
             "处理过程会出错", fun aggId completed reached delay count ->
-                let subscriber = app.EventSubscriber "Note" <| fun aggKey evType version data -> async {
+                let subscriber = app.EventSubscriber "Note" <| fun aggKey version evType data -> async {
                     count := !count + 1
                     if !count = 2 then failwith "Error"
                     if !count = 5 then completed.SetResult true
@@ -46,7 +46,7 @@ let subscribe (app: AppService) name =
                 EventSubscriber.unsub subscriber aggId |> Async.RunSynchronously
             "处理过程中退订", fun aggId completed reached delay count ->
                 let hook = TaskCompletionSource<unit>()
-                let subscriber = app.EventSubscriber "Note" <| fun aggKey evType version data -> async {
+                let subscriber = app.EventSubscriber "Note" <| fun aggKey version evType data -> async {
                     count := !count + 1
                     if !count = 2 then hook.SetResult (); Threading.Thread.Sleep 2
                     if !count = 2 then completed.SetResult true
@@ -60,7 +60,7 @@ let subscribe (app: AppService) name =
                 Expect.equal task delay "执行了不该执行的任务"
             "处理过程会出错，然后退订", fun aggId completed reached delay count ->
                 let hook = TaskCompletionSource<unit>()
-                let subscriber = app.EventSubscriber "Note" <| fun aggKey evType version data -> async {
+                let subscriber = app.EventSubscriber "Note" <| fun aggKey version evType data -> async {
                     count := !count + 1
                     if !count = 1 then failwith "Error"
                     if !count = 3 then hook.SetResult (); Threading.Thread.Sleep 2

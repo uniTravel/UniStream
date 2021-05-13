@@ -99,8 +99,7 @@ module Observer =
             timer.AutoReset <- true
             timer.Elapsed.Add handler
             async { timer.Start() }
-        let aggType = typeof< ^agg>.DeclaringType.FullName
-        let aggType = aggType + "-"
+        let aggType = cfg.TargetAgg + "-"
         let agent = agent< ^agg> cfg aggType
         Async.Start <| createTimer (cfg.Refresh * 60u * 1000u) (fun _ -> agent.Post Refresh)
         if cfg.Scavenge > 0u then Async.Start <| createTimer (cfg.Scavenge * 60u * 60u * 1000u) (fun _ -> agent.Post Scavenge)

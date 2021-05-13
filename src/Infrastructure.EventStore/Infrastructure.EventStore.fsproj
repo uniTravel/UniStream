@@ -1,10 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
     <AssemblyName>UniStream.Infrastructure.EventStore</AssemblyName>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Version>1.0.0</Version>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <InternalsVisibleTo Include="Infrastructure.EventStore.Tests"/>
+  </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssemblyInfo.fs" />
     <Compile Include="DomainEvent.fsi" />
     <Compile Include="DomainEvent.fs" />
     <Compile Include="EventSubscriber.fsi" />
@@ -15,7 +19,9 @@
     <Compile Include="CommandSubscriber.fs" />
     <Compile Include="DomainCommand.fsi" />
     <Compile Include="DomainCommand.fs" />
-    <None Include="paket.references" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
+  <ItemGroup>
+    <PackageReference Include="EventStore.Client.Grpc.PersistentSubscriptions" Version="21.2.0" />
+    <PackageReference Include="EventStore.Client.Grpc.Streams" Version="21.2.0" />
+  </ItemGroup>
 </Project>

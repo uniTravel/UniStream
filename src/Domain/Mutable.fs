@@ -110,10 +110,8 @@ module Mutable =
     let inline apply { Agent = agent } aggKey traceId cmd = async {
         let apply = (^c : (member Apply : (^agg -> (string * ReadOnlyMemory<byte>) seq * ^agg)) cmd)
         match! agent.PostAndAsyncReply <| fun channel -> Apply (aggKey, traceId, apply, channel) with
-        | Ok agg ->
-            return (^agg : (member Value: ^v) agg)
-        | Error err ->
-            return failwithf "Execute command failed: %s" err }
+        | Ok agg -> return (^agg : (member Value: ^v) agg)
+        | Error err -> return failwithf "Execute command failed: %s" err }
 
     let inline get { Agent = agent } aggKey = async {
         match! agent.PostAndAsyncReply <| fun channel -> Get (aggKey, channel) with
