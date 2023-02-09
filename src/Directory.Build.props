@@ -1,0 +1,12 @@
+<Project>
+    <PropertyGroup>
+        <Authors>Eric</Authors>
+        <Company>UniCloud</Company>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageTags>UniStream CQRS</PackageTags>
+        <Description>Lightweight framework for CQRS.</Description>
+        <RepositoryUrl>https://github.com/uniTravel/UniStream</RepositoryUrl>
+        <MinVerTagPrefix>v</MinVerTagPrefix>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+</Project>

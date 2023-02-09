@@ -1,0 +1,25 @@
+:icons: font
+:toc:
+:toc-title: 目录
+
+= UniStream
+
+[TIP]
+====
+[.lead]
+一个轻量级的CQRS框架，遵循以下设计理念:
+
+* DDD（领域驱动设计）
+* CQRS（命令查询职责分离）
+* EDA（事件驱动架构）
+====
+
+== 环境
+目标框架::
+* .NET 6
+开发语言::
+* F#
+IDE::
+* Visual Studio Code
+第三方依赖::
+* https://eventstore.org/[Event Store]: 目前提供的流存储实现。
