@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <AssemblyName>UniStream.Domain</AssemblyName>
@@ -7,6 +7,15 @@
     <InternalsVisibleTo Include="Domain.Tests" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Library.fs" />
+    <Compile Include="Delta.fsi" />
+    <Compile Include="Delta.fs" />
+    <Compile Include="Aggregate.fsi" />
+    <Compile Include="Aggregate.fs" />
+    <Compile Include="Spec.fsi" />
+    <Compile Include="Spec.fs" />
+    <Compile Include="Aggregator.fsi" />
+    <Compile Include="Aggregator.fs" />
+    <Compile Include="Fetcher.fsi" />
+    <Compile Include="Fetcher.fs" />
   </ItemGroup>
 </Project>
