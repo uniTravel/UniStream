@@ -17,6 +17,6 @@
     <ProjectReference Include="..\..\src\Domain\Domain.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Expecto" Version="9.0.4" />
+    <PackageReference Include="Expecto" Version="10.1.0" />
   </ItemGroup>
 </Project>
