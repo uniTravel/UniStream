@@ -8,7 +8,7 @@
             "name": "Domain.Tests",
             "type": "coreclr",
             "request": "launch",
-            "program": "bin/Debug/net7.0/Domain.Tests.dll",
+            "program": "bin/Debug/net8.0/Domain.Tests.dll",
             "cwd": "${workspaceFolder}/test/Domain.Tests/",
             "stopAtEntry": false,
             "console": "internalConsole"
@@ -17,7 +17,7 @@
             "name": "Domain.Debug",
             "type": "coreclr",
             "request": "launch",
-            "program": "bin/Debug/net7.0/Domain.Tests.dll",
+            "program": "bin/Debug/net8.0/Domain.Tests.dll",
             "args": [
                 "--debug"
             ],
@@ -25,26 +25,26 @@
             "stopAtEntry": false,
             "console": "internalConsole"
         },
-        {
-            "name": "EventStore.Tests",
-            "type": "coreclr",
-            "request": "launch",
-            "program": "bin/Debug/net7.0/EventStore.Tests.dll",
-            "cwd": "${workspaceFolder}/test/EventStore.Tests/",
-            "stopAtEntry": false,
-            "console": "internalConsole"
-        },
-        {
-            "name": "EventStore.Debug",
-            "type": "coreclr",
-            "request": "launch",
-            "program": "bin/Debug/net7.0/EventStore.Tests.dll",
-            "args": [
-                "--debug"
-            ],
-            "cwd": "${workspaceFolder}/test/EventStore.Tests/",
-            "stopAtEntry": false,
-            "console": "internalConsole"
-        }
+        // {
+        //     "name": "EventStore.Tests",
+        //     "type": "coreclr",
+        //     "request": "launch",
+        //     "program": "bin/Debug/net8.0/EventStore.Tests.dll",
+        //     "cwd": "${workspaceFolder}/test/EventStore.Tests/",
+        //     "stopAtEntry": false,
+        //     "console": "internalConsole"
+        // },
+        // {
+        //     "name": "EventStore.Debug",
+        //     "type": "coreclr",
+        //     "request": "launch",
+        //     "program": "bin/Debug/net8.0/EventStore.Tests.dll",
+        //     "args": [
+        //         "--debug"
+        //     ],
+        //     "cwd": "${workspaceFolder}/test/EventStore.Tests/",
+        //     "stopAtEntry": false,
+        //     "console": "internalConsole"
+        // }
     ]
 }
