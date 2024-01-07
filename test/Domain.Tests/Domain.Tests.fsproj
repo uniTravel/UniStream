@@ -6,11 +6,15 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Models.fs" />
-    <Compile Include="SerializeTests.fs" />
-    <Compile Include="ApplyTests.fs" />
-    <Compile Include="CorrectTests.fs" />
-    <Compile Include="FetchTests.fs" />
+    <Compile Include="Exceptions.fs" />
+    <Compile Include="Note\Note.fs" />
+    <Compile Include="Note\CreateNote.fs" />
+    <Compile Include="Note\ChangeNote.fs" />
+    <Compile Include="Note\UpgradeNote.fs" />
+    <Compile Include="App.fs" />
+    <Compile Include="WriteTests.fs" />
+    <Compile Include="CacheTests.fs" />
+    <Compile Include="InitTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>

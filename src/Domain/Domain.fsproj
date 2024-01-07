@@ -7,15 +7,11 @@
     <InternalsVisibleTo Include="Domain.Tests" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Delta.fsi" />
-    <Compile Include="Delta.fs" />
     <Compile Include="Aggregate.fsi" />
     <Compile Include="Aggregate.fs" />
-    <Compile Include="Spec.fsi" />
-    <Compile Include="Spec.fs" />
+    <Compile Include="Constraint.fs" />
+    <Compile Include="Replay.fs" />
     <Compile Include="Aggregator.fsi" />
     <Compile Include="Aggregator.fs" />
-    <Compile Include="Fetcher.fsi" />
-    <Compile Include="Fetcher.fs" />
   </ItemGroup>
 </Project>
