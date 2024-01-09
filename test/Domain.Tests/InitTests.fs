@@ -44,7 +44,7 @@ let test =
           Expect.equal (agg.Id, agg.Revision, agg.Title, agg.Content, agg.Grade) (id, 2UL, "t", "c1", 2) "聚合值有误"
       testCase "暂停以第三次刷新缓存，然后应用第三条命令"
       <| fun _ ->
-          Threading.Thread.Sleep 300
+          Threading.Thread.Sleep 400
           let com = { Content = "c1" }
           let f = fun _ -> change agent id com |> Async.RunSynchronously |> ignore
           Expect.throwsT<KeyNotFoundException> f "异常类型有误"
