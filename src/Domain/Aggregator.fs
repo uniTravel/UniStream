@@ -7,26 +7,34 @@ open System.Text.Json
 
 module Aggregator =
 
+    type Writer = Guid option -> string -> Guid -> uint64 -> string -> ReadOnlyMemory<byte> -> unit
+    type Reader = string -> Guid -> seq<string * ReadOnlyMemory<byte>>
+
     type Msg<'agg when Agg<'agg>> =
         | Refresh
         | Register of string * ('agg -> ReadOnlyMemory<byte> -> unit)
-        | Create of ('agg -> unit) * ('agg -> string * ReadOnlyMemory<byte>) * AsyncReplyChannel<Result<'agg, exn>>
+        | Create of
+            Guid option *
+            ('agg -> unit) *
+            ('agg -> string * ReadOnlyMemory<byte>) *
+            AsyncReplyChannel<Result<'agg, exn>>
         | Apply of
+            Guid option *
             Guid *
             ('agg -> unit) *
             ('agg -> string * ReadOnlyMemory<byte>) *
             AsyncReplyChannel<Result<'agg, exn>>
 
-    let inline validate<'agg, 'com when Com<'agg, 'com>> (com: 'com) (agg: 'agg) = com.Validate agg
+    let inline validate<'agg, 'chg when Chg<'agg, 'chg>> (chg: 'chg) (agg: 'agg) = chg.Validate agg
 
-    let inline execute<'agg, 'com when Com<'agg, 'com>> (com: 'com) (agg: 'agg) =
-        com.Execute agg
-        typeof<'com>.FullName, JsonSerializer.SerializeToUtf8Bytes com |> ReadOnlyMemory
+    let inline execute<'agg, 'chg when Chg<'agg, 'chg>> (chg: 'chg) (agg: 'agg) =
+        chg.Execute agg
+        typeof<'chg>.FullName, JsonSerializer.SerializeToUtf8Bytes chg |> ReadOnlyMemory
 
     let inline init<'agg when Agg<'agg>>
         ([<InlineIfLambda>] (creator: Guid -> 'agg))
-        ([<InlineIfLambda>] (writer: string -> Guid -> uint64 -> string -> ReadOnlyMemory<byte> -> unit))
-        ([<InlineIfLambda>] (reader: string -> Guid -> seq<string * ReadOnlyMemory<byte>>))
+        ([<InlineIfLambda>] writer: Writer)
+        ([<InlineIfLambda>] reader: Reader)
         (capacity: int)
         refresh
         =
@@ -42,18 +50,18 @@ module Aggregator =
 
         let inline replay aggType aggId agg =
             reader aggType aggId
-            |> Seq.iter (fun (comType, comData) ->
-                let act = replayer[comType]
-                act agg comData
+            |> Seq.iter (fun (chgType, chgData) ->
+                let act = replayer[chgType]
+                act agg chgData
                 agg.Next())
 
-        let inline handle aggId validate execute (channel: AsyncReplyChannel<Result<'agg, exn>>) =
+        let inline handle traceId aggId validate execute (channel: AsyncReplyChannel<Result<'agg, exn>>) =
             try
                 let agg = creator aggId
                 replay aggType aggId agg
                 validate agg
-                let comType, comData = execute agg
-                writer aggType agg.Id agg.Revision comType comData
+                let chgType, chgData = execute agg
+                writer traceId aggType agg.Id agg.Revision chgType chgData
                 agg.Next()
                 channel.Reply <| Ok agg
                 repository.Add(agg.Id, (DateTime.Now, agg))
@@ -70,42 +78,41 @@ module Aggregator =
                             for (KeyValue(aggId, (dt, _))) in repository do
                                 if (DateTime.Now - dt).TotalSeconds > refresh then
                                     repository.Remove(aggId) |> ignore
-                        | Register(comType, act) -> replayer[comType] <- act
-                        | Create(validate, execute, channel) ->
+                        | Register(chgType, act) -> replayer[chgType] <- act
+                        | Create(traceId, validate, execute, channel) ->
                             try
                                 let agg = creator <| Guid.NewGuid()
                                 validate agg
-                                let comType, comData = execute agg
-                                writer aggType agg.Id agg.Revision comType comData
+                                let chgType, chgData = execute agg
+                                writer traceId aggType agg.Id agg.Revision chgType chgData
                                 agg.Next()
                                 channel.Reply <| Ok agg
-                                repository.Add(agg.Id, (DateTime.Now, agg))
                             with ex ->
                                 channel.Reply <| Error ex
-                        | Apply(aggId, validate, execute, channel) ->
+                        | Apply(traceId, aggId, validate, execute, channel) ->
                             if repository.ContainsKey aggId then
                                 try
                                     let _, agg = repository[aggId]
                                     validate agg
 
                                     try
-                                        let comType, comData = execute agg
+                                        let chgType, chgData = execute agg
 
                                         try
-                                            writer aggType agg.Id agg.Revision comType comData
+                                            writer traceId aggType agg.Id agg.Revision chgType chgData
                                             agg.Next()
                                             channel.Reply <| Ok agg
                                             repository[aggId] <- DateTime.Now, agg
                                         with _ ->
                                             repository.Remove(aggId) |> ignore
-                                            handle aggId validate execute channel
+                                            handle traceId aggId validate execute channel
                                     with ex ->
                                         repository.Remove(aggId) |> ignore
                                         raise ex
                                 with ex ->
                                     channel.Reply <| Error ex
                             else
-                                handle aggId validate execute channel
+                                handle traceId aggId validate execute channel
 
                         return! loop ()
                     }
@@ -118,21 +125,21 @@ module Aggregator =
     let inline register<'agg, 'rep when Rep<'agg, 'rep>> (agent: MailboxProcessor<Msg<'agg>>) (rep: 'rep) =
         agent.Post <| Register(rep.FullName, rep.Act)
 
-    let inline create<'agg, 'com when Com<'agg, 'com>> (agent: MailboxProcessor<Msg<'agg>>) (com: 'com) =
+    let inline create<'agg, 'chg when Chg<'agg, 'chg>> (agent: MailboxProcessor<Msg<'agg>>) (traceId) (chg: 'chg) =
         async {
             match!
                 agent.PostAndAsyncReply
-                <| fun channel -> Create(validate com, execute com, channel)
+                <| fun channel -> Create(traceId, validate chg, execute chg, channel)
             with
             | Ok agg -> return agg
             | Error ex -> return raise ex
         }
 
-    let inline apply<'agg, 'com when Com<'agg, 'com>> (agent: MailboxProcessor<Msg<'agg>>) aggId (com: 'com) =
+    let inline apply<'agg, 'chg when Chg<'agg, 'chg>> (agent: MailboxProcessor<Msg<'agg>>) traceId aggId (chg: 'chg) =
         async {
             match!
                 agent.PostAndAsyncReply
-                <| fun channel -> Apply(aggId, validate com, execute com, channel)
+                <| fun channel -> Apply(traceId, aggId, validate chg, execute chg, channel)
             with
             | Ok agg -> return agg
             | Error ex -> return raise ex

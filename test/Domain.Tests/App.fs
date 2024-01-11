@@ -8,19 +8,19 @@ open UniStream.Domain
 
 let repo = Dictionary<string, seq<uint64 * string * ReadOnlyMemory<byte>>>(10000)
 
-let writer aggType (aggId: Guid) revision comType comData =
+let writer traceId aggType (aggId: Guid) revision chgType chgData =
     let stream = aggType + "-" + aggId.ToString()
 
     if repo.ContainsKey stream then
-        repo[stream] <- Seq.append repo[stream] [ revision + 1UL, comType, comData ]
+        repo[stream] <- Seq.append repo[stream] [ revision + 1UL, chgType, chgData ]
     else
-        repo.Add(stream, Seq.append Seq.empty [ revision + 1UL, comType, comData ])
+        repo.Add(stream, Seq.append Seq.empty [ revision + 1UL, chgType, chgData ])
 
 let reader aggType (aggId: Guid) =
     let stream = aggType + "-" + aggId.ToString()
 
     if repo.ContainsKey stream then
-        repo[stream] |> Seq.map (fun (v, comType, comData) -> (comType, comData))
+        repo[stream] |> Seq.map (fun (v, chgType, chgData) -> (chgType, chgData))
     else
         failwith $"The key {stream} is wrong."
 

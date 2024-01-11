@@ -8,12 +8,12 @@ open System
 /// <typeparam name="'agg">聚合类型。</typeparam>
 type Agg<'agg when 'agg :> Aggregate> = 'agg
 
-/// <summary>命令约束组
+/// <summary>变更约束组
 /// </summary>
 /// <typeparam name="'agg">聚合类型。</typeparam>
-/// <typeparam name="'com">命令类型。</typeparam>
-type Com<'agg, 'com
-    when 'agg :> Aggregate and 'com: (member Validate: 'agg -> unit) and 'com: (member Execute: 'agg -> unit)> = 'com
+/// <typeparam name="'chg">变更类型。</typeparam>
+type Chg<'agg, 'chg
+    when 'agg :> Aggregate and 'chg: (member Validate: 'agg -> unit) and 'chg: (member Execute: 'agg -> unit)> = 'chg
 
 /// <summary>重播约束组
 /// </summary>

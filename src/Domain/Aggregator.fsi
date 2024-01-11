@@ -1,7 +1,6 @@
 namespace UniStream.Domain
 
 open System
-open System.Collections.Generic
 
 
 /// <summary>聚合器模块
@@ -9,14 +8,22 @@ open System.Collections.Generic
 [<RequireQualifiedAccess>]
 module Aggregator =
 
+    type Writer = Guid option -> string -> Guid -> uint64 -> string -> ReadOnlyMemory<byte> -> unit
+    type Reader = string -> Guid -> seq<string * ReadOnlyMemory<byte>>
+
     /// <summary>消息类型
     /// </summary>
     /// <typeparam name="'agg">聚合类型。</typeparam>
     type Msg<'agg when Agg<'agg>> =
         | Refresh
         | Register of string * ('agg -> ReadOnlyMemory<byte> -> unit)
-        | Create of ('agg -> unit) * ('agg -> string * ReadOnlyMemory<byte>) * AsyncReplyChannel<Result<'agg, exn>>
+        | Create of
+            Guid option *
+            ('agg -> unit) *
+            ('agg -> string * ReadOnlyMemory<byte>) *
+            AsyncReplyChannel<Result<'agg, exn>>
         | Apply of
+            Guid option *
             Guid *
             ('agg -> unit) *
             ('agg -> string * ReadOnlyMemory<byte>) *
@@ -25,16 +32,16 @@ module Aggregator =
     /// <summary>初始化聚合器
     /// </summary>
     /// <typeparam name="'agg">聚合类型。</typeparam>
-    /// <param name="creator">创建初始聚合的函数。</param>
-    /// <param name="writer">命令写入流存储的函数。</param>
-    /// <param name="reader">读取命令流的函数。</param>
-    /// <param name="capacity">聚合缓存的容量。</param>
-    /// <param name="refresh">刷新聚合缓存的间隔，单位为秒。</param>
+    /// <param name="creator">聚合构造函数。</param>
+    /// <param name="writer">流存储写入函数。</param>
+    /// <param name="reader">流存储读取函数。</param>
+    /// <param name="capacity">聚合缓存容量。</param>
+    /// <param name="refresh">聚合缓存刷新间隔，单位秒。</param>
     /// <returns>聚合操作代理</returns>
     val inline init:
         [<InlineIfLambda>] creator: (Guid -> 'agg) ->
-        [<InlineIfLambda>] writer: (string -> Guid -> uint64 -> string -> ReadOnlyMemory<byte> -> unit) ->
-        [<InlineIfLambda>] reader: (string -> Guid -> seq<string * ReadOnlyMemory<byte>>) ->
+        [<InlineIfLambda>] writer: Writer ->
+        [<InlineIfLambda>] reader: Reader ->
         capacity: int ->
         refresh: float ->
             MailboxProcessor<Msg<'agg>>
@@ -48,21 +55,26 @@ module Aggregator =
     /// <param name="rep">重播。</param>
     val inline register: agent: MailboxProcessor<Msg<'agg>> -> rep: 'rep -> unit when Rep<'agg, 'rep>
 
-    /// <summary>执行创建聚合的命令
+    /// <summary>创建聚合
     /// </summary>
     /// <typeparam name="'agg">聚合类型。</typeparam>
-    /// <typeparam name="'com">命令类型。</typeparam>
+    /// <typeparam name="'chg">变更类型。</typeparam>
     /// <param name="agent">聚合操作代理。</param>
-    /// <param name="com">命令。</param>
+    /// <param name="traceId">追踪ID。</param>
+    /// <param name="chg">变更。</param>
     /// <returns>新聚合</returns>
-    val inline create: agent: MailboxProcessor<Msg<'agg>> -> com: 'com -> Async<'agg> when Com<'agg, 'com>
+    val inline create:
+        agent: MailboxProcessor<Msg<'agg>> -> traceId: Guid option -> chg: 'chg -> Async<'agg> when Chg<'agg, 'chg>
 
-    /// <summary>对聚合执行命令
+    /// <summary>变更聚合
     /// </summary>
     /// <typeparam name="'agg">聚合类型。</typeparam>
-    /// <typeparam name="'com">命令类型。</typeparam>
+    /// <typeparam name="'chg">变更类型。</typeparam>
     /// <param name="agent">聚合操作代理。</param>
+    /// <param name="traceId">追踪ID。</param>
     /// <param name="aggId">聚合ID。</param>
-    /// <param name="com">命令。</param>
+    /// <param name="chg">变更。</param>
     /// <returns>聚合</returns>
-    val inline apply: agent: MailboxProcessor<Msg<'agg>> -> aggId: Guid -> com: 'com -> Async<'agg> when Com<'agg, 'com>
+    val inline apply:
+        agent: MailboxProcessor<Msg<'agg>> -> traceId: Guid option -> aggId: Guid -> chg: 'chg -> Async<'agg>
+            when Chg<'agg, 'chg>

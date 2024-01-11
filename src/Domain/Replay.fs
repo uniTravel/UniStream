@@ -5,20 +5,19 @@ open System.Text.Json
 
 
 /// <summary>重播类型
-/// <para>重播二进制存储的命令以再建聚合。</para>
+/// <para>重播二进制存储的变更以再建聚合。</para>
 /// </summary>
 /// <typeparam name="'agg">聚合类型。</typeparam>
-/// <typeparam name="'com">命令类型。</typeparam>
-[<Sealed>]
-type Replay<'agg, 'com when Com<'agg, 'com>>() =
+/// <typeparam name="'chg">变更类型。</typeparam>
+type Replay<'agg, 'chg when Chg<'agg, 'chg>>() =
 
-    /// <summary>命令类型全称
+    /// <summary>变更类型全称
     /// </summary>
-    member inline _.FullName = typeof<'com>.FullName
+    member inline _.FullName = typeof<'chg>.FullName
 
-    /// <summary>执行重播的函数
+    /// <summary>重播函数
     /// </summary>
     member inline _.Act =
-        fun (agg: 'agg) (comData: ReadOnlyMemory<byte>) ->
-            let com = JsonSerializer.Deserialize<'com> comData.Span
-            com.Execute agg
+        fun (agg: 'agg) (chgData: ReadOnlyMemory<byte>) ->
+            let chg = JsonSerializer.Deserialize<'chg> chgData.Span
+            chg.Execute agg
