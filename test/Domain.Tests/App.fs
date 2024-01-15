@@ -8,22 +8,22 @@ open UniStream.Domain
 
 let repo = Dictionary<string, seq<uint64 * string * ReadOnlyMemory<byte>>>(10000)
 
-let writer traceId aggType (aggId: Guid) revision chgType chgData =
+let writer traceId aggType (aggId: Guid) revision evtType evtData =
     let stream = aggType + "-" + aggId.ToString()
 
     if repo.ContainsKey stream then
-        repo[stream] <- Seq.append repo[stream] [ revision + 1UL, chgType, chgData ]
+        repo[stream] <- Seq.append repo[stream] [ revision + 1UL, evtType, evtData ]
     else
-        repo.Add(stream, Seq.append Seq.empty [ revision + 1UL, chgType, chgData ])
+        repo.Add(stream, Seq.append Seq.empty [ revision + 1UL, evtType, evtData ])
 
 let reader aggType (aggId: Guid) =
     let stream = aggType + "-" + aggId.ToString()
 
     if repo.ContainsKey stream then
-        repo[stream] |> Seq.map (fun (v, chgType, chgData) -> (chgType, chgData))
+        repo[stream] |> Seq.map (fun (v, evtType, evtData) -> (evtType, evtData))
     else
         failwith $"The key {stream} is wrong."
 
-let create = Aggregator.create<Note, CreateNote>
-let change = Aggregator.apply<Note, ChangeNote>
-let upgrade = Aggregator.apply<Note, UpgradeNote>
+let create = Aggregator.create<Note, CreateNote, NoteCreated>
+let change = Aggregator.apply<Note, ChangeNote, NoteChanged>
+let upgrade = Aggregator.apply<Note, UpgradeNote, NoteUpgraded>

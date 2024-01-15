@@ -58,23 +58,26 @@ module Aggregator =
     /// <summary>创建聚合
     /// </summary>
     /// <typeparam name="'agg">聚合类型。</typeparam>
-    /// <typeparam name="'chg">变更类型。</typeparam>
+    /// <typeparam name="'com">命令类型。</typeparam>
+    /// <typeparam name="'evt">事件类型。</typeparam>
     /// <param name="agent">聚合操作代理。</param>
     /// <param name="traceId">追踪ID。</param>
-    /// <param name="chg">变更。</param>
+    /// <param name="com">命令。</param>
     /// <returns>新聚合</returns>
     val inline create:
-        agent: MailboxProcessor<Msg<'agg>> -> traceId: Guid option -> chg: 'chg -> Async<'agg> when Chg<'agg, 'chg>
+        agent: MailboxProcessor<Msg<'agg>> -> traceId: Guid option -> com: 'com -> Async<'agg>
+            when Com<'agg, 'com, 'evt>
 
     /// <summary>变更聚合
     /// </summary>
     /// <typeparam name="'agg">聚合类型。</typeparam>
-    /// <typeparam name="'chg">变更类型。</typeparam>
+    /// <typeparam name="'com">命令类型。</typeparam>
+    /// <typeparam name="'evt">事件类型。</typeparam>
     /// <param name="agent">聚合操作代理。</param>
     /// <param name="traceId">追踪ID。</param>
     /// <param name="aggId">聚合ID。</param>
-    /// <param name="chg">变更。</param>
+    /// <param name="com">命令。</param>
     /// <returns>聚合</returns>
     val inline apply:
-        agent: MailboxProcessor<Msg<'agg>> -> traceId: Guid option -> aggId: Guid -> chg: 'chg -> Async<'agg>
-            when Chg<'agg, 'chg>
+        agent: MailboxProcessor<Msg<'agg>> -> traceId: Guid option -> aggId: Guid -> com: 'com -> Async<'agg>
+            when Com<'agg, 'com, 'evt>

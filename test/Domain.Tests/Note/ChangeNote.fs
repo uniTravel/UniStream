@@ -1,10 +1,15 @@
 namespace Domain
 
 
-type ChangeNote = { Content: string }
+type NoteChanged =
+    { Content: string }
 
-type ChangeNote with
+    member me.Apply(agg: Note) = agg.Content <- me.Content
+
+
+type ChangeNote =
+    { Content: string }
 
     member me.Validate(agg: Note) = ()
 
-    member me.Execute(agg: Note) = agg.Content <- me.Content
+    member me.Execute(agg: Note) : NoteChanged = { Content = me.Content }
