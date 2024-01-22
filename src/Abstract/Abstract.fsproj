@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>UniStream.Abstract</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Aggregate.fsi" />
+    <Compile Include="Aggregate.fs" />
+  </ItemGroup>
+</Project>

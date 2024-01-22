@@ -8,9 +8,6 @@ open System
 [<RequireQualifiedAccess>]
 module Aggregator =
 
-    type Writer = Guid option -> string -> Guid -> uint64 -> string -> ReadOnlyMemory<byte> -> unit
-    type Reader = string -> Guid -> seq<string * ReadOnlyMemory<byte>>
-
     /// <summary>消息类型
     /// </summary>
     /// <typeparam name="'agg">聚合类型。</typeparam>
@@ -18,12 +15,12 @@ module Aggregator =
         | Refresh
         | Register of string * ('agg -> ReadOnlyMemory<byte> -> unit)
         | Create of
-            Guid option *
+            Guid *
             ('agg -> unit) *
             ('agg -> string * ReadOnlyMemory<byte>) *
             AsyncReplyChannel<Result<'agg, exn>>
         | Apply of
-            Guid option *
+            Guid *
             Guid *
             ('agg -> unit) *
             ('agg -> string * ReadOnlyMemory<byte>) *
@@ -40,8 +37,8 @@ module Aggregator =
     /// <returns>聚合操作代理</returns>
     val inline init:
         [<InlineIfLambda>] creator: (Guid -> 'agg) ->
-        [<InlineIfLambda>] writer: Writer ->
-        [<InlineIfLambda>] reader: Reader ->
+        writer: (Guid -> string -> Guid -> uint64 -> string -> ReadOnlyMemory<byte> -> unit) ->
+        reader: (string -> Guid -> seq<string * ReadOnlyMemory<byte>>) ->
         capacity: int ->
         refresh: float ->
             MailboxProcessor<Msg<'agg>>
@@ -65,8 +62,7 @@ module Aggregator =
     /// <param name="com">命令。</param>
     /// <returns>新聚合</returns>
     val inline create:
-        agent: MailboxProcessor<Msg<'agg>> -> traceId: Guid option -> com: 'com -> Async<'agg>
-            when Com<'agg, 'com, 'evt>
+        agent: MailboxProcessor<Msg<'agg>> -> traceId: Guid -> com: 'com -> Async<'agg> when Com<'agg, 'com, 'evt>
 
     /// <summary>变更聚合
     /// </summary>
@@ -79,5 +75,5 @@ module Aggregator =
     /// <param name="com">命令。</param>
     /// <returns>聚合</returns>
     val inline apply:
-        agent: MailboxProcessor<Msg<'agg>> -> traceId: Guid option -> aggId: Guid -> com: 'com -> Async<'agg>
+        agent: MailboxProcessor<Msg<'agg>> -> traceId: Guid -> aggId: Guid -> com: 'com -> Async<'agg>
             when Com<'agg, 'com, 'evt>

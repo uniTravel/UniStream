@@ -7,11 +7,12 @@
     <InternalsVisibleTo Include="Domain.Tests" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Aggregate.fsi" />
-    <Compile Include="Aggregate.fs" />
     <Compile Include="Constraint.fs" />
     <Compile Include="Replay.fs" />
     <Compile Include="Aggregator.fsi" />
     <Compile Include="Aggregator.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Abstract\Abstract.fsproj" />
   </ItemGroup>
 </Project>

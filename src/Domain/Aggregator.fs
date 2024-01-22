@@ -7,19 +7,16 @@ open System.Text.Json
 
 module Aggregator =
 
-    type Writer = Guid option -> string -> Guid -> uint64 -> string -> ReadOnlyMemory<byte> -> unit
-    type Reader = string -> Guid -> seq<string * ReadOnlyMemory<byte>>
-
     type Msg<'agg when Agg<'agg>> =
         | Refresh
         | Register of string * ('agg -> ReadOnlyMemory<byte> -> unit)
         | Create of
-            Guid option *
+            Guid *
             ('agg -> unit) *
             ('agg -> string * ReadOnlyMemory<byte>) *
             AsyncReplyChannel<Result<'agg, exn>>
         | Apply of
-            Guid option *
+            Guid *
             Guid *
             ('agg -> unit) *
             ('agg -> string * ReadOnlyMemory<byte>) *
@@ -34,8 +31,8 @@ module Aggregator =
 
     let inline init<'agg when Agg<'agg>>
         ([<InlineIfLambda>] (creator: Guid -> 'agg))
-        ([<InlineIfLambda>] writer: Writer)
-        ([<InlineIfLambda>] reader: Reader)
+        (writer: Guid -> string -> Guid -> uint64 -> string -> ReadOnlyMemory<byte> -> unit)
+        (reader: string -> Guid -> seq<string * ReadOnlyMemory<byte>>)
         (capacity: int)
         refresh
         =

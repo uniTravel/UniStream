@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Exceptions.fs" />
+    <Compile Include="Account\Account.fsi" />
+    <Compile Include="Account\Account.fs" />
+    <Compile Include="Account\CreateAccount.fs" />
+    <Compile Include="Account\VerifyAccount.fs" />
+    <Compile Include="Account\LimitAccount.fs" />
+    <Compile Include="Account\ApproveAccount.fs" />
+    <Compile Include="Account\ChangePeriod.fs" />
+    <Compile Include="Transaction\Transaction.fsi" />
+    <Compile Include="Transaction\Transaction.fs" />
+    <Compile Include="Transaction\InitPeriod.fs" />
+    <Compile Include="Transaction\OpenPeriod.fs" />
+    <Compile Include="Transaction\SetLimit.fs" />
+    <Compile Include="Transaction\ChangeLimit.fs" />
+    <Compile Include="Transaction\SetTransLimit.fs" />
+    <Compile Include="Transaction\Deposit.fs" />
+    <Compile Include="Transaction\Withdraw.fs" />
+    <Compile Include="Transaction\TransferOut.fs" />
+    <Compile Include="Transaction\TransferIn.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Domain\Domain.fsproj" />
+  </ItemGroup>
+</Project>
