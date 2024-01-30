@@ -6,7 +6,7 @@ open System.Collections.Generic
 open UniStream.Domain
 
 
-let repo = Dictionary<string, seq<uint64 * string * ReadOnlyMemory<byte>>>(10000)
+let repo = Dictionary<string, seq<uint64 * string * byte array>>(10000)
 
 let writer traceId aggType (aggId: Guid) revision evtType evtData =
     let stream = aggType + "-" + aggId.ToString()

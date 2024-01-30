@@ -13,18 +13,9 @@ module Aggregator =
     /// <typeparam name="'agg">聚合类型。</typeparam>
     type Msg<'agg when Agg<'agg>> =
         | Refresh
-        | Register of string * ('agg -> ReadOnlyMemory<byte> -> unit)
-        | Create of
-            Guid *
-            ('agg -> unit) *
-            ('agg -> string * ReadOnlyMemory<byte>) *
-            AsyncReplyChannel<Result<'agg, exn>>
-        | Apply of
-            Guid *
-            Guid *
-            ('agg -> unit) *
-            ('agg -> string * ReadOnlyMemory<byte>) *
-            AsyncReplyChannel<Result<'agg, exn>>
+        | Register of string * ('agg -> byte array -> unit)
+        | Create of Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<'agg, exn>>
+        | Apply of Guid * Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<'agg, exn>>
 
     /// <summary>初始化聚合器
     /// </summary>
@@ -37,8 +28,8 @@ module Aggregator =
     /// <returns>聚合操作代理</returns>
     val inline init:
         [<InlineIfLambda>] creator: (Guid -> 'agg) ->
-        writer: (Guid -> string -> Guid -> uint64 -> string -> ReadOnlyMemory<byte> -> unit) ->
-        reader: (string -> Guid -> seq<string * ReadOnlyMemory<byte>>) ->
+        writer: (Guid -> string -> Guid -> uint64 -> string -> byte array -> unit) ->
+        reader: (string -> Guid -> seq<string * byte array>) ->
         capacity: int ->
         refresh: float ->
             MailboxProcessor<Msg<'agg>>

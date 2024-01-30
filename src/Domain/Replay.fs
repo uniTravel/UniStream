@@ -18,6 +18,6 @@ type Replay<'agg, 'evt when Evt<'agg, 'evt>>() =
     /// <summary>重播函数
     /// </summary>
     member inline _.Act =
-        fun (agg: 'agg) (evtData: ReadOnlyMemory<byte>) ->
-            let evt = JsonSerializer.Deserialize<'evt> evtData.Span
+        fun (agg: 'agg) (evtData: byte array) ->
+            let evt = JsonSerializer.Deserialize<'evt> evtData
             evt.Apply agg

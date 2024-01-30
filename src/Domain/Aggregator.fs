@@ -9,35 +9,26 @@ module Aggregator =
 
     type Msg<'agg when Agg<'agg>> =
         | Refresh
-        | Register of string * ('agg -> ReadOnlyMemory<byte> -> unit)
-        | Create of
-            Guid *
-            ('agg -> unit) *
-            ('agg -> string * ReadOnlyMemory<byte>) *
-            AsyncReplyChannel<Result<'agg, exn>>
-        | Apply of
-            Guid *
-            Guid *
-            ('agg -> unit) *
-            ('agg -> string * ReadOnlyMemory<byte>) *
-            AsyncReplyChannel<Result<'agg, exn>>
+        | Register of string * ('agg -> byte array -> unit)
+        | Create of Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<'agg, exn>>
+        | Apply of Guid * Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<'agg, exn>>
 
     let inline validate<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>> (com: 'com) (agg: 'agg) = com.Validate agg
 
     let inline execute<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>> (com: 'com) (agg: 'agg) =
         let evt = com.Execute agg
         evt.Apply agg
-        typeof<'evt>.FullName, JsonSerializer.SerializeToUtf8Bytes evt |> ReadOnlyMemory
+        typeof<'evt>.FullName, JsonSerializer.SerializeToUtf8Bytes evt
 
     let inline init<'agg when Agg<'agg>>
         ([<InlineIfLambda>] (creator: Guid -> 'agg))
-        (writer: Guid -> string -> Guid -> uint64 -> string -> ReadOnlyMemory<byte> -> unit)
-        (reader: string -> Guid -> seq<string * ReadOnlyMemory<byte>>)
+        (writer: Guid -> string -> Guid -> uint64 -> string -> byte array -> unit)
+        (reader: string -> Guid -> seq<string * byte array>)
         (capacity: int)
         refresh
         =
         let aggType = typeof<'agg>.FullName
-        let replayer = Dictionary<string, 'agg -> ReadOnlyMemory<byte> -> unit>()
+        let replayer = Dictionary<string, 'agg -> byte array -> unit>()
         let repository = Dictionary<Guid, DateTime * 'agg>(capacity)
 
         let createTimer (interval: float) work =

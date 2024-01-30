@@ -26,6 +26,48 @@
             "console": "internalConsole"
         },
         {
+            "name": "EventStore.Tests",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "bin/Debug/net8.0/EventStore.Tests.dll",
+            "cwd": "${workspaceFolder}/test/EventStore.Tests/",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
+            "name": "EventStore.Debug",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "bin/Debug/net8.0/EventStore.Tests.dll",
+            "args": [
+                "--debug"
+            ],
+            "cwd": "${workspaceFolder}/test/EventStore.Tests/",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
+            "name": "Kafka.Tests",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "bin/Debug/net8.0/Kafka.Tests.dll",
+            "cwd": "${workspaceFolder}/test/Kafka.Tests/",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
+            "name": "Kafka.Debug",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "bin/Debug/net8.0/Kafka.Tests.dll",
+            "args": [
+                "--debug"
+            ],
+            "cwd": "${workspaceFolder}/test/Kafka.Tests/",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
             "name": "Account.Tests",
             "type": "coreclr",
             "request": "launch",
