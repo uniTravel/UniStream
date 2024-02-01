@@ -11,8 +11,8 @@ open Domain
 let agent = Aggregator.init Note writer reader 10000 0.2
 Aggregator.register agent <| Replay<Note, NoteCreated>()
 let traceId = Guid.NewGuid()
-let mutable id1 = Guid.Empty
-let mutable id2 = Guid.Empty
+let id1 = Guid.NewGuid()
+let id2 = Guid.NewGuid()
 
 
 [<Tests>]
@@ -24,13 +24,11 @@ let test =
                 Content = "c"
                 Grade = 1 }
 
-          let agg = create agent traceId com |> Async.RunSynchronously
-          id1 <- agg.Id
+          let agg = create agent traceId id1 com |> Async.RunSynchronously
           Expect.equal (agg.Revision, agg.Title, agg.Content, agg.Grade) (0UL, "t", "c", 1) "聚合值有误"
-          let agg = create agent traceId com |> Async.RunSynchronously
-          id2 <- agg.Id
+          let agg = create agent traceId id2 com |> Async.RunSynchronously
           Expect.equal (agg.Revision, agg.Title, agg.Content, agg.Grade) (0UL, "t", "c", 1) "聚合值有误"
-      testCase "两个聚合分别应用第一条变更，以写入缓存"
+      testCase "两个聚合分别应用第一条变更"
       <| fun _ ->
           let com = { Content = "c0" }
           let agg = change agent traceId id1 com |> Async.RunSynchronously

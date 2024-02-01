@@ -14,7 +14,7 @@ module Aggregator =
     type Msg<'agg when Agg<'agg>> =
         | Refresh
         | Register of string * ('agg -> byte array -> unit)
-        | Create of Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<'agg, exn>>
+        | Create of Guid * Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<'agg, exn>>
         | Apply of Guid * Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<'agg, exn>>
 
     /// <summary>初始化聚合器
@@ -50,10 +50,12 @@ module Aggregator =
     /// <typeparam name="'evt">事件类型。</typeparam>
     /// <param name="agent">聚合操作代理。</param>
     /// <param name="traceId">追踪ID。</param>
+    /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>新聚合</returns>
     val inline create:
-        agent: MailboxProcessor<Msg<'agg>> -> traceId: Guid -> com: 'com -> Async<'agg> when Com<'agg, 'com, 'evt>
+        agent: MailboxProcessor<Msg<'agg>> -> traceId: Guid -> aggId: Guid -> com: 'com -> Async<'agg>
+            when Com<'agg, 'com, 'evt>
 
     /// <summary>变更聚合
     /// </summary>

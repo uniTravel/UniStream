@@ -10,8 +10,9 @@ open Domain
 
 let agent = Aggregator.init Note writer reader 10000 0.2
 let traceId = Guid.NewGuid()
-let mutable id1 = Guid.Empty
-let mutable id2 = Guid.Empty
+let id1 = Guid.NewGuid()
+let id2 = Guid.NewGuid()
+let id3 = Guid.NewGuid()
 
 
 [<Tests>]
@@ -23,11 +24,9 @@ let test =
                 Content = "c"
                 Grade = 1 }
 
-          let agg = create agent traceId com |> Async.RunSynchronously
-          id1 <- agg.Id
+          let agg = create agent traceId id1 com |> Async.RunSynchronously
           Expect.equal (agg.Revision, agg.Title, agg.Content, agg.Grade) (0UL, "t", "c", 1) "聚合值有误"
-          let agg = create agent traceId com |> Async.RunSynchronously
-          id2 <- agg.Id
+          let agg = create agent traceId id2 com |> Async.RunSynchronously
           Expect.equal (agg.Revision, agg.Title, agg.Content, agg.Grade) (0UL, "t", "c", 1) "聚合值有误"
           Expect.notEqual id1 id2 "两个Id值有误"
       testCase "创建第三个聚合，存在不合验证逻辑的数据"
@@ -37,10 +36,11 @@ let test =
                 Content = "c"
                 Grade = 4 }
 
-          let f = fun _ -> create agent traceId com |> Async.RunSynchronously |> ignore
+          let f = fun _ -> create agent traceId id3 com |> Async.RunSynchronously |> ignore
           Expect.throwsT<ValidateError> f "验证错误类型有误"
-      testCase "第一个聚合应用第一条不会导致验证错误的变更"
+      testCase "暂停以刷新两次缓存，然后第一个聚合应用第一条不会导致验证错误的变更"
       <| fun _ ->
+          Threading.Thread.Sleep 400
           let com = { Up = 2 }
           let f = fun _ -> upgrade agent traceId id1 com |> Async.RunSynchronously |> ignore
           Expect.throwsT<KeyNotFoundException> f "异常类型有误"
@@ -86,7 +86,11 @@ let test =
                       Content = $"c{i}"
                       Grade = 1 } ]
 
-          let! r = coms |> List.map (fun c -> create agent traceId c) |> Async.Parallel
+          let! r =
+              coms
+              |> List.map (fun c -> create agent traceId (Guid.NewGuid()) c)
+              |> Async.Parallel
+
           Expect.allEqual (r |> Array.map (fun n -> n.Revision)) 0UL "聚合版本有误"
           Expect.hasLength r 1000 "返回集合长度有误"
       } ]

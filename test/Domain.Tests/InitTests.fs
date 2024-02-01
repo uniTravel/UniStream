@@ -10,7 +10,7 @@ open Domain
 
 let agent = Aggregator.init Note writer reader 10000 0.2
 let traceId = Guid.NewGuid()
-let mutable id = Guid.Empty
+let id = Guid.NewGuid()
 
 
 [<Tests>]
@@ -22,8 +22,7 @@ let test =
                 Content = "c"
                 Grade = 1 }
 
-          let agg = create agent traceId com |> Async.RunSynchronously
-          id <- agg.Id
+          let agg = create agent traceId id com |> Async.RunSynchronously
           Expect.equal (agg.Revision, agg.Title, agg.Content, agg.Grade) (0UL, "t", "c", 1) "聚合值有误"
       testCase "暂停以刷新两次缓存，然后应用第一条变更"
       <| fun _ ->
