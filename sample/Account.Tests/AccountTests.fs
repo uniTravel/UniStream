@@ -16,7 +16,7 @@ let test1 =
     [ testCase "初始化"
       <| fun _ ->
           let com = { Owner = "张三" }
-          let agg = svc.CreateAccount trace com |> Async.RunSynchronously
+          let agg = svc.CreateAccount trace (Guid.NewGuid()) com |> Async.RunSynchronously
           id <- agg.Id
           Expect.equal agg.Owner "张三" "聚合值有误"
 
@@ -58,7 +58,7 @@ let test2 =
     [ testCase "初始化"
       <| fun _ ->
           let com = { Owner = "张三" }
-          let agg = svc.CreateAccount trace com |> Async.RunSynchronously
+          let agg = svc.CreateAccount trace (Guid.NewGuid()) com |> Async.RunSynchronously
           id <- agg.Id
           Expect.equal agg.Owner "张三" "聚合值有误"
 
@@ -108,7 +108,7 @@ let test3 =
     [ testCase "初始化"
       <| fun _ ->
           let com = { Owner = "张三" }
-          let agg = svc.CreateAccount trace com |> Async.RunSynchronously
+          let agg = svc.CreateAccount trace (Guid.NewGuid()) com |> Async.RunSynchronously
           id <- agg.Id
           Expect.equal agg.Owner "张三" "聚合值有误"
 

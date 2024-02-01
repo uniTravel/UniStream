@@ -21,7 +21,7 @@ let test1 =
                 Period = $"{DateTime.Today:yyyyMM}"
                 Limit = 1000m }
 
-          let agg = svc.InitPeriod trace com |> Async.RunSynchronously
+          let agg = svc.InitPeriod trace (Guid.NewGuid()) com |> Async.RunSynchronously
           id <- agg.Id
           Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 1000m, 1000m, 0m) "聚合值有误"
       testCase "存款"
@@ -88,7 +88,7 @@ let test2 =
               { AccountId = acid
                 Period = $"{next:yyyyMM}" }
 
-          let agg = svc.OpenPeriod trace com |> Async.RunSynchronously
+          let agg = svc.OpenPeriod trace (Guid.NewGuid()) com |> Async.RunSynchronously
           id <- agg.Id
           Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 0m, 0m, 0m) "聚合值有误"
       testCase "打开但未生效的交易期间执行存款命令"
