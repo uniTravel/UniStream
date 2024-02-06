@@ -27,15 +27,35 @@ module Aggregator =
         (capacity: int)
         refresh
         =
+        let max = Int32.MaxValue >>> 3
+
+        if capacity >= max then
+            invalidArg (nameof (capacity)) $"capacity must less than %d{max}"
+
         let aggType = typeof<'agg>.FullName
         let replayer = Dictionary<string, 'agg -> byte array -> unit>()
-        let repository = Dictionary<Guid, DateTime * 'agg>(capacity)
+        let repository = Dictionary<Guid, 'agg>(capacity)
+        let half = capacity >>> 1
+        let upper = capacity + half
 
         let createTimer (interval: float) work =
             let timer = new Timers.Timer(interval)
             timer.AutoReset <- true
             timer.Elapsed.Add work
             async { timer.Start() }
+
+        let reduce op =
+            let l, r = List.splitAt half op
+
+            r
+            |> List.iter (fun id ->
+                if repository.ContainsKey id then
+                    repository.Remove(id) |> ignore)
+
+            List.distinct l
+
+        let check op =
+            if repository.Count = capacity then reduce op else op
 
         let inline replay aggType aggId agg =
             reader aggType aggId
@@ -54,27 +74,28 @@ module Aggregator =
         let agent =
             MailboxProcessor<Msg<'agg>>.Start
             <| fun inbox ->
-                let rec loop () =
+                let rec loop op =
                     async {
                         match! inbox.Receive() with
                         | Refresh ->
-                            for (KeyValue(aggId, (dt, _))) in repository do
-                                if (DateTime.Now - dt).TotalSeconds > refresh then
-                                    repository.Remove(aggId) |> ignore
+                            if List.length op > upper then
+                                return! reduce op |> loop
                         | Register(evtType, act) -> replayer[evtType] <- act
                         | Create(traceId, aggId, validate, execute, channel) ->
                             try
                                 let agg = creator aggId
                                 handle traceId agg validate execute channel
-                                repository.Add(agg.Id, (DateTime.Now, agg))
+                                repository.Add(agg.Id, agg)
+                                return! aggId :: op |> check |> loop
                             with ex ->
                                 channel.Reply <| Error ex
                         | Apply(traceId, aggId, validate, execute, channel) ->
                             if repository.ContainsKey aggId then
                                 try
-                                    let _, agg = repository[aggId]
+                                    let agg = repository[aggId]
                                     handle traceId agg validate execute channel
-                                    repository[aggId] <- DateTime.Now, agg
+                                    repository[aggId] <- agg
+                                    return! aggId :: op |> loop
                                 with ex ->
                                     channel.Reply <| Error ex
                             else
@@ -82,14 +103,15 @@ module Aggregator =
                                     let agg = creator aggId
                                     replay aggType aggId agg
                                     handle traceId agg validate execute channel
-                                    repository.Add(agg.Id, (DateTime.Now, agg))
+                                    repository.Add(agg.Id, agg)
+                                    return! aggId :: op |> check |> loop
                                 with ex ->
                                     channel.Reply <| Error ex
 
-                        return! loop ()
+                        return! loop op
                     }
 
-                loop ()
+                loop []
 
         createTimer (refresh * 1000.0) (fun _ -> agent.Post Refresh) |> Async.Start
         agent

@@ -1,7 +1,5 @@
 namespace UniStream.Domain
 
-open System
-
 
 /// <summary>聚合约束组
 /// </summary>

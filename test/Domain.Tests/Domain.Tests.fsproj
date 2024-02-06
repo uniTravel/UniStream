@@ -14,7 +14,6 @@
     <Compile Include="Note\UpgradeNote.fs" />
     <Compile Include="App.fs" />
     <Compile Include="WriteTests.fs" />
-    <Compile Include="CacheTests.fs" />
     <Compile Include="InitTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>

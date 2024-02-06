@@ -1,7 +1,6 @@
 module Domain.Tests.Write
 
 open System
-open System.Collections.Generic
 open Expecto
 
 open UniStream.Domain
@@ -9,6 +8,9 @@ open Domain
 
 
 let agent = Aggregator.init Note writer reader 10000 0.2
+Aggregator.register agent <| Replay<Note, NoteCreated>()
+Aggregator.register agent <| Replay<Note, NoteChanged>()
+Aggregator.register agent <| Replay<Note, NoteUpgraded>()
 let traceId = Guid.NewGuid()
 let id1 = Guid.NewGuid()
 let id2 = Guid.NewGuid()
@@ -38,17 +40,8 @@ let test =
 
           let f = fun _ -> create agent traceId id3 com |> Async.RunSynchronously |> ignore
           Expect.throwsT<ValidateError> f "验证错误类型有误"
-      testCase "暂停以刷新两次缓存，然后第一个聚合应用第一条不会导致验证错误的变更"
+      testCase "第一个聚合应用第一条不会导致验证错误的变更"
       <| fun _ ->
-          Threading.Thread.Sleep 400
-          let com = { Up = 2 }
-          let f = fun _ -> upgrade agent traceId id1 com |> Async.RunSynchronously |> ignore
-          Expect.throwsT<KeyNotFoundException> f "异常类型有误"
-      testCase "注册所有重播，然后第一个聚合再次应用第一条不会导致验证错误的变更"
-      <| fun _ ->
-          Aggregator.register agent <| Replay<Note, NoteCreated>()
-          Aggregator.register agent <| Replay<Note, NoteChanged>()
-          Aggregator.register agent <| Replay<Note, NoteUpgraded>()
           let com = { Up = 2 }
           let agg = upgrade agent traceId id1 com |> Async.RunSynchronously
           Expect.equal (agg.Id, agg.Revision, agg.Title, agg.Content, agg.Grade) (id1, 1UL, "t", "c", 3) "聚合值有误"
