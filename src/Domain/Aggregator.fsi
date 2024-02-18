@@ -29,7 +29,7 @@ module Aggregator =
     val inline init:
         [<InlineIfLambda>] creator: (Guid -> 'agg) ->
         writer: (Guid -> string -> Guid -> uint64 -> string -> byte array -> unit) ->
-        reader: (string -> Guid -> seq<string * byte array>) ->
+        reader: (string -> Guid -> (string * byte array) list) ->
         capacity: int ->
         refresh: float ->
             MailboxProcessor<Msg<'agg>>

@@ -23,7 +23,7 @@ module Aggregator =
     let inline init<'agg when Agg<'agg>>
         ([<InlineIfLambda>] (creator: Guid -> 'agg))
         (writer: Guid -> string -> Guid -> uint64 -> string -> byte array -> unit)
-        (reader: string -> Guid -> seq<string * byte array>)
+        (reader: string -> Guid -> (string * byte array) list)
         (capacity: int)
         refresh
         =
@@ -59,7 +59,7 @@ module Aggregator =
 
         let inline replay aggType aggId agg =
             reader aggType aggId
-            |> Seq.iter (fun (evtType, evtData) ->
+            |> List.iter (fun (evtType, evtData) ->
                 let act = replayer[evtType]
                 act agg evtData
                 agg.Next())
