@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>UniStream.Infrastructure.EventStore</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Stream.fsi" />
+    <Compile Include="Stream.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="EventStore.Client.Grpc.Streams" Version="23.1.0" />
+    <PackageReference Include="FSharp.Control.AsyncSeq" Version="3.2.1" />
+  </ItemGroup>
+</Project>
