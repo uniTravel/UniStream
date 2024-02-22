@@ -35,7 +35,7 @@ module Stream =
     /// <param name="evtData">事件数据。</param>
     val write:
         client: T ->
-        traceId: Guid ->
+        traceId: Guid option ->
         aggType: string ->
         aggId: Guid ->
         revision: uint64 ->

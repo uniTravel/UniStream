@@ -11,7 +11,7 @@ let conn =
     "esdb://admin:changeit@127.0.0.1:2111,127.0.0.1:2112,127.0.0.1:2113?tls=true&tlsVerifyCert=false"
 
 let es = EventStoreClientSettings.Create(conn) |> Stream.create
-let traceId = Guid.NewGuid()
+let traceId = Some <| Guid.NewGuid()
 let aggId = Guid.NewGuid()
 
 
@@ -25,7 +25,7 @@ let test =
                 Grade = 1 }
 
           let data = JsonSerializer.SerializeToUtf8Bytes note
-          Stream.write es traceId "Note" aggId UInt64.MaxValue "NoteCreated" data
+          Stream.write es None "Note" aggId UInt64.MaxValue "NoteCreated" data
           let result = Stream.read es "Note" aggId
           Expect.hasLength result 1 "写入结果有误"
           Expect.equal result[0] ("NoteCreated", data) "写入结果有误"

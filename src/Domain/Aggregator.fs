@@ -10,8 +10,18 @@ module Aggregator =
     type Msg<'agg when Agg<'agg>> =
         | Refresh
         | Register of string * ('agg -> byte array -> unit)
-        | Create of Guid * Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<'agg, exn>>
-        | Apply of Guid * Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<'agg, exn>>
+        | Create of
+            Guid option *
+            Guid *
+            ('agg -> unit) *
+            ('agg -> string * byte array) *
+            AsyncReplyChannel<Result<'agg, exn>>
+        | Apply of
+            Guid option *
+            Guid *
+            ('agg -> unit) *
+            ('agg -> string * byte array) *
+            AsyncReplyChannel<Result<'agg, exn>>
 
     let inline validate<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>> (com: 'com) (agg: 'agg) = com.Validate agg
 
@@ -22,7 +32,7 @@ module Aggregator =
 
     let inline init<'agg when Agg<'agg>>
         ([<InlineIfLambda>] (creator: Guid -> 'agg))
-        (writer: Guid -> string -> Guid -> uint64 -> string -> byte array -> unit)
+        (writer: Guid option -> string -> Guid -> uint64 -> string -> byte array -> unit)
         (reader: string -> Guid -> (string * byte array) list)
         (capacity: int)
         refresh

@@ -9,7 +9,7 @@ open Domain
 
 
 let agent = Aggregator.init Note writer reader 3 0.2
-let traceId = Guid.NewGuid()
+let traceId = None
 let id = Guid.NewGuid()
 
 

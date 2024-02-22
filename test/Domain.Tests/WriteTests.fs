@@ -11,7 +11,7 @@ let agent = Aggregator.init Note writer reader 10000 0.2
 Aggregator.register agent <| Replay<Note, NoteCreated>()
 Aggregator.register agent <| Replay<Note, NoteChanged>()
 Aggregator.register agent <| Replay<Note, NoteUpgraded>()
-let traceId = Guid.NewGuid()
+let traceId = None
 let id1 = Guid.NewGuid()
 let id2 = Guid.NewGuid()
 let id3 = Guid.NewGuid()

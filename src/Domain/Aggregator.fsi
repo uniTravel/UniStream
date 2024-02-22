@@ -14,8 +14,18 @@ module Aggregator =
     type Msg<'agg when Agg<'agg>> =
         | Refresh
         | Register of string * ('agg -> byte array -> unit)
-        | Create of Guid * Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<'agg, exn>>
-        | Apply of Guid * Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<'agg, exn>>
+        | Create of
+            Guid option *
+            Guid *
+            ('agg -> unit) *
+            ('agg -> string * byte array) *
+            AsyncReplyChannel<Result<'agg, exn>>
+        | Apply of
+            Guid option *
+            Guid *
+            ('agg -> unit) *
+            ('agg -> string * byte array) *
+            AsyncReplyChannel<Result<'agg, exn>>
 
     /// <summary>初始化聚合器
     /// </summary>
@@ -28,7 +38,7 @@ module Aggregator =
     /// <returns>聚合操作代理</returns>
     val inline init:
         [<InlineIfLambda>] creator: (Guid -> 'agg) ->
-        writer: (Guid -> string -> Guid -> uint64 -> string -> byte array -> unit) ->
+        writer: (Guid option -> string -> Guid -> uint64 -> string -> byte array -> unit) ->
         reader: (string -> Guid -> (string * byte array) list) ->
         capacity: int ->
         refresh: float ->
@@ -54,7 +64,7 @@ module Aggregator =
     /// <param name="com">命令。</param>
     /// <returns>新聚合</returns>
     val inline create:
-        agent: MailboxProcessor<Msg<'agg>> -> traceId: Guid -> aggId: Guid -> com: 'com -> Async<'agg>
+        agent: MailboxProcessor<Msg<'agg>> -> traceId: Guid option -> aggId: Guid -> com: 'com -> Async<'agg>
             when Com<'agg, 'com, 'evt>
 
     /// <summary>变更聚合
@@ -68,5 +78,5 @@ module Aggregator =
     /// <param name="com">命令。</param>
     /// <returns>聚合</returns>
     val inline apply:
-        agent: MailboxProcessor<Msg<'agg>> -> traceId: Guid -> aggId: Guid -> com: 'com -> Async<'agg>
+        agent: MailboxProcessor<Msg<'agg>> -> traceId: Guid option -> aggId: Guid -> com: 'com -> Async<'agg>
             when Com<'agg, 'com, 'evt>

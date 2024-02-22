@@ -1,6 +1,7 @@
 namespace UniStream.Infrastructure
 
 open System
+open System.Text
 open EventStore.Client
 open FSharp.Control
 
@@ -14,9 +15,20 @@ module Stream =
 
     let close (Client client) = client.Dispose()
 
-    let write (Client client) (traceId: Guid) aggType (aggId: Guid) revision evtType (evtData: byte array) =
+    let write (Client client) (traceId: Guid option) aggType (aggId: Guid) revision evtType (evtData: byte array) =
         let stream = aggType + "-" + aggId.ToString()
-        let data = EventData(Uuid.NewUuid(), evtType, evtData)
+
+        let data =
+            match traceId with
+            | Some traceId ->
+                let metadata =
+                    $"{{\"$correlationId\":\"{traceId}\"}}"
+                    |> Encoding.ASCII.GetBytes
+                    |> ReadOnlyMemory
+                    |> Nullable
+
+                EventData(Uuid.NewUuid(), evtType, evtData, metadata)
+            | None -> EventData(Uuid.NewUuid(), evtType, evtData)
 
         client.AppendToStreamAsync(stream, StreamRevision revision, [ data ])
         |> Async.AwaitTask
