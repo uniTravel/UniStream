@@ -6,16 +6,28 @@ open EventStore.Client
 open FSharp.Control
 
 
-module Stream =
+type Stream(settings: EventStoreClientSettings) =
 
-    type T = Client of EventStoreClient
+    let client = new EventStoreClient(settings)
 
-    let create (settings: EventStoreClientSettings) =
-        Client <| new EventStoreClient(settings)
-
-    let close (Client client) = client.Dispose()
-
-    let write (Client client) (traceId: Guid option) aggType (aggId: Guid) revision evtType (evtData: byte array) =
+    /// <summary>聚合事件写入流
+    /// </summary>
+    /// <param name="client">EventStore客户端。</param>
+    /// <param name="traceId">追踪ID。</param>
+    /// <param name="aggType">聚合类型全称。</param>
+    /// <param name="aggId">聚合ID。</param>
+    /// <param name="revision">聚合版本。</param>
+    /// <param name="evtType">事件类型。</param>
+    /// <param name="evtData">事件数据。</param>
+    let write
+        (client: EventStoreClient)
+        (traceId: Guid option)
+        aggType
+        (aggId: Guid)
+        revision
+        evtType
+        (evtData: byte array)
+        =
         let stream = aggType + "-" + aggId.ToString()
 
         let data =
@@ -35,10 +47,20 @@ module Stream =
         |> Async.RunSynchronously
         |> ignore
 
-    let read (Client client) (aggType: string) (aggId: Guid) =
+    /// <param name="client">EventStore客户端。</param>
+    /// <param name="aggType">聚合类型全称。</param>
+    /// <param name="aggId">聚合ID。</param>
+    /// <returns>聚合事件流</returns>
+    let read (client: EventStoreClient) (aggType: string) (aggId: Guid) =
         let stream = aggType + "-" + aggId.ToString()
 
         client.ReadStreamAsync(Direction.Forwards, stream, StreamPosition.Start)
         |> AsyncSeq.ofAsyncEnum
         |> AsyncSeq.map (fun x -> x.Event.EventType, x.Event.Data.ToArray())
         |> AsyncSeq.toListSynchronously
+
+    member _.Write = write client
+
+    member _.Read = read client
+
+    member _.Close() = client.Dispose()
