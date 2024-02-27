@@ -1,6 +1,5 @@
 namespace Account.Application
 
-open System
 open UniStream.Domain
 open Account.Domain
 
@@ -18,42 +17,40 @@ type AccountService(writer, reader, capacity, refresh) =
 
     /// <summary>创建账户
     /// </summary>
-    /// <param name="traceId">追踪ID。</param>
+    /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>新账户</returns>
     member _.CreateAccount =
-        Aggregator.create<Account, CreateAccount, AccountCreated> agent
+        Aggregator.create<Account, CreateAccount, AccountCreated> agent None
 
     /// <summary>审核账户
     /// </summary>
-    /// <param name="traceId">追踪ID。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>账户</returns>
     member _.VerifyAccount =
-        Aggregator.apply<Account, VerifyAccount, AccountVerified> agent
+        Aggregator.apply<Account, VerifyAccount, AccountVerified> agent None
 
     /// <summary>批准设立账户
     /// </summary>
-    /// <param name="traceId">追踪ID。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>账户</returns>
     member _.ApproveAccount =
-        Aggregator.apply<Account, ApproveAccount, AccountApproved> agent
+        Aggregator.apply<Account, ApproveAccount, AccountApproved> agent None
 
     /// <summary>设置账户限额
     /// </summary>
-    /// <param name="traceId">追踪ID。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>账户</returns>
-    member _.LimitAccount = Aggregator.apply<Account, LimitAccount, AccountLimited> agent
+    member _.LimitAccount =
+        Aggregator.apply<Account, LimitAccount, AccountLimited> agent None
 
     /// <summary>变更交易期间
     /// </summary>
-    /// <param name="traceId">追踪ID。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>账户</returns>
-    member _.ChangePeriod = Aggregator.apply<Account, ChangePeriod, PeriodChanged> agent
+    member _.ChangePeriod =
+        Aggregator.apply<Account, ChangePeriod, PeriodChanged> agent None
