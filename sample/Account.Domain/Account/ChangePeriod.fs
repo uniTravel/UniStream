@@ -1,6 +1,7 @@
 namespace Account.Domain
 
 open System
+open System.ComponentModel.DataAnnotations
 
 
 type PeriodChanged =
@@ -13,8 +14,10 @@ type PeriodChanged =
         agg.NextPeriod <- me.NextPeriod
 
 
-type ChangePeriod =
-    { Today: DateTime }
+type ChangePeriod() =
+
+    [<DataType(DataType.Date)>]
+    member val Today = DateTime.Today with get, set
 
     member me.Validate(agg: Account) =
         let current = $"{me.Today:yyyyMM}"

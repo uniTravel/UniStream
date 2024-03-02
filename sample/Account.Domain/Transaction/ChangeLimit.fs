@@ -1,5 +1,7 @@
 namespace Account.Domain
 
+open System.ComponentModel.DataAnnotations
+
 
 type LimitChanged =
     { Limit: decimal
@@ -10,8 +12,10 @@ type LimitChanged =
         agg.TransLimit <- me.TransLimit
 
 
-type ChangeLimit =
-    { Limit: decimal }
+type ChangeLimit() =
+
+    [<Required>]
+    member val Limit = 0m with get, set
 
     member me.Validate(agg: Transaction) = ()
 

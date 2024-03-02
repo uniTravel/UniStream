@@ -1,5 +1,7 @@
 namespace Account.Domain
 
+open System.ComponentModel.DataAnnotations
+
 
 type TransLimitSetted =
     { TransLimit: decimal }
@@ -7,8 +9,10 @@ type TransLimitSetted =
     member me.Apply(agg: Transaction) = agg.TransLimit <- me.TransLimit
 
 
-type SetTransLimit =
-    { TransLimit: decimal }
+type SetTransLimit() =
+
+    [<Required>]
+    member val TransLimit = 0m with get, set
 
     member me.Validate(agg: Transaction) =
         if me.TransLimit > agg.Limit then

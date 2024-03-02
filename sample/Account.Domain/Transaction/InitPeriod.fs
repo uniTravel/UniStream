@@ -1,6 +1,7 @@
 namespace Account.Domain
 
 open System
+open System.ComponentModel.DataAnnotations
 
 
 type PeriodInited =
@@ -15,10 +16,16 @@ type PeriodInited =
         agg.TransLimit <- me.Limit
 
 
-type InitPeriod =
-    { AccountId: Guid
-      Period: string
-      Limit: decimal }
+type InitPeriod() =
+
+    [<Required>]
+    member val AccountId = Guid.Empty with get, set
+
+    [<StringLength(6)>]
+    member val Period = "" with get, set
+
+    [<Required>]
+    member val Limit = 0m with get, set
 
     member me.Validate(agg: Transaction) =
         let period = $"{DateTime.Today:yyyyMM}"

@@ -1,5 +1,7 @@
 namespace Account.Domain
 
+open System.ComponentModel.DataAnnotations
+
 
 type AccountVerified =
     { VerifiedBy: string
@@ -12,9 +14,13 @@ type AccountVerified =
         agg.VerifyConclusion <- me.Conclusion
 
 
-type VerifyAccount =
-    { VerifiedBy: string
-      Conclusion: bool }
+type VerifyAccount() =
+
+    [<Required>]
+    member val VerifiedBy = "" with get, set
+
+    [<Required>]
+    member val Conclusion = false with get, set
 
     member me.Validate(agg: Account) =
         if agg.Verified then

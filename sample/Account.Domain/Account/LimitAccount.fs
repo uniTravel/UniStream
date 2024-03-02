@@ -1,6 +1,7 @@
 namespace Account.Domain
 
 open System
+open System.ComponentModel.DataAnnotations
 
 
 type AccountLimited =
@@ -10,8 +11,10 @@ type AccountLimited =
     member me.Apply(agg: Account) = agg.Limit <- me.Limit
 
 
-type LimitAccount =
-    { Limit: decimal }
+type LimitAccount() =
+
+    [<Required>]
+    member val Limit = 0.0m with get, set
 
     member me.Validate(agg: Account) =
         if not agg.Approved then

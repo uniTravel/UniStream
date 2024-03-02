@@ -1,5 +1,7 @@
 namespace Account.Domain
 
+open System.ComponentModel.DataAnnotations
+
 
 type AccountCreated =
     { Owner: string }
@@ -7,8 +9,10 @@ type AccountCreated =
     member me.Apply(agg: Account) = agg.Owner <- me.Owner
 
 
-type CreateAccount =
-    { Owner: string }
+type CreateAccount() =
+
+    [<Required>]
+    member val Owner = "" with get, set
 
     member me.Validate(agg: Account) = ()
 

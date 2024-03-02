@@ -1,6 +1,7 @@
 namespace Account.Domain
 
 open System
+open System.ComponentModel.DataAnnotations
 
 
 type PeriodOpened =
@@ -12,9 +13,13 @@ type PeriodOpened =
         agg.Period <- me.Period
 
 
-type OpenPeriod =
-    { AccountId: Guid
-      Period: string }
+type OpenPeriod() =
+
+    [<Required>]
+    member val AccountId = Guid.Empty with get, set
+
+    [<StringLength(6)>]
+    member val Period = "" with get, set
 
     member me.Validate(agg: Transaction) =
         let next = DateTime.Today.AddMonths(1)

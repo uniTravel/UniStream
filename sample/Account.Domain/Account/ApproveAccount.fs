@@ -1,6 +1,7 @@
 namespace Account.Domain
 
 open System
+open System.ComponentModel.DataAnnotations
 
 
 type AccountApproved =
@@ -19,10 +20,16 @@ type AccountApproved =
         agg.NextPeriod <- me.NextPeriod
 
 
-type ApproveAccount =
-    { ApprovedBy: string
-      Approved: bool
-      Limit: decimal }
+type ApproveAccount() =
+
+    [<Required>]
+    member val ApprovedBy = "" with get, set
+
+    [<Required>]
+    member val Approved = false with get, set
+
+    [<Required>]
+    member val Limit = 0m with get, set
 
     member me.Validate(agg: Account) =
         if not agg.VerifyConclusion then

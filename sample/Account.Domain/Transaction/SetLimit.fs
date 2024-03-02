@@ -1,5 +1,7 @@
 namespace Account.Domain
 
+open System.ComponentModel.DataAnnotations
+
 
 type LimitSetted =
     { Limit: decimal
@@ -12,10 +14,16 @@ type LimitSetted =
         agg.Balance <- me.Balance
 
 
-type SetLimit =
-    { Limit: decimal
-      TransLimit: decimal
-      Balance: decimal }
+type SetLimit() =
+
+    [<Required>]
+    member val Limit = 0m with get, set
+
+    [<Required>]
+    member val TransLimit = 0m with get, set
+
+    [<Required>]
+    member val Balance = 0m with get, set
 
     member me.Validate(agg: Transaction) =
         if agg.Limit <> 0m then

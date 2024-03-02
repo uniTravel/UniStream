@@ -1,6 +1,7 @@
 namespace Account.Domain
 
 open System
+open System.ComponentModel.DataAnnotations
 
 
 type TransferInFinished =
@@ -11,8 +12,10 @@ type TransferInFinished =
     member me.Apply(agg: Transaction) = agg.Balance <- me.Balance
 
 
-type TransferIn =
-    { Amount: decimal }
+type TransferIn() =
+
+    [<Required>]
+    member val Amount = 0m with get, set
 
     member me.Validate(agg: Transaction) =
         if agg.Limit = 0m then
