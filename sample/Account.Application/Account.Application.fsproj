@@ -10,5 +10,6 @@
     <ProjectReference Include="..\..\src\Abstract\Abstract.fsproj" />
     <ProjectReference Include="..\..\src\Domain\Domain.fsproj" PrivateAssets="all" />
     <ProjectReference Include="..\Account.Domain\Account.Domain.fsproj" />
+    <ProjectReference Include="..\Account.Command\Account.Command.fsproj" />
   </ItemGroup>
 </Project>

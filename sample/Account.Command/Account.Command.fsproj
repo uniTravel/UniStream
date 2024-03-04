@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Account.fs" />
+    <Compile Include="Transaction.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Account.Domain\Account.Domain.fsproj" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

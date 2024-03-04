@@ -1,6 +1,5 @@
 namespace Account.Application
 
-open System
 open UniStream.Domain
 open Account.Domain
 
@@ -25,61 +24,63 @@ type TransactionService(writer, reader, capacity, refresh) =
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>新交易期间</returns>
-    member _.InitPeriod =
-        Aggregator.create<Transaction, InitPeriod, PeriodInited> agent None
+    member _.InitPeriod aggId com =
+        Aggregator.create<Transaction, InitPeriod, PeriodInited> agent None aggId com
 
     /// <summary>滚动创建新交易期间
     /// </summary>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>新交易期间</returns>
-    member _.OpenPeriod =
-        Aggregator.create<Transaction, OpenPeriod, PeriodOpened> agent None
+    member _.OpenPeriod aggId com =
+        Aggregator.create<Transaction, OpenPeriod, PeriodOpened> agent None aggId com
 
     /// <summary>滚动初始化限额
     /// </summary>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>交易期间</returns>
-    member _.SetLimit = Aggregator.apply<Transaction, SetLimit, LimitSetted> agent None
+    member _.SetLimit aggId com =
+        Aggregator.apply<Transaction, SetLimit, LimitSetted> agent None aggId com
 
     /// <summary>变更限额
     /// </summary>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>交易期间</returns>
-    member _.ChangeLimit =
-        Aggregator.apply<Transaction, ChangeLimit, LimitChanged> agent None
+    member _.ChangeLimit aggId com =
+        Aggregator.apply<Transaction, ChangeLimit, LimitChanged> agent None aggId com
 
     /// <summary>设置交易限额
     /// </summary>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>交易期间</returns>
-    member _.SetTransLimit =
-        Aggregator.apply<Transaction, SetTransLimit, TransLimitSetted> agent None
+    member _.SetTransLimit aggId com =
+        Aggregator.apply<Transaction, SetTransLimit, TransLimitSetted> agent None aggId com
 
     /// <summary>存款
     /// </summary>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>交易期间</returns>
-    member _.Deposit = Aggregator.apply<Transaction, Deposit, DepositFinished> agent None
+    member _.Deposit aggId com =
+        Aggregator.apply<Transaction, Deposit, DepositFinished> agent None aggId com
 
     /// <summary>取款
     /// </summary>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>交易期间</returns>
-    member _.Withdraw =
-        Aggregator.apply<Transaction, Withdraw, WithdrawFinished> agent None
+    member _.Withdraw aggId com =
+        Aggregator.apply<Transaction, Withdraw, WithdrawFinished> agent None aggId com
 
     /// <summary>转出
     /// </summary>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>交易期间</returns>
-    member _.TransferOut(aggId: Guid, com: TransferOut) =
+    member _.TransferOut(aggId, com) =
         Aggregator.apply<Transaction, TransferOut, TransferOutFinished> agent None aggId com
 
     /// <summary>转出
@@ -88,7 +89,7 @@ type TransactionService(writer, reader, capacity, refresh) =
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>交易期间</returns>
-    member _.TransferOut(traceId: Guid, aggId: Guid, com: TransferOut) =
+    member _.TransferOut(traceId, aggId, com) =
         Aggregator.apply<Transaction, TransferOut, TransferOutFinished> agent (Some traceId) aggId com
 
     /// <summary>转入
@@ -96,7 +97,7 @@ type TransactionService(writer, reader, capacity, refresh) =
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>交易期间</returns>
-    member _.TransferIn(aggId: Guid, com: TransferIn) =
+    member _.TransferIn(aggId, com) =
         Aggregator.apply<Transaction, TransferIn, TransferInFinished> agent None aggId com
 
     /// <summary>转入
@@ -105,5 +106,5 @@ type TransactionService(writer, reader, capacity, refresh) =
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>交易期间</returns>
-    member _.TransferIn(traceId: Guid, aggId: Guid, com: TransferIn) =
+    member _.TransferIn(traceId, aggId, com) =
         Aggregator.apply<Transaction, TransferIn, TransferInFinished> agent (Some traceId) aggId com
