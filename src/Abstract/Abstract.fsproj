@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <AssemblyName>UniStream.Abstract</AssemblyName>
+    <MinVerTagPrefix>d-</MinVerTagPrefix>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Aggregate.fsi" />

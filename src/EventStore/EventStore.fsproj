@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <AssemblyName>UniStream.Infrastructure.EventStore</AssemblyName>
+    <MinVerTagPrefix>e-</MinVerTagPrefix>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Stream.fsi" />

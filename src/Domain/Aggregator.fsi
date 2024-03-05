@@ -38,8 +38,8 @@ module Aggregator =
     /// <returns>聚合操作代理</returns>
     val inline init:
         [<InlineIfLambda>] creator: (Guid -> 'agg) ->
-        writer: (Guid option -> string -> Guid -> uint64 -> string -> byte array -> unit) ->
-        reader: (string -> Guid -> (string * byte array) list) ->
+        [<InlineIfLambda>] writer: (Guid option -> string -> Guid -> uint64 -> string -> byte array -> unit) ->
+        [<InlineIfLambda>] reader: (string -> Guid -> (string * byte array) list) ->
         capacity: int ->
         refresh: float ->
             MailboxProcessor<Msg<'agg>>

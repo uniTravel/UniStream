@@ -31,9 +31,9 @@ module Aggregator =
         typeof<'evt>.FullName, JsonSerializer.SerializeToUtf8Bytes evt
 
     let inline init<'agg when Agg<'agg>>
-        ([<InlineIfLambda>] (creator: Guid -> 'agg))
-        (writer: Guid option -> string -> Guid -> uint64 -> string -> byte array -> unit)
-        (reader: string -> Guid -> (string * byte array) list)
+        ([<InlineIfLambda>] creator: Guid -> 'agg)
+        ([<InlineIfLambda>] writer: Guid option -> string -> Guid -> uint64 -> string -> byte array -> unit)
+        ([<InlineIfLambda>] reader: string -> Guid -> (string * byte array) list)
         (capacity: int)
         refresh
         =

@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <AssemblyName>UniStream.Domain</AssemblyName>
+    <MinVerTagPrefix>d-</MinVerTagPrefix>
   </PropertyGroup>
   <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
     <InternalsVisibleTo Include="Domain.Tests" />

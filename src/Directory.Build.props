@@ -6,7 +6,12 @@
         <PackageTags>UniStream CQRS</PackageTags>
         <Description>Lightweight framework for CQRS.</Description>
         <RepositoryUrl>https://github.com/uniTravel/UniStream</RepositoryUrl>
-        <MinVerTagPrefix>v</MinVerTagPrefix>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="MinVer" Version="5.0.0">
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+    </ItemGroup>
 </Project>
