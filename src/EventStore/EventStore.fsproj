@@ -9,7 +9,7 @@
     <Compile Include="Stream.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="EventStore.Client.Grpc.Streams" Version="23.1.0" />
+    <PackageReference Include="EventStore.Client.Grpc.Streams" Version="23.2.1" />
     <PackageReference Include="FSharp.Control.AsyncSeq" Version="3.2.1" />
   </ItemGroup>
 </Project>

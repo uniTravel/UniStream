@@ -21,7 +21,6 @@ services:
       - eventstore.env
     environment:
       - EVENTSTORE_ADVERTISE_NODE_PORT_TO_CLIENT_AS=2111
-      - EVENTSTORE_ADVERTISE_TCP_PORT_TO_CLIENT_AS=1111
       - EVENTSTORE_REPLICATION_HOST_ADVERTISE_AS=node1.eventstore
       - EVENTSTORE_NODE_HOST_ADVERTISE_AS=node1.eventstore
       - EVENTSTORE_GOSSIP_SEED=node2.eventstore:2113,node3.eventstore:2113
@@ -51,7 +50,6 @@ services:
     container_name: node2.eventstore
     environment:
       - EVENTSTORE_ADVERTISE_NODE_PORT_TO_CLIENT_AS=2112
-      - EVENTSTORE_ADVERTISE_TCP_PORT_TO_CLIENT_AS=1112
       - EVENTSTORE_REPLICATION_HOST_ADVERTISE_AS=node2.eventstore
       - EVENTSTORE_NODE_HOST_ADVERTISE_AS=node2.eventstore
       - EVENTSTORE_GOSSIP_SEED=node1.eventstore:2113,node3.eventstore:2113
@@ -76,7 +74,6 @@ services:
     container_name: node3.eventstore
     environment:
       - EVENTSTORE_ADVERTISE_NODE_PORT_TO_CLIENT_AS=2113
-      - EVENTSTORE_ADVERTISE_TCP_PORT_TO_CLIENT_AS=1113
       - EVENTSTORE_REPLICATION_HOST_ADVERTISE_AS=node3.eventstore
       - EVENTSTORE_NODE_HOST_ADVERTISE_AS=node3.eventstore
       - EVENTSTORE_GOSSIP_SEED=node1.eventstore:2113,node2.eventstore:2113
