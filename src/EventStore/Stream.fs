@@ -6,9 +6,7 @@ open EventStore.Client
 open FSharp.Control
 
 
-type Stream(settings: EventStoreClientSettings) =
-
-    let client = new EventStoreClient(settings)
+type Stream(client: EventStoreClient) =
 
     /// <summary>聚合事件写入流
     /// </summary>
@@ -19,15 +17,7 @@ type Stream(settings: EventStoreClientSettings) =
     /// <param name="revision">聚合版本。</param>
     /// <param name="evtType">事件类型。</param>
     /// <param name="evtData">事件数据。</param>
-    let write
-        (client: EventStoreClient)
-        (traceId: Guid option)
-        aggType
-        (aggId: Guid)
-        revision
-        evtType
-        (evtData: byte array)
-        =
+    let write (traceId: Guid option) aggType (aggId: Guid) revision evtType (evtData: byte array) =
         let stream = aggType + "-" + aggId.ToString()
 
         let data =
@@ -51,7 +41,7 @@ type Stream(settings: EventStoreClientSettings) =
     /// <param name="aggType">聚合类型全称。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <returns>聚合事件流</returns>
-    let read (client: EventStoreClient) (aggType: string) (aggId: Guid) =
+    let read (aggType: string) (aggId: Guid) =
         let stream = aggType + "-" + aggId.ToString()
 
         client.ReadStreamAsync(Direction.Forwards, stream, StreamPosition.Start)
@@ -59,8 +49,8 @@ type Stream(settings: EventStoreClientSettings) =
         |> AsyncSeq.map (fun x -> x.Event.EventType, x.Event.Data.ToArray())
         |> AsyncSeq.toListSynchronously
 
-    member _.Write = write client
+    member _.Write = write
 
-    member _.Read = read client
+    member _.Read = read
 
     member _.Close() = client.Dispose()

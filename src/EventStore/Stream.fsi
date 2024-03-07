@@ -10,8 +10,8 @@ type Stream =
 
     /// <summary>主构造函数
     /// </summary>
-    /// <param name="settings">EventStore客户端设置。</param>
-    new: settings: EventStoreClientSettings -> Stream
+    /// <param name="client">EventStore客户端。</param>
+    new: client: EventStoreClient -> Stream
 
     /// <summary>聚合事件写入流的函数
     /// </summary>
