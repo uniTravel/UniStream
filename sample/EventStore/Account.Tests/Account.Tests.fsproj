@@ -10,7 +10,8 @@
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Account.Application\Account.Application.fsproj" />
+    <ProjectReference Include="..\..\Account.Application\Account.Application.fsproj" />
+    <ProjectReference Include="..\..\..\src\EventStore\EventStore.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Expecto" Version="10.1.0" />

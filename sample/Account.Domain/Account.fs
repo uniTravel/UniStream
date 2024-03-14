@@ -22,7 +22,3 @@ type Account(id) =
     member val ApprovedBy = "" with get, set
 
     member val Approved = false with get, set
-
-    member val CurrentPeriod = "" with get, set
-
-    member val NextPeriod = "" with get, set

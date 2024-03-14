@@ -1,6 +1,5 @@
 namespace Account.Domain
 
-open System
 open System.ComponentModel.DataAnnotations
 
 
@@ -71,38 +70,7 @@ type ApproveAccount() =
             raise <| ValidateError "批准的账户，限额必须大于零"
 
     member me.Execute(agg: Account) =
-        let current = DateTime.Today
-        let next = current.AddMonths(1)
-
         { AccountId = agg.Id
           ApprovedBy = me.ApprovedBy
           Approved = me.Approved
-          Limit = if me.Approved then me.Limit else 0m
-          CurrentPeriod = if me.Approved then $"{current:yyyyMM}" else ""
-          NextPeriod = if me.Approved then $"{next:yyyyMM}" else "" }
-
-
-type ChangePeriod() =
-
-    [<DataType(DataType.Date)>]
-    member val Today = DateTime.Today with get, set
-
-    member me.Validate(agg: Account) =
-        let current = $"{me.Today:yyyyMM}"
-
-        if not agg.Approved then
-            raise <| ValidateError "账户未批准"
-
-        if agg.CurrentPeriod = current then
-            raise <| ValidateError "相关交易期已处理"
-
-        if agg.NextPeriod <> current then
-            raise <| ValidateError $"当期应为{agg.NextPeriod}"
-
-    member me.Execute(agg: Account) =
-        let current = me.Today
-        let next = current.AddMonths(1)
-
-        { AccountId = agg.Id
-          CurrentPeriod = $"{current:yyyyMM}"
-          NextPeriod = $"{next:yyyyMM}" }
+          Limit = if me.Approved then me.Limit else 0m }

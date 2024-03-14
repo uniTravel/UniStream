@@ -1,0 +1,44 @@
+@baseUrl = https://localhost:7180/Account
+
+
+###
+POST {{baseUrl}}/CreateAccount
+    ?aggId=a4f374f2-718d-41ef-8ee3-5ffa89704c8c
+Content-Type: application/json
+
+{
+  "owner": "张三"
+}
+
+
+###
+POST {{baseUrl}}/VerifyAccount
+    ?aggId=a4f374f2-718d-41ef-8ee3-5ffa89704c8c
+Content-Type: application/json
+
+{
+  "verifiedBy": "王五",
+  "conclusion": true
+}
+
+
+###
+POST {{baseUrl}}/ApproveAccount
+    ?aggId=a4f374f2-718d-41ef-8ee3-5ffa89704c8c
+Content-Type: application/json
+
+{
+  "approvedBy": "赵六",
+  "approved": true,
+  "limit": 10
+}
+
+
+###
+POST {{baseUrl}}/LimitAccount
+    ?aggId=a4f374f2-718d-41ef-8ee3-5ffa89704c8c
+Content-Type: application/json
+
+{
+  "limit": 20
+}

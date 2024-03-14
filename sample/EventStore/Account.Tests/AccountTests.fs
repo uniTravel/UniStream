@@ -6,7 +6,7 @@ open Account.Domain
 open Account.Application
 
 
-let svc = AccountService(writer, reader, 10000, 0.2)
+let svc = AccountService(es.Write, es.Read, 10000, 0.2)
 let mutable id = Guid.Empty
 
 
@@ -30,11 +30,6 @@ let test1 =
       <| fun _ ->
           let com = LimitAccount(Limit = 20m)
           let f = fun _ -> svc.LimitAccount id com |> Async.RunSynchronously |> ignore
-          Expect.throwsT<ValidateError> f "异常类型有误"
-      testCase "提交变更交易期间命令"
-      <| fun _ ->
-          let com = ChangePeriod(Today = DateTime.Today)
-          let f = fun _ -> svc.ChangePeriod id com |> Async.RunSynchronously |> ignore
           Expect.throwsT<ValidateError> f "异常类型有误" ]
     |> testList "未通过审核"
     |> testSequenced
@@ -56,26 +51,13 @@ let test2 =
           let agg = svc.ApproveAccount id com |> Async.RunSynchronously
 
           Expect.equal
-              (agg.Owner,
-               agg.VerifiedBy,
-               agg.Verified,
-               agg.VerifyConclusion,
-               agg.ApprovedBy,
-               agg.Approved,
-               agg.Limit,
-               agg.CurrentPeriod,
-               agg.NextPeriod)
-              ("张三", "王五", true, true, "赵六", false, 0m, "", "")
+              (agg.Owner, agg.VerifiedBy, agg.Verified, agg.VerifyConclusion, agg.ApprovedBy, agg.Approved, agg.Limit)
+              ("张三", "王五", true, true, "赵六", false, 0m)
               "聚合值有误"
       testCase "提交设置限额命令"
       <| fun _ ->
           let com = LimitAccount(Limit = 20m)
           let f = fun _ -> svc.LimitAccount id com |> Async.RunSynchronously |> ignore
-          Expect.throwsT<ValidateError> f "异常类型有误"
-      testCase "提交变更交易期间命令"
-      <| fun _ ->
-          let com = ChangePeriod(Today = DateTime.Today)
-          let f = fun _ -> svc.ChangePeriod id com |> Async.RunSynchronously |> ignore
           Expect.throwsT<ValidateError> f "异常类型有误" ]
     |> testList "通过审核，但未批准"
     |> testSequenced
@@ -95,39 +77,19 @@ let test3 =
           Expect.equal (agg.Owner, agg.VerifiedBy, agg.Verified, agg.VerifyConclusion) ("张三", "王五", true, true) "聚合值有误"
           let com = ApproveAccount(ApprovedBy = "赵六", Approved = true, Limit = 10m)
           let agg = svc.ApproveAccount id com |> Async.RunSynchronously
-          let current = DateTime.Today
-          let next = current.AddMonths(1)
 
           Expect.equal
-              (agg.Owner,
-               agg.VerifiedBy,
-               agg.Verified,
-               agg.VerifyConclusion,
-               agg.ApprovedBy,
-               agg.Approved,
-               agg.Limit,
-               agg.CurrentPeriod,
-               agg.NextPeriod)
-              ("张三", "王五", true, true, "赵六", true, 10m, $"{current:yyyyMM}", $"{next:yyyyMM}")
+              (agg.Owner, agg.VerifiedBy, agg.Verified, agg.VerifyConclusion, agg.ApprovedBy, agg.Approved, agg.Limit)
+              ("张三", "王五", true, true, "赵六", true, 10m)
               "聚合值有误"
       testCase "提交设置限额命令"
       <| fun _ ->
           let com = LimitAccount(Limit = 20m)
           let agg = svc.LimitAccount id com |> Async.RunSynchronously
-          let current = DateTime.Today
-          let next = current.AddMonths(1)
 
           Expect.equal
-              (agg.Owner,
-               agg.VerifiedBy,
-               agg.Verified,
-               agg.VerifyConclusion,
-               agg.ApprovedBy,
-               agg.Approved,
-               agg.Limit,
-               agg.CurrentPeriod,
-               agg.NextPeriod)
-              ("张三", "王五", true, true, "赵六", true, 20m, $"{current:yyyyMM}", $"{next:yyyyMM}")
+              (agg.Owner, agg.VerifiedBy, agg.Verified, agg.VerifyConclusion, agg.ApprovedBy, agg.Approved, agg.Limit)
+              ("张三", "王五", true, true, "赵六", true, 20m)
               "聚合值有误"
       testCase "提交的限额不变"
       <| fun _ ->

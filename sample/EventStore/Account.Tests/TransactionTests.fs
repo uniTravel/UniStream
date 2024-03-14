@@ -6,10 +6,10 @@ open Account.Domain
 open Account.Application
 
 
-let svc = TransactionService(writer, reader, 10000, 0.2)
+let svc = TransactionService(es.Write, es.Read, 10000, 0.2)
 let mutable id = Guid.Empty
 let acid = Guid.NewGuid()
-
+let traceId = Guid.NewGuid()
 
 [<Tests>]
 let test1 =
@@ -34,12 +34,12 @@ let test1 =
       testCase "转入"
       <| fun _ ->
           let com = TransferIn(Amount = 100m)
-          let agg = svc.TransferIn(id, com) |> Async.RunSynchronously
+          let agg = svc.TransferIn traceId id com |> Async.RunSynchronously
           Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 1000m, 1000m, 104m) "聚合值有误"
       testCase "转出"
       <| fun _ ->
           let com = TransferOut(Amount = 10m)
-          let agg = svc.TransferOut(id, com) |> Async.RunSynchronously
+          let agg = svc.TransferOut traceId id com |> Async.RunSynchronously
           Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 1000m, 1000m, 94m) "聚合值有误"
       testCase "设置的交易限额超过账户限额"
       <| fun _ ->
@@ -69,7 +69,7 @@ let test1 =
       testCase "转出金额超过余额"
       <| fun _ ->
           let com = TransferOut(Amount = 100m)
-          let f = fun _ -> svc.TransferOut(id, com) |> Async.RunSynchronously |> ignore
+          let f = fun _ -> svc.TransferOut traceId id com |> Async.RunSynchronously |> ignore
           Expect.throwsT<ValidateError> f "异常类型有误" ]
     |> testList "初始创建的交易期间"
     |> testSequenced
@@ -107,12 +107,12 @@ let test2 =
       testCase "转入"
       <| fun _ ->
           let com = TransferIn(Amount = 100m)
-          let agg = svc.TransferIn(id, com) |> Async.RunSynchronously
+          let agg = svc.TransferIn traceId id com |> Async.RunSynchronously
           Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 1000m, 1000m, 198m) "聚合值有误"
       testCase "转出"
       <| fun _ ->
           let com = TransferOut(Amount = 10m)
-          let agg = svc.TransferOut(id, com) |> Async.RunSynchronously
+          let agg = svc.TransferOut traceId id com |> Async.RunSynchronously
           Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 1000m, 1000m, 188m) "聚合值有误" ]
     |> testList "打开新的交易期间"
     |> testSequenced

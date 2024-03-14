@@ -136,7 +136,7 @@ type Withdraw() =
             raise <| ValidateError "金额超限"
 
     member me.Execute(agg: Transaction) : WithdrawFinished =
-        { AccountId = agg.Id
+        { AccountId = agg.AccountId
           Amount = me.Amount
           Balance = agg.Balance - me.Amount }
 
@@ -145,6 +145,9 @@ type TransferOut() =
 
     [<Required>]
     member val Amount = 0m with get, set
+
+    [<Required>]
+    member val InCode = "" with get, set
 
     member me.Validate(agg: Transaction) =
         if agg.Limit = 0m then
@@ -160,7 +163,8 @@ type TransferOut() =
             raise <| ValidateError "金额超限"
 
     member me.Execute(agg: Transaction) : TransferOutFinished =
-        { AccountId = agg.Id
+        { AccountId = agg.AccountId
+          InCode = me.InCode
           Amount = me.Amount
           Balance = agg.Balance - me.Amount }
 
@@ -169,6 +173,9 @@ type TransferIn() =
 
     [<Required>]
     member val Amount = 0m with get, set
+
+    [<Required>]
+    member val OutCode = "" with get, set
 
     member me.Validate(agg: Transaction) =
         if agg.Limit = 0m then
@@ -182,5 +189,6 @@ type TransferIn() =
 
     member me.Execute(agg: Transaction) : TransferInFinished =
         { AccountId = agg.AccountId
+          OutCode = me.OutCode
           Amount = me.Amount
           Balance = agg.Balance + me.Amount }

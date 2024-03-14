@@ -3,8 +3,8 @@
     <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="AccountService.fs" />
     <Compile Include="TransactionService.fs" />
+    <Compile Include="AccountService.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Abstract\Abstract.fsproj" />

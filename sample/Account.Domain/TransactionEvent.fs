@@ -68,6 +68,7 @@ type WithdrawFinished =
 
 type TransferOutFinished =
     { AccountId: Guid
+      InCode: string
       Amount: decimal
       Balance: decimal }
 
@@ -76,6 +77,7 @@ type TransferOutFinished =
 
 type TransferInFinished =
     { AccountId: Guid
+      OutCode: string
       Amount: decimal
       Balance: decimal }
 

@@ -31,23 +31,9 @@ type AccountApproved =
     { AccountId: Guid
       ApprovedBy: string
       Approved: bool
-      Limit: decimal
-      CurrentPeriod: string
-      NextPeriod: string }
+      Limit: decimal }
 
     member me.Apply(agg: Account) =
         agg.ApprovedBy <- me.ApprovedBy
         agg.Approved <- me.Approved
         agg.Limit <- me.Limit
-        agg.CurrentPeriod <- me.CurrentPeriod
-        agg.NextPeriod <- me.NextPeriod
-
-
-type PeriodChanged =
-    { AccountId: Guid
-      CurrentPeriod: string
-      NextPeriod: string }
-
-    member me.Apply(agg: Account) =
-        agg.CurrentPeriod <- me.CurrentPeriod
-        agg.NextPeriod <- me.NextPeriod

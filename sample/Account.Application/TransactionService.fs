@@ -77,34 +77,18 @@ type TransactionService(writer, reader, capacity, refresh) =
 
     /// <summary>转出
     /// </summary>
-    /// <param name="aggId">聚合ID。</param>
-    /// <param name="com">命令。</param>
-    /// <returns>交易期间</returns>
-    member _.TransferOut(aggId, com) =
-        Aggregator.apply<Transaction, TransferOut, TransferOutFinished> agent None aggId com
-
-    /// <summary>转出
-    /// </summary>
     /// <param name="traceId">追踪ID。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>交易期间</returns>
-    member _.TransferOut(traceId, aggId, com) =
+    member _.TransferOut traceId aggId com =
         Aggregator.apply<Transaction, TransferOut, TransferOutFinished> agent (Some traceId) aggId com
 
     /// <summary>转入
     /// </summary>
-    /// <param name="aggId">聚合ID。</param>
-    /// <param name="com">命令。</param>
-    /// <returns>交易期间</returns>
-    member _.TransferIn(aggId, com) =
-        Aggregator.apply<Transaction, TransferIn, TransferInFinished> agent None aggId com
-
-    /// <summary>转入
-    /// </summary>
     /// <param name="traceId">追踪ID。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>交易期间</returns>
-    member _.TransferIn(traceId, aggId, com) =
+    member _.TransferIn traceId aggId com =
         Aggregator.apply<Transaction, TransferIn, TransferInFinished> agent (Some traceId) aggId com

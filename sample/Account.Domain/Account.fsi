@@ -33,9 +33,3 @@ type Account =
 
     member ApprovedBy: string with get
     member internal ApprovedBy: string with set
-
-    member CurrentPeriod: string with get
-    member internal CurrentPeriod: string with set
-
-    member NextPeriod: string with get
-    member internal NextPeriod: string with set

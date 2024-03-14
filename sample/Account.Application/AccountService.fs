@@ -13,7 +13,6 @@ type AccountService(writer, reader, capacity, refresh) =
         Aggregator.register agent <| Replay<Account, AccountVerified>()
         Aggregator.register agent <| Replay<Account, AccountApproved>()
         Aggregator.register agent <| Replay<Account, AccountLimited>()
-        Aggregator.register agent <| Replay<Account, PeriodChanged>()
 
     /// <summary>创建账户
     /// </summary>
@@ -37,7 +36,7 @@ type AccountService(writer, reader, capacity, refresh) =
     /// <param name="com">命令。</param>
     /// <returns>账户</returns>
     member _.ApproveAccount aggId com =
-        Aggregator.apply<Account, ApproveAccount, AccountApproved> agent (Some aggId) aggId com
+        Aggregator.apply<Account, ApproveAccount, AccountApproved> agent None aggId com
 
     /// <summary>设置账户限额
     /// </summary>
@@ -45,12 +44,4 @@ type AccountService(writer, reader, capacity, refresh) =
     /// <param name="com">命令。</param>
     /// <returns>账户</returns>
     member _.LimitAccount aggId com =
-        Aggregator.apply<Account, LimitAccount, AccountLimited> agent (Some aggId) aggId com
-
-    /// <summary>变更交易期间
-    /// </summary>
-    /// <param name="aggId">聚合ID。</param>
-    /// <param name="com">命令。</param>
-    /// <returns>账户</returns>
-    member _.ChangePeriod aggId com =
-        Aggregator.apply<Account, ChangePeriod, PeriodChanged> agent (Some aggId) aggId com
+        Aggregator.apply<Account, LimitAccount, AccountLimited> agent None aggId com

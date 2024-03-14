@@ -72,7 +72,7 @@
             "type": "coreclr",
             "request": "launch",
             "program": "bin/Debug/net8.0/Account.Tests.dll",
-            "cwd": "${workspaceFolder}/sample/Account.Tests/",
+            "cwd": "${workspaceFolder}/sample/EventStore/Account.Tests/",
             "stopAtEntry": false,
             "console": "internalConsole"
         },
@@ -84,7 +84,7 @@
             "args": [
                 "--debug"
             ],
-            "cwd": "${workspaceFolder}/sample/Account.Tests/",
+            "cwd": "${workspaceFolder}/sample/EventStore/Account.Tests/",
             "stopAtEntry": false,
             "console": "internalConsole"
         }
