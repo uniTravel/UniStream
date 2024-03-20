@@ -7,6 +7,8 @@
   <ItemGroup>
     <Compile Include="Stream.fsi" />
     <Compile Include="Stream.fs" />
+    <Compile Include="Options.fsi" />
+    <Compile Include="Options.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="EventStore.Client.Grpc.Streams" Version="23.2.1" />
