@@ -7,5 +7,7 @@
   <ItemGroup>
     <Compile Include="Aggregate.fsi" />
     <Compile Include="Aggregate.fs" />
+    <Compile Include="IStream.fsi" />
+    <Compile Include="IStream.fs" />
   </ItemGroup>
 </Project>

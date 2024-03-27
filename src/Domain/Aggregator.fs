@@ -7,7 +7,7 @@ open System.Text.Json
 
 module Aggregator =
 
-    type Msg<'agg when Agg<'agg>> =
+    type Msg<'agg when 'agg :> Aggregate> =
         | Refresh
         | Register of string * ('agg -> byte array -> unit)
         | Create of
@@ -30,23 +30,49 @@ module Aggregator =
         evt.Apply agg
         typeof<'evt>.FullName, JsonSerializer.SerializeToUtf8Bytes evt
 
-    let inline init<'agg when Agg<'agg>>
-        ([<InlineIfLambda>] creator: Guid -> 'agg)
-        ([<InlineIfLambda>] writer: Guid option -> string -> Guid -> uint64 -> string -> byte array -> unit)
-        ([<InlineIfLambda>] reader: string -> Guid -> (string * byte array) list)
-        (capacity: int)
-        refresh
+    let inline create<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>>
+        (agent: MailboxProcessor<Msg<'agg>>)
+        traceId
+        aggId
+        (com: 'com)
         =
-        let max = Int32.MaxValue >>> 3
+        async {
+            match!
+                agent.PostAndAsyncReply
+                <| fun channel -> Create(traceId, aggId, validate com, execute com, channel)
+            with
+            | Ok agg -> return agg
+            | Error ex -> return raise ex
+        }
 
-        if capacity >= max then
-            invalidArg (nameof (capacity)) $"capacity must less than %d{max}"
+    let inline apply<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>>
+        (agent: MailboxProcessor<Msg<'agg>>)
+        traceId
+        aggId
+        (com: 'com)
+        =
+        async {
+            match!
+                agent.PostAndAsyncReply
+                <| fun channel -> Apply(traceId, aggId, validate com, execute com, channel)
+            with
+            | Ok agg -> return agg
+            | Error ex -> return raise ex
+        }
 
+    let inline register<'agg, 'rep when Rep<'agg, 'rep>> (agent: MailboxProcessor<Msg<'agg>>) (rep: 'rep) =
+        agent.Post <| Register(rep.FullName, rep.Act)
+
+    let inline init<'agg, 'stream when 'agg :> Aggregate and 'stream :> IStream>
+        ([<InlineIfLambda>] creator: Guid -> 'agg)
+        (stream: 'stream)
+        (options: AggregateOptions)
+        =
         let aggType = typeof<'agg>.FullName
         let replayer = Dictionary<string, 'agg -> byte array -> unit>()
-        let repository = Dictionary<Guid, 'agg>(capacity)
-        let half = capacity >>> 1
-        let upper = capacity + half
+        let repository = Dictionary<Guid, 'agg>(options.Capacity)
+        let half = options.Capacity >>> 1
+        let upper = options.Capacity + half
 
         let createTimer (interval: float) work =
             let timer = new Timers.Timer(interval)
@@ -65,10 +91,13 @@ module Aggregator =
             List.distinct l
 
         let check op =
-            if repository.Count = capacity then reduce op else op
+            if repository.Count = options.Capacity then
+                reduce op
+            else
+                op
 
         let inline replay aggType aggId agg =
-            reader aggType aggId
+            stream.Reader aggType aggId
             |> List.iter (fun (evtType, evtData) ->
                 let act = replayer[evtType]
                 act agg evtData
@@ -77,7 +106,7 @@ module Aggregator =
         let inline handle traceId (agg: 'agg) validate execute (channel: AsyncReplyChannel<Result<'agg, exn>>) =
             validate agg
             let evtType, evtData = execute agg
-            writer traceId aggType agg.Id agg.Revision evtType evtData
+            stream.Writer traceId aggType agg.Id agg.Revision evtType evtData
             agg.Next()
             channel.Reply <| Ok agg
 
@@ -123,38 +152,7 @@ module Aggregator =
 
                 loop []
 
-        createTimer (refresh * 1000.0) (fun _ -> agent.Post Refresh) |> Async.Start
+        createTimer (options.Refresh * 1000.0) (fun _ -> agent.Post Refresh)
+        |> Async.Start
+
         agent
-
-    let inline register<'agg, 'rep when Rep<'agg, 'rep>> (agent: MailboxProcessor<Msg<'agg>>) (rep: 'rep) =
-        agent.Post <| Register(rep.FullName, rep.Act)
-
-    let inline create<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>>
-        (agent: MailboxProcessor<Msg<'agg>>)
-        traceId
-        aggId
-        (com: 'com)
-        =
-        async {
-            match!
-                agent.PostAndAsyncReply
-                <| fun channel -> Create(traceId, aggId, validate com, execute com, channel)
-            with
-            | Ok agg -> return agg
-            | Error ex -> return raise ex
-        }
-
-    let inline apply<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>>
-        (agent: MailboxProcessor<Msg<'agg>>)
-        traceId
-        aggId
-        (com: 'com)
-        =
-        async {
-            match!
-                agent.PostAndAsyncReply
-                <| fun channel -> Apply(traceId, aggId, validate com, execute com, channel)
-            with
-            | Ok agg -> return agg
-            | Error ex -> return raise ex
-        }

@@ -8,6 +8,7 @@ open System.Text.Json
 /// </summary>
 /// <typeparam name="'agg">聚合类型。</typeparam>
 /// <typeparam name="'evt">事件类型。</typeparam>
+[<Sealed>]
 type Replay<'agg, 'evt when Evt<'agg, 'evt>>() =
 
     /// <summary>事件类型全称

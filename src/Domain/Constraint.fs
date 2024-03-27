@@ -1,11 +1,6 @@
 namespace UniStream.Domain
 
 
-/// <summary>聚合约束组
-/// </summary>
-/// <typeparam name="'agg">聚合类型。</typeparam>
-type Agg<'agg when 'agg :> Aggregate> = 'agg
-
 /// <summary>事件约束组
 /// </summary>
 /// <typeparam name="'agg">聚合类型。</typeparam>

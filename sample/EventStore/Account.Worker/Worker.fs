@@ -1,19 +1,37 @@
 namespace Account.Worker
 
-open System
-open System.Collections.Generic
-open System.Linq
 open System.Threading
-open System.Threading.Tasks
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
+open EventStore.Client
+open FSharp.Control
+open UniStream.Domain
+open Account.Application
 
-type Worker(logger: ILogger<Worker>) =
+
+type Worker(logger: ILogger<Worker>, svc: AccountService, sub: ISubscriber) =
     inherit BackgroundService()
+    let sub = sub.Subscriber
 
     override _.ExecuteAsync(ct: CancellationToken) =
         task {
-            while not ct.IsCancellationRequested do
-                logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now)
-                do! Task.Delay(1000)
+            use subscription =
+                sub.SubscribeToStream("$ce-Account.Domain.Account", "group", cancellationToken = ct)
+
+            do!
+                subscription.Messages
+                |> AsyncSeq.ofAsyncEnum
+                |> AsyncSeq.iter (fun x ->
+                    match x with
+                    | :? PersistentSubscriptionMessage.Event as ev ->
+                        logger.LogInformation(
+                            $"{ev.ResolvedEvent.Event.EventStreamId}, {ev.ResolvedEvent.Event.EventNumber}"
+                        )
+
+                        subscription.Ack(ev.ResolvedEvent) |> ignore
+                    | :? PersistentSubscriptionMessage.SubscriptionConfirmation as confirm ->
+                        logger.LogInformation($"Subscription {confirm.SubscriptionId} started")
+                    | :? PersistentSubscriptionMessage.NotFound -> logger.LogWarning("NotFound")
+                    | :? PersistentSubscriptionMessage.Unknown -> logger.LogWarning("Unknown")
+                    | _ -> logger.LogCritical("Error message type"))
         }

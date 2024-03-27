@@ -1,6 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <UserSecretsId>01153b54-85cf-4f88-97de-3b7b6c48f69f</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Controllers/AccountController.fs" />

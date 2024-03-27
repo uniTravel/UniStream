@@ -3,13 +3,14 @@ namespace Account.Api.Controllers
 open System
 open Microsoft.AspNetCore.Mvc
 open Microsoft.AspNetCore.Http
+open Microsoft.Extensions.Logging
 open Account.Application
 open Account.Domain
 
 
 [<ApiController>]
 [<Route("[controller]/[action]")>]
-type AccountController(svc: AccountService) as me =
+type AccountController(logger: ILogger<AccountController>, svc: AccountService) as me =
     inherit ControllerBase()
 
     [<HttpPost>]

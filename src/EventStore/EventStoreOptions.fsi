@@ -1,39 +1,36 @@
-namespace UniStream.Infrastructure
+namespace UniStream.Domain
+
+open System.ComponentModel.DataAnnotations
 
 
-/// <summary>配置选项
+/// <summary>EventStore配置选项
 /// </summary>
 [<Sealed>]
-type Options =
+type EventStoreOptions =
 
     /// <summary>主构造函数
     /// </summary>
-    new: unit -> Options
+    new: unit -> EventStoreOptions
 
     /// <summary>配置节的名称
     /// </summary>
-    static member Stream: string
+    static member Name: string
 
     /// <summary>用户名
     /// </summary>
+    [<Required>]
     member User: string with get, set
 
     /// <summary>密码
     /// </summary>
+    [<Required>]
     member Pass: string with get, set
 
     /// <summary>host地址
     /// </summary>
+    [<Required>]
     member Host: string with get, set
 
     /// <summary>是否验证证书
     /// </summary>
     member VerifyCert: bool with get, set
-
-    /// <summary>聚合缓存容量
-    /// </summary>
-    member Capacity: int with get, set
-
-    /// <summary>聚合缓存刷新间隔，单位秒
-    /// </summary>
-    member Refresh: float with get, set

@@ -5,9 +5,8 @@ namespace Account.Api
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
-
-open EventStore.Client
-open UniStream.Infrastructure
+open UniStream.Domain
+open Account.Domain
 open Account.Application
 
 
@@ -23,12 +22,9 @@ module Program =
         builder.Services.AddEndpointsApiExplorer()
         builder.Services.AddSwaggerGen()
 
-        let conn =
-            "esdb://admin:changeit@127.0.0.1:2111,127.0.0.1:2112,127.0.0.1:2113?tls=true&tlsVerifyCert=false"
-
-        let client = new EventStoreClient(EventStoreClientSettings.Create(conn))
-        let es = Stream(client)
-        builder.Services.AddSingleton(new AccountService(es.Write, es.Read, 10000, 0.2))
+        builder.Services.AddEventStore(builder.Configuration)
+        builder.Services.AddAggregate<Account>(builder.Configuration)
+        builder.Services.AddSingleton<AccountService>()
 
         let app = builder.Build()
 

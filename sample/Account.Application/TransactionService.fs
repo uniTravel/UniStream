@@ -1,12 +1,13 @@
 namespace Account.Application
 
+open Microsoft.Extensions.Options
 open UniStream.Domain
 open Account.Domain
 
 
-type TransactionService(writer, reader, capacity, refresh) =
-
-    let agent = Aggregator.init Transaction writer reader capacity refresh
+type TransactionService(stream: IStream, options: IOptionsMonitor<AggregateOptions>) =
+    let options = options.Get(nameof Transaction)
+    let agent = Aggregator.init Transaction stream options
 
     do
         Aggregator.register agent <| Replay<Transaction, PeriodInited>()

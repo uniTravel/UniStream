@@ -1,12 +1,13 @@
 module Account.Tests.Account
 
 open System
+open Microsoft.Extensions.DependencyInjection
 open Expecto
 open Account.Domain
 open Account.Application
 
 
-let svc = AccountService(es.Write, es.Read, 10000, 0.2)
+let svc = host.Services.GetRequiredService<AccountService>()
 let mutable id = Guid.Empty
 
 

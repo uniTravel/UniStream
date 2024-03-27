@@ -14,6 +14,6 @@
     <Compile Include="Aggregator.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Abstract\Abstract.fsproj" />
+    <ProjectReference Include="..\Config\Config.fsproj" />
   </ItemGroup>
 </Project>

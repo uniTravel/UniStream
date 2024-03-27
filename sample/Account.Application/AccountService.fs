@@ -1,12 +1,13 @@
 namespace Account.Application
 
+open Microsoft.Extensions.Options
 open UniStream.Domain
 open Account.Domain
 
 
-type AccountService(writer, reader, capacity, refresh) =
-
-    let agent = Aggregator.init Account writer reader capacity refresh
+type AccountService(stream: IStream, options: IOptionsMonitor<AggregateOptions>) =
+    let options = options.Get(nameof Account)
+    let agent = Aggregator.init Account stream options
 
     do
         Aggregator.register agent <| Replay<Account, AccountCreated>()

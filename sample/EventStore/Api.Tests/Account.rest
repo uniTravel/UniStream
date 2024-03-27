@@ -1,9 +1,14 @@
 @baseUrl = https://localhost:7180/Account
+@aggId = a4f374f2-718d-41ef-8ee3-5ffa89704c8c
 
+# a4f374f2-718d-41ef-8ee3-5ffa89704c8c
+# 8c2bd911-ba24-459b-a7dd-da07c84b0f5f
+# 68122bb7-4e68-41bb-89cc-217e6e254c8c
+# 37639c0f-c9f2-4fb6-b2d2-4ca19950de9a
 
 ###
 POST {{baseUrl}}/CreateAccount
-    ?aggId=a4f374f2-718d-41ef-8ee3-5ffa89704c8c
+    ?aggId={{aggId}}
 Content-Type: application/json
 
 {
@@ -13,7 +18,7 @@ Content-Type: application/json
 
 ###
 POST {{baseUrl}}/VerifyAccount
-    ?aggId=a4f374f2-718d-41ef-8ee3-5ffa89704c8c
+    ?aggId={{aggId}}
 Content-Type: application/json
 
 {
@@ -24,7 +29,7 @@ Content-Type: application/json
 
 ###
 POST {{baseUrl}}/ApproveAccount
-    ?aggId=a4f374f2-718d-41ef-8ee3-5ffa89704c8c
+    ?aggId={{aggId}}
 Content-Type: application/json
 
 {
@@ -36,7 +41,7 @@ Content-Type: application/json
 
 ###
 POST {{baseUrl}}/LimitAccount
-    ?aggId=a4f374f2-718d-41ef-8ee3-5ffa89704c8c
+    ?aggId={{aggId}}
 Content-Type: application/json
 
 {

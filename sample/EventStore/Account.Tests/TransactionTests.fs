@@ -1,12 +1,13 @@
 module Account.Tests.Transaction
 
 open System
+open Microsoft.Extensions.DependencyInjection
 open Expecto
 open Account.Domain
 open Account.Application
 
 
-let svc = TransactionService(es.Write, es.Read, 10000, 0.2)
+let svc = host.Services.GetRequiredService<TransactionService>()
 let mutable id = Guid.Empty
 let acid = Guid.NewGuid()
 let traceId = Guid.NewGuid()

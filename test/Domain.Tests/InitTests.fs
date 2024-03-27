@@ -3,12 +3,19 @@ module Domain.Tests.Init
 open System
 open System.Collections.Generic
 open Expecto
-
 open UniStream.Domain
 open Domain
 
 
-let agent = Aggregator.init Note writer reader 3 0.2
+let stream =
+    { new IStream with
+        member _.Writer = writer
+        member _.Reader = reader }
+
+let opt = AggregateOptions()
+opt.Capacity <- 3
+opt.Refresh <- 0.2
+let agent = Aggregator.init Note stream opt
 let traceId = None
 let id = Guid.NewGuid()
 

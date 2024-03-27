@@ -7,6 +7,6 @@
     <Compile Include="Transaction.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Account.Domain\Account.Domain.fsproj" PrivateAssets="all" />
+    <ProjectReference Include="..\Account.Domain\Account.Domain.fsproj" />
   </ItemGroup>
 </Project>
