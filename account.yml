@@ -23,8 +23,6 @@ services:
     env_file:
       - eventstore.env
     environment:
-      - EVENTSTORE_ADVERTISE_HOST_TO_CLIENT_AS=127.0.0.1
-      - EVENTSTORE_ADVERTISE_NODE_PORT_TO_CLIENT_AS=2111
       - EVENTSTORE_REPLICATION_HOST_ADVERTISE_AS=node1.eventstore
       - EVENTSTORE_NODE_HOST_ADVERTISE_AS=node1.eventstore
       - EVENTSTORE_GOSSIP_SEED=node2.eventstore:2113,node3.eventstore:2113
@@ -55,8 +53,6 @@ services:
     <<: *template
     container_name: node2.eventstore
     environment:
-      - EVENTSTORE_ADVERTISE_HOST_TO_CLIENT_AS=127.0.0.1
-      - EVENTSTORE_ADVERTISE_NODE_PORT_TO_CLIENT_AS=2112
       - EVENTSTORE_REPLICATION_HOST_ADVERTISE_AS=node2.eventstore
       - EVENTSTORE_NODE_HOST_ADVERTISE_AS=node2.eventstore
       - EVENTSTORE_GOSSIP_SEED=node1.eventstore:2113,node3.eventstore:2113
@@ -82,8 +78,6 @@ services:
     <<: *template
     container_name: node3.eventstore
     environment:
-      - EVENTSTORE_ADVERTISE_HOST_TO_CLIENT_AS=127.0.0.1
-      - EVENTSTORE_ADVERTISE_NODE_PORT_TO_CLIENT_AS=2113
       - EVENTSTORE_REPLICATION_HOST_ADVERTISE_AS=node3.eventstore
       - EVENTSTORE_NODE_HOST_ADVERTISE_AS=node3.eventstore
       - EVENTSTORE_GOSSIP_SEED=node1.eventstore:2113,node2.eventstore:2113
@@ -105,9 +99,27 @@ services:
       clusternetwork:
         ipv4_address: 172.30.240.13
 
+  account:
+    image: account
+    container_name: account
+    environment:
+      - ASPNETCORE_HTTPS_PORTS=7180
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=123@abc
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - EventStore__Pass=changeit
+      - EventStore__VerifyCert=false
+      - EventStore__Host=node1.eventstore:2113,node2.eventstore:2113,node3.eventstore:2113
+    ports:
+      - 7180:7180
+    networks:
+      clusternetwork:
+        ipv4_address: 172.30.240.20
+    volumes:
+      - ~/.aspnet/https:/https:ro
+
 networks:
   clusternetwork:
-    name: eventstoredb.local
+    name: account
     driver: bridge
     ipam:
       driver: default

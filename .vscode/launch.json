@@ -30,6 +30,9 @@
             "type": "coreclr",
             "request": "launch",
             "program": "bin/Debug/net8.0/Account.Tests.dll",
+            "env": {
+                "DOTNET_ENVIRONMENT": "Development"
+            },
             "cwd": "${workspaceFolder}/sample/EventStore/Account.Tests/",
             "stopAtEntry": false,
             "console": "internalConsole"
@@ -39,6 +42,9 @@
             "type": "coreclr",
             "request": "launch",
             "program": "bin/Debug/net8.0/Account.Tests.dll",
+            "env": {
+                "DOTNET_ENVIRONMENT": "Development"
+            },
             "args": [
                 "--debug"
             ],
