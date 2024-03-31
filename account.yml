@@ -6,9 +6,9 @@ services:
     command: >
       -c "mkdir -p ./certs && cd /certs
       && es-gencert-cli create-ca
-      && es-gencert-cli create-node -out ./node1 -ip-addresses 127.0.0.1 -dns-names localhost,node1.eventstore
-      && es-gencert-cli create-node -out ./node2 -ip-addresses 127.0.0.1 -dns-names localhost,node2.eventstore
-      && es-gencert-cli create-node -out ./node3 -ip-addresses 127.0.0.1 -dns-names localhost,node3.eventstore
+      && es-gencert-cli create-node -out ./node1 -ip-addresses 172.30.240.11 -dns-names node1.eventstore
+      && es-gencert-cli create-node -out ./node2 -ip-addresses 172.30.240.12 -dns-names node2.eventstore
+      && es-gencert-cli create-node -out ./node3 -ip-addresses 172.30.240.13 -dns-names node3.eventstore
       && find . -type f -print0 | xargs -0 chmod 666"
     container_name: setup
     volumes:
@@ -23,9 +23,8 @@ services:
     env_file:
       - eventstore.env
     environment:
-      - EVENTSTORE_REPLICATION_HOST_ADVERTISE_AS=node1.eventstore
-      - EVENTSTORE_NODE_HOST_ADVERTISE_AS=node1.eventstore
-      - EVENTSTORE_GOSSIP_SEED=node2.eventstore:2113,node3.eventstore:2113
+      - EVENTSTORE_REPLICATION_IP=172.30.240.11
+      - EVENTSTORE_GOSSIP_SEED=172.30.240.12:2113,172.30.240.13:2113
       - EVENTSTORE_TRUSTED_ROOT_CERTIFICATES_PATH=/certs/ca
       - EVENTSTORE_CERTIFICATE_FILE=/certs/node1/node.crt
       - EVENTSTORE_CERTIFICATE_PRIVATE_KEY_FILE=/certs/node1/node.key
@@ -53,9 +52,8 @@ services:
     <<: *template
     container_name: node2.eventstore
     environment:
-      - EVENTSTORE_REPLICATION_HOST_ADVERTISE_AS=node2.eventstore
-      - EVENTSTORE_NODE_HOST_ADVERTISE_AS=node2.eventstore
-      - EVENTSTORE_GOSSIP_SEED=node1.eventstore:2113,node3.eventstore:2113
+      - EVENTSTORE_REPLICATION_IP=172.30.240.12
+      - EVENTSTORE_GOSSIP_SEED=172.30.240.11:2113,172.30.240.13:2113
       - EVENTSTORE_TRUSTED_ROOT_CERTIFICATES_PATH=/certs/ca
       - EVENTSTORE_CERTIFICATE_FILE=/certs/node2/node.crt
       - EVENTSTORE_CERTIFICATE_PRIVATE_KEY_FILE=/certs/node2/node.key
@@ -78,9 +76,8 @@ services:
     <<: *template
     container_name: node3.eventstore
     environment:
-      - EVENTSTORE_REPLICATION_HOST_ADVERTISE_AS=node3.eventstore
-      - EVENTSTORE_NODE_HOST_ADVERTISE_AS=node3.eventstore
-      - EVENTSTORE_GOSSIP_SEED=node1.eventstore:2113,node2.eventstore:2113
+      - EVENTSTORE_REPLICATION_IP=172.30.240.13
+      - EVENTSTORE_GOSSIP_SEED=172.30.240.11:2113,172.30.240.12:2113
       - EVENTSTORE_TRUSTED_ROOT_CERTIFICATES_PATH=/certs/ca
       - EVENTSTORE_CERTIFICATE_FILE=/certs/node3/node.crt
       - EVENTSTORE_CERTIFICATE_PRIVATE_KEY_FILE=/certs/node3/node.key
