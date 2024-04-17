@@ -96,9 +96,31 @@ services:
       clusternetwork:
         ipv4_address: 172.30.240.13
 
-  account:
-    image: account
-    container_name: account
+  account.init:
+    image: account.init
+    container_name: account.init
+    environment:
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=123@abc
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+      - EventStore__Pass=changeit
+      - EventStore__VerifyCert=false
+      - EventStore__Host=node1.eventstore:2113,node2.eventstore:2113,node3.eventstore:2113
+    depends_on:
+      node1.eventstore:
+        condition: service_healthy
+      node2.eventstore:
+        condition: service_healthy
+      node3.eventstore:
+        condition: service_healthy
+    networks:
+      clusternetwork:
+        ipv4_address: 172.30.240.20
+    volumes:
+      - ~/.aspnet/https:/https:ro
+
+  account.api:
+    image: account.api
+    container_name: account.api
     environment:
       - ASPNETCORE_HTTPS_PORTS=7180
       - ASPNETCORE_Kestrel__Certificates__Default__Password=123@abc
@@ -108,9 +130,12 @@ services:
       - EventStore__Host=node1.eventstore:2113,node2.eventstore:2113,node3.eventstore:2113
     ports:
       - 7180:7180
+    depends_on:
+      account.init:
+        condition: service_completed_successfully
     networks:
       clusternetwork:
-        ipv4_address: 172.30.240.20
+        ipv4_address: 172.30.240.21
     volumes:
       - ~/.aspnet/https:/https:ro
 
