@@ -1,4 +1,4 @@
-namespace Account.Api
+namespace Account.Handler
 
 #nowarn "20"
 

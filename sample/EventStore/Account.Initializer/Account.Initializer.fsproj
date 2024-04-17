@@ -1,15 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <UserSecretsId>dotnet-Account.Init-8c966f77-1c87-45a7-ab32-756ca23adee8</UserSecretsId>
+    <UserSecretsId>dotnet-Account.Initializer-e9b77802-1c57-47a0-a227-dd24b85e1029</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <ProjectReference Include="..\..\..\src\EventStore\EventStore.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\EventStore\EventStore.fsproj" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
   </ItemGroup>
 </Project>

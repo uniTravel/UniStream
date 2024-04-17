@@ -1,4 +1,4 @@
-namespace Account.Worker
+namespace Account.Subscriber
 
 open System.Threading
 open Microsoft.Extensions.Hosting
@@ -7,8 +7,8 @@ open UniStream.Domain
 open Account.Application
 
 
-type InitPeriodWorker(logger: ILogger<InitPeriodWorker>, client: IClient, sub: ISubscriber, svc: TransactionService) =
+type SetLimitWorker(logger: ILogger<SetLimitWorker>, client: IClient, sub: ISubscriber, svc: TransactionService) =
     inherit BackgroundService()
 
     override _.ExecuteAsync(ct: CancellationToken) =
-        Worker.run ct logger client sub Cons.Group svc.InitPeriod
+        Worker.run ct logger client sub Cons.Group svc.SetLimit

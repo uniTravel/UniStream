@@ -1,4 +1,4 @@
-namespace Account.Init
+namespace Account.Initializer
 
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting

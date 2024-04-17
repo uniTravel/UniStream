@@ -1,7 +1,7 @@
 ﻿{
   "$schema": "http://json.schemastore.org/launchsettings.json",
   "profiles": {
-    "Account.Init": {
+    "Account.Initializer": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "environmentVariables": {

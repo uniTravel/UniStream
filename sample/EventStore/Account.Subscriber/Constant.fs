@@ -1,4 +1,4 @@
-namespace Account.Worker
+namespace Account.Subscriber
 
 
 [<RequireQualifiedAccess>]
