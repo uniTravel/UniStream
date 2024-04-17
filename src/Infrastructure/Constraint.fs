@@ -1,5 +1,7 @@
 namespace UniStream.Domain
 
+open System
+
 
 /// <summary>事件约束组
 /// </summary>
@@ -23,5 +25,6 @@ type Com<'agg, 'com, 'evt
 /// <typeparam name="'agg">聚合类型。</typeparam>
 /// <typeparam name="'rep">重播类型。</typeparam>
 type Rep<'agg, 'rep
-    when 'agg :> Aggregate and 'rep: (member FullName: string) and 'rep: (member Act: ('agg -> byte array -> unit))> =
-    'rep
+    when 'agg :> Aggregate
+    and 'rep: (member FullName: string)
+    and 'rep: (member Act: ('agg -> ReadOnlyMemory<byte> -> unit))> = 'rep

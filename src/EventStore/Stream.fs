@@ -23,18 +23,16 @@ type Stream(client: IClient) =
                 EventData(Uuid.NewUuid(), evtType, evtData, metadata)
             | None -> EventData(Uuid.NewUuid(), evtType, evtData)
 
-        client.Client.AppendToStreamAsync(stream, StreamRevision revision, [ data ])
-        |> Async.AwaitTask
-        |> Async.RunSynchronously
-        |> ignore
+        client.Client
+            .AppendToStreamAsync(stream, StreamRevision revision, [ data ])
+            .Wait()
 
     let read aggType (aggId: Guid) =
         let stream = aggType + "-" + aggId.ToString()
 
         client.Client.ReadStreamAsync(Direction.Forwards, stream, StreamPosition.Start)
-        |> AsyncSeq.ofAsyncEnum
-        |> AsyncSeq.map (fun x -> x.Event.EventType, x.Event.Data.ToArray())
-        |> AsyncSeq.toListSynchronously
+        |> TaskSeq.map (fun x -> x.Event.EventType, x.Event.Data)
+        |> TaskSeq.toList
 
     interface IStream with
         member _.Reader = read

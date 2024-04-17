@@ -4,7 +4,16 @@
     <UserSecretsId>dotnet-Account.Worker-bf396f59-a6cc-42ec-887a-fcd6bc39b73b</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Worker.fs" />
+    <Compile Include="Constant.fs" />
+    <Compile Include="InitPeriodWorker.fs" />
+    <Compile Include="OpenPeriodWorker.fs" />
+    <Compile Include="SetLimitWorker.fs" />
+    <Compile Include="ChangeLimitWorker.fs" />
+    <Compile Include="SetTransLimitWorker.fs" />
+    <Compile Include="DepositWorker.fs" />
+    <Compile Include="WithdrawWorker.fs" />
+    <Compile Include="TransferOutWorker.fs" />
+    <Compile Include="TransferInWorker.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
@@ -12,7 +21,6 @@
     <ProjectReference Include="..\..\Account.Application\Account.Application.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FSharp.Control.AsyncSeq" Version="3.2.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
   </ItemGroup>
 </Project>

@@ -1,5 +1,6 @@
 namespace UniStream.Domain
 
+open System
 open EventStore.Client
 
 
@@ -24,3 +25,5 @@ type Subscriber =
     new: settings: ISettings -> Subscriber
 
     interface ISubscriber
+
+    interface IDisposable

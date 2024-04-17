@@ -22,7 +22,7 @@ module Program =
         builder.Services.AddEndpointsApiExplorer()
         builder.Services.AddSwaggerGen()
 
-        builder.Services.AddEventStore(builder.Configuration)
+        builder.Services.AddHandler(builder.Configuration)
         builder.Services.AddAggregate<Account>(builder.Configuration)
         builder.Services.AddSingleton<AccountService>()
 

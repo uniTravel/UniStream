@@ -9,7 +9,7 @@ open Account.Application
 
 let host =
     let builder = Host.CreateApplicationBuilder()
-    builder.Services.AddEventStore(builder.Configuration, true)
+    builder.Services.AddHandler(builder.Configuration)
     builder.Services.AddAggregate<Account>(builder.Configuration)
     builder.Services.AddSingleton<AccountService>() |> ignore
     builder.Services.AddAggregate<Transaction>(builder.Configuration)

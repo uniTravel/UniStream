@@ -6,15 +6,15 @@ open System.Collections.Generic
 open UniStream.Domain
 
 
-let repo = Dictionary<string, (uint64 * string * byte array) list>(10000)
+let repo = Dictionary<string, (uint64 * string * ReadOnlyMemory<byte>) list>(10000)
 
 let writer traceId aggType (aggId: Guid) revision evtType evtData =
     let stream = aggType + "-" + aggId.ToString()
 
     if repo.ContainsKey stream then
-        repo[stream] <- List.append repo[stream] [ revision + 1UL, evtType, evtData ]
+        repo[stream] <- List.append repo[stream] [ revision + 1UL, evtType, ReadOnlyMemory evtData ]
     else
-        repo.Add(stream, List.append List.empty [ revision + 1UL, evtType, evtData ])
+        repo.Add(stream, List.append List.empty [ revision + 1UL, evtType, ReadOnlyMemory evtData ])
 
 let reader aggType (aggId: Guid) =
     let stream = aggType + "-" + aggId.ToString()

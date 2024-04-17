@@ -8,7 +8,6 @@
     <InternalsVisibleTo Include="Domain.Tests" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Constraint.fs" />
     <Compile Include="Replay.fs" />
     <Compile Include="Aggregator.fsi" />
     <Compile Include="Aggregator.fs" />

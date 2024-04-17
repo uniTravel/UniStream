@@ -1,5 +1,6 @@
 namespace UniStream.Domain
 
+open System
 open EventStore.Client
 
 
@@ -24,3 +25,5 @@ type Client =
     new: settings: ISettings -> Client
 
     interface IClient
+
+    interface IDisposable

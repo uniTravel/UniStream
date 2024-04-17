@@ -13,7 +13,7 @@ module Aggregator =
     /// <typeparam name="'agg">聚合类型。</typeparam>
     type Msg<'agg when 'agg :> Aggregate> =
         | Refresh
-        | Register of string * ('agg -> byte array -> unit)
+        | Register of string * ('agg -> ReadOnlyMemory<byte> -> unit)
         | Create of
             Guid option *
             Guid *

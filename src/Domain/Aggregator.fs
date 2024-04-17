@@ -9,7 +9,7 @@ module Aggregator =
 
     type Msg<'agg when 'agg :> Aggregate> =
         | Refresh
-        | Register of string * ('agg -> byte array -> unit)
+        | Register of string * ('agg -> ReadOnlyMemory<byte> -> unit)
         | Create of
             Guid option *
             Guid *
@@ -69,7 +69,7 @@ module Aggregator =
         (options: AggregateOptions)
         =
         let aggType = typeof<'agg>.FullName
-        let replayer = Dictionary<string, 'agg -> byte array -> unit>()
+        let replayer = Dictionary<string, 'agg -> ReadOnlyMemory<byte> -> unit>()
         let repository = Dictionary<Guid, 'agg>(options.Capacity)
         let half = options.Capacity >>> 1
         let upper = options.Capacity + half

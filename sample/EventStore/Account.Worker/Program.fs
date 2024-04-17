@@ -13,11 +13,12 @@ module Program =
     [<EntryPoint>]
     let main args =
         let builder = Host.CreateApplicationBuilder(args)
-        builder.Services.AddHostedService<Worker>() |> ignore
+        builder.Services.AddHostedService<OpenPeriodWorker>() |> ignore
+        builder.Services.AddHostedService<SetLimitWorker>() |> ignore
 
-        builder.Services.AddEventStore(builder.Configuration, true)
-        builder.Services.AddAggregate<Account>(builder.Configuration)
-        builder.Services.AddSingleton<AccountService>() |> ignore
+        builder.Services.AddSubscriber(builder.Configuration)
+        builder.Services.AddAggregate<Transaction>(builder.Configuration)
+        builder.Services.AddSingleton<TransactionService>() |> ignore
 
         builder.Build().Run()
 

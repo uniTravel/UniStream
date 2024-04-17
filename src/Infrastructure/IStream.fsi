@@ -23,4 +23,4 @@ type IStream =
     /// <param name="aggType">聚合类型全称。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <returns>聚合事件流</returns>
-    abstract member Reader: (string -> Guid -> (string * byte array) list)
+    abstract member Reader: (string -> Guid -> (string * ReadOnlyMemory<byte>) list)
