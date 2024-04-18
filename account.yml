@@ -96,9 +96,9 @@ services:
       clusternetwork:
         ipv4_address: 172.30.240.13
 
-  account.initializer:
-    image: account.initializer
-    container_name: account.initializer
+  account-initializer:
+    image: account-initializer
+    container_name: account-initializer
     environment:
       - ASPNETCORE_Kestrel__Certificates__Default__Password=123@abc
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
@@ -118,9 +118,9 @@ services:
     volumes:
       - ~/.aspnet/https:/https:ro
 
-  account.handler:
-    image: account.handler
-    container_name: account.handler
+  account-handler:
+    image: account-handler
+    container_name: account-handler
     environment:
       - ASPNETCORE_HTTPS_PORTS=7180
       - ASPNETCORE_Kestrel__Certificates__Default__Password=123@abc
@@ -131,7 +131,7 @@ services:
     ports:
       - 7180:7180
     depends_on:
-      account.initializer:
+      account-initializer:
         condition: service_completed_successfully
     networks:
       clusternetwork:

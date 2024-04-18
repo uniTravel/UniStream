@@ -10,11 +10,7 @@ open EventStore.Client
 
 module Worker =
 
-    let inline send<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>>
-        (client: IClient)
-        (aggId: Guid)
-        (com: 'com)
-        : Async<'agg> =
+    let inline send<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>> (client: IClient) (aggId: Guid) (com: 'com) =
         async {
             let mutable s = true
             let client = client.Client
@@ -32,13 +28,14 @@ module Worker =
 
                     match e.Current with
                     | :? StreamMessage.Event -> s <- false
-                    | :? StreamMessage.SubscriptionConfirmation -> ()
-                    | _ -> s <- false
+                    | :? StreamMessage.NotFound -> s <- false
+                    | :? StreamMessage.Unknown -> s <- false
+                    | _ -> ()
 
                 match e.Current with
                 | :? StreamMessage.Event as ev ->
                     if ev.ResolvedEvent.Event.EventType = typeof<'evt>.FullName then
-                        return JsonSerializer.Deserialize<'agg> ev.ResolvedEvent.Event.Data.Span
+                        return ()
                     elif ev.ResolvedEvent.Event.EventType = "Fail" then
                         let err = JsonSerializer.Deserialize<string> ev.ResolvedEvent.Event.Data.Span
                         return failwith $"Apply command failed: {err}"
@@ -63,6 +60,7 @@ module Worker =
             let aggId = ev.Event.EventStreamId
 
             try
+                logger.LogInformation($"Receive command of {aggId} from {stream}")
                 f (Some comId) (Guid aggId) com |> Async.RunSynchronously |> ignore
             with ex ->
                 let metadata =
@@ -71,7 +69,7 @@ module Worker =
                     |> ReadOnlyMemory
                     |> Nullable
 
-                logger.LogError("Handle command of {stream} error: {ex}", stream, ex)
+                logger.LogError($"Handle command of {stream} error: {ex}")
                 let evtData = JsonSerializer.SerializeToUtf8Bytes ex.Message
                 let data = EventData(Uuid.NewUuid(), "Fail", evtData, metadata)
                 client.Client.AppendToStreamAsync(aggId, StreamState.Any, [ data ]).Wait()

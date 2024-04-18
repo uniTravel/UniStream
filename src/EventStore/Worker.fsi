@@ -18,9 +18,8 @@ module Worker =
     /// <param name="client">EventStore客户端。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
-    /// <returns>命令执行结果</returns>
     val inline send<'agg, 'com, 'evt> :
-        client: IClient -> aggId: Guid -> com: 'com -> Async<'agg> when Com<'agg, 'com, 'evt>
+        client: IClient -> aggId: Guid -> com: 'com -> Async<unit> when Com<'agg, 'com, 'evt>
 
     /// <summary>执行命令
     /// </summary>
