@@ -1,6 +1,7 @@
 namespace UniStream.Domain
 
 open System
+open System.Text
 open System.Text.Json
 open EventStore.Client
 
@@ -35,14 +36,14 @@ module Channel =
     let init (client: IClient) =
         let client = client.Client
 
-        MailboxProcessor<Guid * Uuid * string * EventData * AsyncReplyChannel<Result<unit, exn>>>.Start
+        MailboxProcessor<string * Uuid * string * EventData * AsyncReplyChannel<Result<unit, exn>>>.Start
         <| fun inbox ->
             let rec loop () =
                 async {
-                    let! aggId, comId, evtType, data, channel = inbox.Receive()
+                    let! aggType, comId, evtType, data, channel = inbox.Receive()
 
                     try
-                        client.AppendToStreamAsync(aggId.ToString(), StreamState.Any, [ data ]).Wait()
+                        client.AppendToStreamAsync(aggType, StreamState.Any, [ data ]).Wait()
                         subscribe client comId evtType channel
                     with ex ->
                         channel.Reply <| Error ex
@@ -53,14 +54,21 @@ module Channel =
             loop ()
 
     let inline setup<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>> aggId (com: 'com) channel =
-        let comData = JsonSerializer.SerializeToUtf8Bytes com
         let comId = Uuid.NewUuid()
-        let data = EventData(comId, typeof<'com>.FullName, comData)
-        let evtType = typeof<'evt>.FullName
-        aggId, comId, evtType, data, channel
+        let comData = JsonSerializer.SerializeToUtf8Bytes com
+        let aggId = aggId.ToString()
+
+        let metadata =
+            $"{{\"$correlationId\":\"{aggId}\"}}"
+            |> Encoding.ASCII.GetBytes
+            |> ReadOnlyMemory
+            |> Nullable
+
+        let data = EventData(comId, typeof<'com>.FullName, comData, metadata)
+        typeof<'agg>.FullName, comId, typeof<'evt>.FullName, data, channel
 
     let inline send<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>>
-        (agent: MailboxProcessor<Guid * Uuid * string * EventData * AsyncReplyChannel<Result<unit, exn>>>)
+        (agent: MailboxProcessor<string * Uuid * string * EventData * AsyncReplyChannel<Result<unit, exn>>>)
         (aggId: Guid)
         (com: 'com)
         =

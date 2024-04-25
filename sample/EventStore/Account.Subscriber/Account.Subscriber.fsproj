@@ -5,15 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Constant.fs" />
-    <Compile Include="InitPeriodWorker.fs" />
-    <Compile Include="OpenPeriodWorker.fs" />
-    <Compile Include="SetLimitWorker.fs" />
-    <Compile Include="ChangeLimitWorker.fs" />
-    <Compile Include="SetTransLimitWorker.fs" />
-    <Compile Include="DepositWorker.fs" />
-    <Compile Include="WithdrawWorker.fs" />
-    <Compile Include="TransferOutWorker.fs" />
-    <Compile Include="TransferInWorker.fs" />
+    <Compile Include="TransactionWorker.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

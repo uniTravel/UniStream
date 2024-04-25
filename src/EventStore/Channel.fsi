@@ -14,7 +14,7 @@ module Channel =
     /// <param name="client">EventStore客户端。</param>
     /// <returns>命令通道代理</returns>
     val init:
-        client: IClient -> MailboxProcessor<Guid * Uuid * string * EventData * AsyncReplyChannel<Result<unit, exn>>>
+        client: IClient -> MailboxProcessor<string * Uuid * string * EventData * AsyncReplyChannel<Result<unit, exn>>>
 
     /// <summary>发送命令
     /// </summary>
@@ -25,7 +25,7 @@ module Channel =
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     val inline send<'agg, 'com, 'evt> :
-        agent: MailboxProcessor<Guid * Uuid * string * EventData * AsyncReplyChannel<Result<unit, exn>>> ->
+        agent: MailboxProcessor<string * Uuid * string * EventData * AsyncReplyChannel<Result<unit, exn>>> ->
         aggId: Guid ->
         com: 'com ->
             Async<unit>

@@ -13,15 +13,7 @@ module Program =
     [<EntryPoint>]
     let main args =
         let builder = Host.CreateApplicationBuilder(args)
-        builder.Services.AddHostedService<InitPeriodWorker>() |> ignore
-        builder.Services.AddHostedService<OpenPeriodWorker>() |> ignore
-        builder.Services.AddHostedService<SetLimitWorker>() |> ignore
-        builder.Services.AddHostedService<ChangeLimitWorker>() |> ignore
-        builder.Services.AddHostedService<SetTransLimitWorker>() |> ignore
-        builder.Services.AddHostedService<DepositWorker>() |> ignore
-        builder.Services.AddHostedService<WithdrawWorker>() |> ignore
-        builder.Services.AddHostedService<TransferOutWorker>() |> ignore
-        builder.Services.AddHostedService<TransferInWorker>() |> ignore
+        builder.Services.AddHostedService<TransactionWorker>() |> ignore
 
         builder.Services.AddSubscriber(builder.Configuration)
         builder.Services.AddAggregate<Transaction>(builder.Configuration)
