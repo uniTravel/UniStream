@@ -13,13 +13,15 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Account.Application", "samp
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EventStore", "EventStore", "{F652ED88-BB2A-4CC6-A392-780BF7C91CC3}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Account.Tests", "sample\EventStore\Account.Tests\Account.Tests.fsproj", "{255F4DFC-6A8B-4108-8091-201744373381}"
-EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Account.Initializer", "sample\EventStore\Account.Initializer\Account.Initializer.fsproj", "{2FD1676A-1C0F-4E96-A80D-1968EACBC5F0}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Account.Handler", "sample\EventStore\Account.Handler\Account.Handler.fsproj", "{D4A4176F-46DF-49CD-B287-DDE9D00E6671}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Account.Subscriber", "sample\EventStore\Account.Subscriber\Account.Subscriber.fsproj", "{BF8E870F-3A3F-4821-AC14-55C878BD6B72}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Account.Tests", "sample\EventStore\Account.Tests\Account.Tests.fsproj", "{255F4DFC-6A8B-4108-8091-201744373381}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Account.Sender.Tests", "sample\EventStore\Account.Sender.Tests\Account.Sender.Tests.fsproj", "{88AFF8B9-866E-4BEA-A2E6-109EBCE85F2A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -58,6 +60,10 @@ Global
 		{BF8E870F-3A3F-4821-AC14-55C878BD6B72}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BF8E870F-3A3F-4821-AC14-55C878BD6B72}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BF8E870F-3A3F-4821-AC14-55C878BD6B72}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88AFF8B9-866E-4BEA-A2E6-109EBCE85F2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88AFF8B9-866E-4BEA-A2E6-109EBCE85F2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88AFF8B9-866E-4BEA-A2E6-109EBCE85F2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88AFF8B9-866E-4BEA-A2E6-109EBCE85F2A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{BAB3398F-AFD0-424A-9124-CF3AB3CFD09C} = {44CE2A34-BBB7-4C0F-B27C-E2111A4F075A}
@@ -68,5 +74,6 @@ Global
 		{2FD1676A-1C0F-4E96-A80D-1968EACBC5F0} = {F652ED88-BB2A-4CC6-A392-780BF7C91CC3}
 		{D4A4176F-46DF-49CD-B287-DDE9D00E6671} = {F652ED88-BB2A-4CC6-A392-780BF7C91CC3}
 		{BF8E870F-3A3F-4821-AC14-55C878BD6B72} = {F652ED88-BB2A-4CC6-A392-780BF7C91CC3}
+		{88AFF8B9-866E-4BEA-A2E6-109EBCE85F2A} = {F652ED88-BB2A-4CC6-A392-780BF7C91CC3}
 	EndGlobalSection
 EndGlobal

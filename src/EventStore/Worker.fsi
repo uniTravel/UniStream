@@ -10,17 +10,6 @@ open Microsoft.Extensions.Logging
 [<RequireQualifiedAccess>]
 module Worker =
 
-    /// <summary>发送命令
-    /// </summary>
-    /// <typeparam name="'agg">聚合类型。</typeparam>
-    /// <typeparam name="'com">命令类型。</typeparam>
-    /// <typeparam name="'evt">事件类型。</typeparam>
-    /// <param name="client">EventStore客户端。</param>
-    /// <param name="aggId">聚合ID。</param>
-    /// <param name="com">命令。</param>
-    val inline send<'agg, 'com, 'evt> :
-        client: IClient -> aggId: Guid -> com: 'com -> Async<unit> when Com<'agg, 'com, 'evt>
-
     /// <summary>执行命令
     /// </summary>
     /// <typeparam name="'agg">聚合类型。</typeparam>

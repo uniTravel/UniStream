@@ -15,6 +15,8 @@
     <Compile Include="Subscriber.fs" />
     <Compile Include="Manager.fsi" />
     <Compile Include="Manager.fs" />
+    <Compile Include="Channel.fsi" />
+    <Compile Include="Channel.fs" />
     <Compile Include="Stream.fsi" />
     <Compile Include="Stream.fs" />
     <Compile Include="Worker.fsi" />
@@ -28,7 +30,6 @@
     <PackageReference Include="EventStore.Client.Grpc.PersistentSubscriptions" Version="23.2.1" />
     <PackageReference Include="EventStore.Client.Grpc.ProjectionManagement" Version="23.2.1" />
     <PackageReference Include="EventStore.Client.Grpc.Streams" Version="23.2.1" />
-    <PackageReference Include="FSharp.Control.TaskSeq" Version="0.4.0" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="8.0.0" />
   </ItemGroup>

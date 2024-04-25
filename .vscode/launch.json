@@ -51,6 +51,33 @@
             "cwd": "${workspaceFolder}/sample/EventStore/Account.Tests/",
             "stopAtEntry": false,
             "console": "internalConsole"
+        },
+        {
+            "name": "Account.Sender.Tests",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "bin/Debug/net8.0/Account.Sender.Tests.dll",
+            "env": {
+                "DOTNET_ENVIRONMENT": "Development"
+            },
+            "cwd": "${workspaceFolder}/sample/EventStore/Account.Sender.Tests/",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
+            "name": "Account.Sender.Debug",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "bin/Debug/net8.0/Account.Sender.Tests.dll",
+            "env": {
+                "DOTNET_ENVIRONMENT": "Development"
+            },
+            "args": [
+                "--debug"
+            ],
+            "cwd": "${workspaceFolder}/sample/EventStore/Account.Sender.Tests/",
+            "stopAtEntry": false,
+            "console": "internalConsole"
         }
     ]
 }

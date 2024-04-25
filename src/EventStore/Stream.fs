@@ -3,7 +3,6 @@ namespace UniStream.Domain
 open System
 open System.Text
 open EventStore.Client
-open FSharp.Control
 
 
 [<Sealed>]
@@ -30,9 +29,14 @@ type Stream(client: IClient) =
     let read aggType (aggId: Guid) =
         let stream = aggType + "-" + aggId.ToString()
 
-        client.Client.ReadStreamAsync(Direction.Forwards, stream, StreamPosition.Start)
-        |> TaskSeq.map (fun x -> x.Event.EventType, x.Event.Data)
-        |> TaskSeq.toList
+        let e =
+            client.Client
+                .ReadStreamAsync(Direction.Forwards, stream, StreamPosition.Start)
+                .GetAsyncEnumerator()
+
+        [ while (let vt = e.MoveNextAsync() in if vt.IsCompleted then vt.Result else vt.AsTask().Result) do
+              yield e.Current.Event.EventType, e.Current.Event.Data ]
+
 
     interface IStream with
         member _.Reader = read
