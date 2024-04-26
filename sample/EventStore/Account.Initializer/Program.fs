@@ -19,45 +19,12 @@ module Program =
         use manager = services.GetRequiredService<IManager>().Manager
 
         manager.EnableAsync("$by_correlation_id").Wait()
-        manager.EnableAsync("$by_event_type").Wait()
 
         let settings =
             PersistentSubscriptionSettings(true, consumerStrategyName = SystemConsumerStrategies.Pinned)
 
         sub
-            .CreateToStreamAsync("$et-Account.Domain.InitPeriod", "account", settings)
-            .Wait()
-
-        sub
-            .CreateToStreamAsync("$et-Account.Domain.OpenPeriod", "account", settings)
-            .Wait()
-
-        sub
-            .CreateToStreamAsync("$et-Account.Domain.SetLimit", "account", settings)
-            .Wait()
-
-        sub
-            .CreateToStreamAsync("$et-Account.Domain.ChangeLimit", "account", settings)
-            .Wait()
-
-        sub
-            .CreateToStreamAsync("$et-Account.Domain.SetTransLimit", "account", settings)
-            .Wait()
-
-        sub
-            .CreateToStreamAsync("$et-Account.Domain.Deposit", "account", settings)
-            .Wait()
-
-        sub
-            .CreateToStreamAsync("$et-Account.Domain.Withdraw", "account", settings)
-            .Wait()
-
-        sub
-            .CreateToStreamAsync("$et-Account.Domain.TransferOut", "account", settings)
-            .Wait()
-
-        sub
-            .CreateToStreamAsync("$et-Account.Domain.TransferIn", "account", settings)
+            .CreateToStreamAsync("Account.Domain.Transaction", "account", settings)
             .Wait()
 
         0 // exit code

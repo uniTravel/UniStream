@@ -1,7 +1,6 @@
 namespace UniStream.Domain
 
 open System
-open System.Collections.Generic
 open System.Threading
 open Microsoft.Extensions.Logging
 open EventStore.Client
@@ -35,13 +34,13 @@ module Worker =
     /// <param name="logger">日志记录器。</param>
     /// <param name="sub">EventStore持久订阅客户端。</param>
     /// <param name="group">订阅组。</param>
-    /// <param name="dic">命令代理字典。</param>
+    /// <param name="agents">命令代理列表。</param>
     /// <returns>订阅并执行命令的后台任务</returns>
     val inline run<'agg> :
         ct: CancellationToken ->
         logger: ILogger ->
         sub: ISubscriber ->
         group: string ->
-        dic: IDictionary<string, MailboxProcessor<ResolvedEvent>> ->
+        agents: (string * MailboxProcessor<ResolvedEvent>) list ->
             Tasks.Task
             when 'agg :> Aggregate

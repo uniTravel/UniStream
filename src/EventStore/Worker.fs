@@ -1,7 +1,6 @@
 namespace UniStream.Domain
 
 open System
-open System.Collections.Generic
 open System.Text
 open System.Text.Json
 open System.Threading
@@ -23,8 +22,7 @@ module Worker =
                 let rec loop () =
                     async {
                         let! ev = inbox.Receive()
-                        let meta = Encoding.ASCII.GetString ev.Event.Metadata.Span
-                        let aggId = meta[19..54]
+                        let aggId = Encoding.ASCII.GetString(ev.Event.Metadata.Span)[19..54]
                         let aggType = typeof<'agg>.FullName
                         let stream = "Fail-" + aggType
                         let comId = ev.Event.EventId.ToGuid()
@@ -58,12 +56,13 @@ module Worker =
         (logger: ILogger)
         (sub: ISubscriber)
         (group: string)
-        (dic: IDictionary<string, MailboxProcessor<ResolvedEvent>>)
+        (agents: (string * MailboxProcessor<ResolvedEvent>) list)
         : Tasks.Task =
         task {
             let stream = typeof<'agg>.FullName
             use sub = sub.Subscriber.SubscribeToStream(stream, group, cancellationToken = ct)
             let e = sub.Messages.GetAsyncEnumerator()
+            let dic = dict agents
 
             while! e.MoveNextAsync().AsTask() do
                 match e.Current with
