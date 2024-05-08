@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>UniStream.Infrastructure.Kafka</AssemblyName>
+    <MinVerTagPrefix>k-</MinVerTagPrefix>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Admin.fsi" />
+    <Compile Include="Admin.fs" />
+    <Compile Include="Stream.fsi" />
+    <Compile Include="Stream.fs" />
+    <Compile Include="ServiceCollectionExtensions.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Infrastructure\Infrastructure.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Confluent.Kafka" Version="2.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
+  </ItemGroup>
+</Project>

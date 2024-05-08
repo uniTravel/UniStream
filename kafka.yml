@@ -21,8 +21,8 @@ services:
       KAFKA_CFG_MIN_INSYNC_REPLICAS: 2
     ports:
       - 9192:9192
-    volumes:
-      - ./kafka/broker1:/bitnami/kafka:rw
+    # volumes:
+    #   - ./kafka/broker1:/bitnami/kafka:rw
 
   kafka2:
     <<: *template
@@ -35,8 +35,8 @@ services:
       KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://broker2:9092,EXTERNAL://localhost:9292
     ports:
       - 9292:9292
-    volumes:
-      - ./kafka/broker2:/bitnami/kafka:rw
+    # volumes:
+    #   - ./kafka/broker2:/bitnami/kafka:rw
 
   kafka3:
     <<: *template
@@ -50,8 +50,8 @@ services:
       KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://broker3:9092,EXTERNAL://localhost:9392
     ports:
       - 9392:9392
-    volumes:
-      - ./kafka/broker3:/bitnami/kafka:rw
+    # volumes:
+    #   - ./kafka/broker3:/bitnami/kafka:rw
 
   kafka-ui:
     image: provectuslabs/kafka-ui
@@ -63,5 +63,5 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker1:9092,broker2:9092,broker3:9092
     ports:
       - 9091:8080
-    volumes:
-      - ./kafka/kafka_ui/etc/localtime:/etc/localtime
+    # volumes:
+    #   - ./kafka/kafka_ui/etc/localtime:/etc/localtime

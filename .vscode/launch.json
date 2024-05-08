@@ -26,7 +26,7 @@
             "console": "internalConsole"
         },
         {
-            "name": "Account.Tests",
+            "name": "EventStore.Tests",
             "type": "coreclr",
             "request": "launch",
             "program": "bin/Debug/net8.0/Account.Tests.dll",
@@ -38,7 +38,7 @@
             "console": "internalConsole"
         },
         {
-            "name": "Account.Debug",
+            "name": "EventStore.Debug",
             "type": "coreclr",
             "request": "launch",
             "program": "bin/Debug/net8.0/Account.Tests.dll",
@@ -53,7 +53,7 @@
             "console": "internalConsole"
         },
         {
-            "name": "Account.Sender.Tests",
+            "name": "EventStore.Sender.Tests",
             "type": "coreclr",
             "request": "launch",
             "program": "bin/Debug/net8.0/Account.Sender.Tests.dll",
@@ -65,7 +65,7 @@
             "console": "internalConsole"
         },
         {
-            "name": "Account.Sender.Debug",
+            "name": "EventStore.Sender.Debug",
             "type": "coreclr",
             "request": "launch",
             "program": "bin/Debug/net8.0/Account.Sender.Tests.dll",
@@ -76,6 +76,33 @@
                 "--debug"
             ],
             "cwd": "${workspaceFolder}/sample/EventStore/Account.Sender.Tests/",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
+            "name": "Kafka.Tests",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "bin/Debug/net8.0/Account.Tests.dll",
+            "env": {
+                "DOTNET_ENVIRONMENT": "Development"
+            },
+            "cwd": "${workspaceFolder}/sample/Kafka/Account.Tests/",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
+            "name": "Kafka.Debug",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "bin/Debug/net8.0/Account.Tests.dll",
+            "env": {
+                "DOTNET_ENVIRONMENT": "Development"
+            },
+            "args": [
+                "--debug"
+            ],
+            "cwd": "${workspaceFolder}/sample/Kafka/Account.Tests/",
             "stopAtEntry": false,
             "console": "internalConsole"
         }
