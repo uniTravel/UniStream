@@ -11,9 +11,7 @@ let stream =
         member _.Writer = writer
         member _.Reader = reader }
 
-let opt = AggregateOptions()
-opt.Capacity <- 3
-opt.Refresh <- 0.2
+let opt = AggregateOptions(Capacity = 3)
 let agent = Aggregator.init Note stream opt
 Aggregator.register agent <| Replay<Note, NoteCreated>()
 Aggregator.register agent <| Replay<Note, NoteChanged>()
@@ -67,9 +65,8 @@ let test =
           let com = { Content = "c1" }
           let agg = change agent traceId id2 com |> Async.RunSynchronously
           Expect.equal (agg.Id, agg.Revision, agg.Title, agg.Content, agg.Grade) (id2, 1UL, "t", "c1", 1) "聚合值有误"
-      testCase "暂停以触发第一次缓存刷新，然后第一个聚合应用第三条变更"
+      testCase "第一个聚合应用第三条变更"
       <| fun _ ->
-          Threading.Thread.Sleep 200
           let com = { Content = "c2" }
           let agg = change agent traceId id1 com |> Async.RunSynchronously
           Expect.equal (agg.Id, agg.Revision, agg.Title, agg.Content, agg.Grade) (id1, 3UL, "t", "c2", 3) "聚合值有误"

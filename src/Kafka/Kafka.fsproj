@@ -5,8 +5,21 @@
     <MinVerTagPrefix>k-</MinVerTagPrefix>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Constant.fs" />
     <Compile Include="Admin.fsi" />
     <Compile Include="Admin.fs" />
+    <Compile Include="Producer.fsi" />
+    <Compile Include="Producer.fs" />
+    <Compile Include="Consumer.fsi" />
+    <Compile Include="Consumer.fs" />
+    <Compile Include="Projector.fsi" />
+    <Compile Include="Projector.fs" />
+    <Compile Include="Sender.fsi" />
+    <Compile Include="Sender.fs" />
+    <Compile Include="Subscriber.fsi" />
+    <Compile Include="Subscriber.fs" />
+    <Compile Include="Handler.fsi" />
+    <Compile Include="Handler.fs" />
     <Compile Include="Stream.fsi" />
     <Compile Include="Stream.fs" />
     <Compile Include="ServiceCollectionExtensions.fs" />
@@ -16,6 +29,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Confluent.Kafka" Version="2.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
   </ItemGroup>
 </Project>

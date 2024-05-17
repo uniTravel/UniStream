@@ -7,8 +7,10 @@
   <ItemGroup>
     <Compile Include="Aggregate.fsi" />
     <Compile Include="Aggregate.fs" />
+    <Compile Include="Constraint.fs" />
     <Compile Include="IStream.fsi" />
     <Compile Include="IStream.fs" />
-    <Compile Include="Constraint.fs" />
+    <Compile Include="IWorker.fsi" />
+    <Compile Include="IWorker.fs" />
   </ItemGroup>
 </Project>

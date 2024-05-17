@@ -13,13 +13,16 @@ type AggregateOptions =
     /// </summary>
     new: unit -> AggregateOptions
 
-    /// <summary>聚合缓存容量
+    /// <summary>聚合缓存容量，缺省为10000
     /// </summary>
-    [<Range(1, Int32.MaxValue >>> 3)>]
+    [<Range(2, Int32.MaxValue >>> 3)>]
     member Capacity: int with get, set
 
-    /// <summary>聚合缓存刷新间隔
+    /// <summary>操作容量倍数，缺省为3
     /// </summary>
-    /// <remarks>单位为秒。</remarks>
-    [<Range(0.1, 7200.0)>]
-    member Refresh: float with get, set
+    /// <remarks>
+    /// <para> 1、用于计算操作容量。</para>
+    /// <para> 2、操作容量系触发缓存刷新的操作计数。</para>
+    /// </remarks>
+    [<Range(2, 7)>]
+    member Multiple: int with get, set

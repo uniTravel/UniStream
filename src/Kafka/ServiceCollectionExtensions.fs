@@ -1,11 +1,55 @@
 namespace UniStream.Domain
 
-open System
 open System.Runtime.CompilerServices
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
 open Confluent.Kafka
 open UniStream.Domain
+
+
+[<RequireQualifiedAccess>]
+module internal Cfg =
+    let admin (services: IServiceCollection) (config: IConfiguration) =
+        services.AddOptions<AdminClientConfig>().Bind(config.GetSection("Kafka:Admin"))
+        |> ignore
+
+        services.AddSingleton<IAdmin, Admin>() |> ignore
+
+    let aggregateProducer (services: IServiceCollection) (config: IConfiguration) =
+        services
+            .AddOptions<ProducerConfig>(Cons.Agg)
+            .Bind(config.GetSection("Kafka:Aggregate:Producer"))
+        |> ignore
+
+        services.AddKeyedSingleton<IProducer<string, byte array>, AggregateProducer>(Cons.Agg)
+        |> ignore
+
+    let aggregateConsumer (services: IServiceCollection) (config: IConfiguration) =
+        services
+            .AddOptions<ConsumerConfig>(Cons.Agg)
+            .Bind(config.GetSection("Kafka:Aggregate:Consumer"))
+        |> ignore
+
+        services.AddKeyedSingleton<IConsumer<string, byte array>, AggregateConsumer>(Cons.Agg)
+        |> ignore
+
+    let commandProducer (services: IServiceCollection) (config: IConfiguration) =
+        services
+            .AddOptions<ProducerConfig>(Cons.Com)
+            .Bind(config.GetSection("Kafka:Command:Producer"))
+        |> ignore
+
+        services.AddKeyedSingleton<IProducer<string, byte array>, CommandProducer>(Cons.Com)
+        |> ignore
+
+    let commandConsumer (services: IServiceCollection) (config: IConfiguration) =
+        services
+            .AddOptions<ConsumerConfig>(Cons.Com)
+            .Bind(config.GetSection("Kafka:Command:Consumer"))
+        |> ignore
+
+        services.AddKeyedSingleton<IConsumer<string, byte array>, CommandConsumer>(Cons.Com)
+        |> ignore
 
 
 /// <summary>EventStore服务注入扩展
@@ -18,34 +62,15 @@ type ServiceCollectionExtensions =
     /// <param name="config">配置。</param>
     [<Extension>]
     static member AddSender(services: IServiceCollection, config: IConfiguration) =
-        services
-            .AddOptions<ProducerConfig>()
-            .Bind(config.GetSection("Kafka:ProducerSettings"))
-        |> ignore
-
-        services
-            .AddOptions<ConsumerConfig>()
-            .Bind(config.GetSection("Kafka:ConsumerSettings"))
-        |> ignore
-
-    // services.AddSingleton<IProducer<Guid, EventData>, Producer<Guid, EventData>>()
-    // |> ignore
-
-    // services.AddSingleton<IConsumer<Guid, EventData>, Consumer<Guid, EventData>>()
-    // |> ignore
-
+        Cfg.commandProducer services config
+        Cfg.commandConsumer services config
 
     /// <summary>注入Kafka初始化相关配置
     /// </summary>
     /// <remarks>启用投影、创建持久化订阅。</remarks>
     /// <param name="config">配置。</param>
     [<Extension>]
-    static member AddInitializer(services: IServiceCollection, config: IConfiguration) =
-        services.AddOptions<AdminClientConfig>().Bind(config.GetSection("Kafka:Admin"))
-        |> ignore
-
-        services.AddSingleton<IAdmin, Admin>() |> ignore
-
+    static member AddInitializer(services: IServiceCollection, config: IConfiguration) = Cfg.admin services config
 
     /// <summary>注入命令处理者相关配置
     /// </summary>
@@ -53,18 +78,19 @@ type ServiceCollectionExtensions =
     /// <param name="config">配置。</param>
     [<Extension>]
     static member AddHandler(services: IServiceCollection, config: IConfiguration) =
-        services
-            .AddOptions<ProducerConfig>("Aggregate")
-            .Bind(config.GetSection("Kafka:Aggregate:Producer"))
-        |> ignore
-
-        services
-            .AddOptions<ConsumerConfig>("Aggregate")
-            .Bind(config.GetSection("Kafka:Aggregate:Consumer"))
-        |> ignore
-
+        Cfg.admin services config
+        Cfg.aggregateProducer services config
+        Cfg.aggregateConsumer services config
         services.AddSingleton<IStream, Stream>() |> ignore
 
+    /// <summary>注入聚合投影者相关配置
+    /// </summary>
+    /// <remarks>监听并投影到聚合流。</remarks>
+    /// <param name="config">配置。</param>
+    [<Extension>]
+    static member AddProjector(services: IServiceCollection, config: IConfiguration) =
+        Cfg.aggregateProducer services config
+        Cfg.aggregateConsumer services config
 
     /// <summary>注入命令订阅者相关配置
     /// </summary>
@@ -72,24 +98,8 @@ type ServiceCollectionExtensions =
     /// <param name="config">配置。</param>
     [<Extension>]
     static member AddSubscriber(services: IServiceCollection, config: IConfiguration) =
-        services
-            .AddOptions<ProducerConfig>("Aggregate")
-            .Bind(config.GetSection("Kafka:Aggregate:Producer"))
-        |> ignore
-
-        services
-            .AddOptions<ConsumerConfig>("Aggregate")
-            .Bind(config.GetSection("Kafka:Aggregate:Consumer"))
-        |> ignore
-
-        services
-            .AddOptions<ProducerConfig>("Command")
-            .Bind(config.GetSection("Kafka:Command:Producer"))
-        |> ignore
-
-        services
-            .AddOptions<ConsumerConfig>("Command")
-            .Bind(config.GetSection("Kafka:Command:Consumer"))
-        |> ignore
-
+        Cfg.aggregateProducer services config
+        Cfg.aggregateConsumer services config
+        Cfg.commandProducer services config
+        Cfg.commandConsumer services config
         services.AddSingleton<IStream, Stream>() |> ignore

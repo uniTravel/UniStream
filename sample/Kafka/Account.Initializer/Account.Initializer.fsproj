@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <UserSecretsId>de33a9d3-1147-4763-a2f9-9ae1c5bb8090</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\EventStore\EventStore.fsproj" />
+    <ProjectReference Include="..\..\..\src\Kafka\Kafka.fsproj" />
+    <ProjectReference Include="..\..\Account.Domain\Account.Domain.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />

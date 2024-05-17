@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <UserSecretsId>dotnet-Account.Subscriber-b35e5851-0bcc-4192-84de-087a0c3c2d75</UserSecretsId>
+    <UserSecretsId>de33a9d3-1147-4763-a2f9-9ae1c5bb8090</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Constant.fs" />

@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <UserSecretsId>e1a42035-c0da-439e-abd0-463f00a92503</UserSecretsId>
+    <UserSecretsId>de33a9d3-1147-4763-a2f9-9ae1c5bb8090</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="App.fs" />

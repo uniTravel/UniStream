@@ -1,5 +1,6 @@
 namespace UniStream.Domain
 
+open System
 open Microsoft.Extensions.Options
 open Confluent.Kafka
 
@@ -25,3 +26,5 @@ type Admin =
     new: options: IOptions<AdminClientConfig> -> Admin
 
     interface IAdmin
+
+    interface IDisposable

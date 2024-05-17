@@ -1,37 +1,56 @@
 namespace UniStream.Domain
 
 open System
-open Microsoft.Extensions.Options
+open System.Text
 open Confluent.Kafka
+open Confluent.Kafka.Admin
 open UniStream.Domain
 
 
 [<Sealed>]
-type Stream(producerConfig: IOptionsMonitor<ProducerConfig>, consumerConfig: IOptionsMonitor<ConsumerConfig>) =
-    let producer =
-        ProducerBuilder<string, byte array>(producerConfig.Get("Aggregate")).Build()
+type Stream(admin: IAdmin, producer: IProducer<string, byte array>, consumer: IConsumer<string, byte array>) =
+    let p = producer.Client
+    let c = consumer.Client
+    let admin = admin.Client
 
-    let consumer =
-        ConsumerBuilder<string, byte array>(consumerConfig.Get("Aggregate")).Build()
+    let createTopic aggType aggId (revision: uint64) =
+        async {
+            if revision = UInt64.MaxValue then
+                let topic = aggType + "-" + aggId
 
-    let write (traceId: Guid option) aggType (aggId: Guid) (revision: uint64) evtType (evtData: byte array) =
-        let topic = aggType + "-" + aggId.ToString()
+                admin
+                    .CreateTopicsAsync([ TopicSpecification(Name = topic, ReplicationFactor = 1s, NumPartitions = 1) ])
+                    .Wait()
+        }
 
-        producer.Produce(topic, Message<string, byte array>(Key = evtType, Value = evtData))
-        producer.Flush(TimeSpan.FromSeconds(10)) |> ignore
+    let write
+        (traceId: Guid option)
+        (aggType: string)
+        (aggId: Guid)
+        (revision: uint64)
+        (evtType: string)
+        (evtData: byte array)
+        =
+        let aggId = aggId.ToString()
+        Async.Start <| createTopic aggType aggId revision
+        let h = Headers()
+        let msg = Message<string, byte array>(Key = aggId, Value = evtData, Headers = h)
+        msg.Headers.Add("evtType", Encoding.ASCII.GetBytes evtType)
+        p.Produce(aggType, msg)
+        p.Flush(TimeSpan.FromSeconds(10)) |> ignore
 
     let read aggType (aggId: Guid) =
         let topic = aggType + "-" + aggId.ToString()
         let tp = TopicPartition(topic, Partition 0)
-        let mutable c = true
-        consumer.Subscribe(topic)
-        consumer.Assign(TopicPartitionOffset(tp, Offset.Beginning))
+        let mutable d = true
+        c.Subscribe(topic)
+        c.Assign(TopicPartitionOffset(tp, Offset.Beginning))
 
-        [ while c do
-              let cr = consumer.Consume(2000)
+        [ while d do
+              let cr = c.Consume(2000)
 
               if cr.IsPartitionEOF then
-                  c <- false
+                  d <- false
               else
                   yield cr.Message.Key, ReadOnlyMemory cr.Message.Value ]
 

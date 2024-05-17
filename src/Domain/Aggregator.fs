@@ -8,7 +8,6 @@ open System.Text.Json
 module Aggregator =
 
     type Msg<'agg when 'agg :> Aggregate> =
-        | Refresh
         | Register of string * ('agg -> ReadOnlyMemory<byte> -> unit)
         | Create of
             Guid option *
@@ -69,18 +68,15 @@ module Aggregator =
         (options: AggregateOptions)
         =
         let aggType = typeof<'agg>.FullName
+        let capacity = options.Capacity
+        let multiple = options.Multiple
+        let half = capacity >>> 1
+        let upper = capacity * multiple + half
         let replayer = Dictionary<string, 'agg -> ReadOnlyMemory<byte> -> unit>()
-        let repository = Dictionary<Guid, 'agg>(options.Capacity)
-        let half = options.Capacity >>> 1
-        let upper = options.Capacity + half
-
-        let createTimer (interval: float) work =
-            let timer = new Timers.Timer(interval)
-            timer.AutoReset <- true
-            timer.Elapsed.Add work
-            async { timer.Start() }
+        let repository = Dictionary<Guid, 'agg>(capacity)
 
         let reduce op =
+            let op = List.distinct op
             let l, r = List.splitAt half op
 
             r
@@ -88,13 +84,13 @@ module Aggregator =
                 if repository.ContainsKey id then
                     repository.Remove(id) |> ignore)
 
-            List.distinct l
+            l
 
-        let check op =
-            if repository.Count = options.Capacity then
-                reduce op
-            else
-                op
+        let checkRepo op =
+            if repository.Count = capacity then reduce op else op
+
+        let checkOp op =
+            if List.length op = upper then reduce op else op
 
         let inline replay aggType aggId agg =
             stream.Reader aggType aggId
@@ -116,16 +112,13 @@ module Aggregator =
                 let rec loop op =
                     async {
                         match! inbox.Receive() with
-                        | Refresh ->
-                            if List.length op > upper then
-                                return! reduce op |> loop
                         | Register(evtType, act) -> replayer[evtType] <- act
                         | Create(traceId, aggId, validate, execute, channel) ->
                             try
                                 let agg = creator aggId
                                 handle traceId agg validate execute channel
                                 repository.Add(agg.Id, agg)
-                                return! aggId :: op |> check |> loop
+                                return! aggId :: op |> checkRepo |> loop
                             with ex ->
                                 channel.Reply <| Error ex
                         | Apply(traceId, aggId, validate, execute, channel) ->
@@ -134,7 +127,7 @@ module Aggregator =
                                     let agg = repository[aggId]
                                     handle traceId agg validate execute channel
                                     repository[aggId] <- agg
-                                    return! aggId :: op |> loop
+                                    return! aggId :: op |> checkOp |> loop
                                 with ex ->
                                     channel.Reply <| Error ex
                             else
@@ -143,7 +136,7 @@ module Aggregator =
                                     replay aggType aggId agg
                                     handle traceId agg validate execute channel
                                     repository.Add(agg.Id, agg)
-                                    return! aggId :: op |> check |> loop
+                                    return! aggId :: op |> checkRepo |> loop
                                 with ex ->
                                     channel.Reply <| Error ex
 
@@ -151,8 +144,5 @@ module Aggregator =
                     }
 
                 loop []
-
-        createTimer (options.Refresh * 1000.0) (fun _ -> agent.Post Refresh)
-        |> Async.Start
 
         agent
