@@ -19,10 +19,10 @@ module Handler =
     /// <param name="logger">日志记录器。</param>
     /// <param name="producer">Kafka命令生产者。</param>
     /// <param name="commit">提交命令的函数。</param>
-    val inline register:
-        subscriber: Subscriber<'agg> ->
+    val inline register<'agg, 'com, 'evt> :
+        subscriber: ISubscriber ->
         logger: ILogger ->
-        producer: IProducer<Guid, byte array> ->
+        producer: IProducer<string, byte array> ->
         commit: (Guid option -> Guid -> 'com -> Async<'agg>) ->
             unit
             when Com<'agg, 'com, 'evt>

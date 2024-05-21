@@ -52,7 +52,7 @@ module internal Cfg =
         |> ignore
 
 
-/// <summary>EventStore服务注入扩展
+/// <summary>Kafka服务注入扩展
 /// </summary>
 [<Sealed>]
 type ServiceCollectionExtensions =
@@ -98,6 +98,7 @@ type ServiceCollectionExtensions =
     /// <param name="config">配置。</param>
     [<Extension>]
     static member AddSubscriber(services: IServiceCollection, config: IConfiguration) =
+        Cfg.admin services config
         Cfg.aggregateProducer services config
         Cfg.aggregateConsumer services config
         Cfg.commandProducer services config

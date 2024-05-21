@@ -9,18 +9,24 @@ open Microsoft.FSharp.Core
 open UniStream.Domain
 
 
-type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, consumer: IConsumer<Guid, byte array>) =
+type ISubscriber =
+    inherit IWorker
+    abstract member AddHandler: key: string -> handler: MailboxProcessor<string * string * int * byte array> -> unit
+
+
+type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, consumer: IConsumer<string, byte array>)
+    =
     let c = consumer.Client
     let aggType = typeof<'agg>.FullName
-    let topic = aggType + ":>"
-    let dic = Dictionary<string, MailboxProcessor<Guid * Guid * int * byte array>>()
+    let topic = aggType + "_Post"
+    let dic = Dictionary<string, MailboxProcessor<string * string * int * byte array>>()
 
     let work (ct: CancellationToken) =
         async {
             try
                 while true do
                     let cr = c.Consume ct
-                    let comId = Guid(cr.Message.Headers.GetLastBytes("comId"))
+                    let comId = Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes("comId"))
                     let comType = Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes("comType"))
                     let partition = BitConverter.ToInt32(cr.Message.Headers.GetLastBytes("partition"))
 
@@ -32,10 +38,11 @@ type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, 
                 logger.LogError($"Consume loop breaked: {ex}")
         }
 
-    member _.AddHandler (key: string) (handler: MailboxProcessor<Guid * Guid * int * byte array>) =
-        dic.Add(key, handler)
+    interface ISubscriber with
 
-    interface IWorker with
+        member _.AddHandler (key: string) (handler: MailboxProcessor<string * string * int * byte array>) =
+            dic.Add(key, handler)
+
         member _.Launch(ct: CancellationToken) =
             task {
                 c.Subscribe(topic)

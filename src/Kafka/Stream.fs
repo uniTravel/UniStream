@@ -19,7 +19,7 @@ type Stream(admin: IAdmin, producer: IProducer<string, byte array>, consumer: IC
                 let topic = aggType + "-" + aggId
 
                 admin
-                    .CreateTopicsAsync([ TopicSpecification(Name = topic, ReplicationFactor = 1s, NumPartitions = 1) ])
+                    .CreateTopicsAsync([ TopicSpecification(Name = topic, ReplicationFactor = 2s, NumPartitions = 1) ])
                     .Wait()
         }
 

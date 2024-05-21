@@ -18,8 +18,8 @@ type Sender<'agg when 'agg :> Aggregate> =
     /// <param name="consumer">Kafka命令消费者。</param>
     new:
         logger: ILogger<Sender<'agg>> *
-        [<FromKeyedServices(Cons.Com)>] producer: IProducer<Guid, byte array> *
-        [<FromKeyedServices(Cons.Com)>] consumer: IConsumer<Guid, byte array> ->
+        [<FromKeyedServices(Cons.Com)>] producer: IProducer<string, byte array> *
+        [<FromKeyedServices(Cons.Com)>] consumer: IConsumer<string, byte array> ->
             Sender<'agg>
 
     /// <summary>聚合命令接收主题相应分区
@@ -28,7 +28,7 @@ type Sender<'agg when 'agg :> Aggregate> =
 
     /// <summary>聚合命令发送代理
     /// </summary>
-    member Agent: MailboxProcessor<Guid * Message<Guid, byte array> * AsyncReplyChannel<Result<unit, exn>>>
+    member Agent: MailboxProcessor<string * Message<string, byte array> * AsyncReplyChannel<Result<unit, exn>>>
 
     interface IDisposable
 

@@ -12,23 +12,24 @@ open UniStream.Domain
 
 
 type Hub =
-    | Add of Guid * AsyncReplyChannel<Result<unit, exn>>
-    | Reply of Guid * Result<unit, exn>
+    | Add of string * AsyncReplyChannel<Result<unit, exn>>
+    | Reply of string * Result<unit, exn>
 
 
 type Sender<'agg when 'agg :> Aggregate>
-    (logger: ILogger<Sender<'agg>>, producer: IProducer<Guid, byte array>, consumer: IConsumer<Guid, byte array>) =
+    (logger: ILogger<Sender<'agg>>, producer: IProducer<string, byte array>, consumer: IConsumer<string, byte array>) =
     let p = producer.Client
     let c = consumer.Client
+    // TODO 分区需要从配置读取
     let partition = 0
     let aggType = typeof<'agg>.FullName
     let cts = new CancellationTokenSource()
-    let topic = aggType + "<:"
+    let topic = aggType + "_Reply"
     let mutable dispose = false
 
     let receiver =
         new MailboxProcessor<Hub>(fun inbox ->
-            let rec loop (dic: Dictionary<Guid, AsyncReplyChannel<Result<unit, exn>>>) =
+            let rec loop (dic: Dictionary<string, AsyncReplyChannel<Result<unit, exn>>>) =
                 async {
                     match! inbox.Receive() with
                     | Add(comId, channel) -> dic.Add(comId, channel)
@@ -39,11 +40,11 @@ type Sender<'agg when 'agg :> Aggregate>
                     return! loop dic
                 }
 
-            loop <| Dictionary<Guid, AsyncReplyChannel<Result<unit, exn>>>())
+            loop <| Dictionary<string, AsyncReplyChannel<Result<unit, exn>>>())
 
     let agent =
-        new MailboxProcessor<Guid * Message<Guid, byte array> * AsyncReplyChannel<Result<unit, exn>>>(fun inbox ->
-            let topic = aggType + ":>"
+        new MailboxProcessor<string * Message<string, byte array> * AsyncReplyChannel<Result<unit, exn>>>(fun inbox ->
+            let topic = aggType + "_Post"
 
             let rec loop () =
                 async {
@@ -87,7 +88,7 @@ type Sender<'agg when 'agg :> Aggregate>
     member val Agent = agent
 
     interface IDisposable with
-        member me.Dispose() =
+        member _.Dispose() =
             if not dispose then
                 cts.Cancel()
                 agent.Dispose()
@@ -98,13 +99,14 @@ type Sender<'agg when 'agg :> Aggregate>
 module Sender =
 
     let inline send<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>> (sender: Sender<'agg>) (aggId: Guid) (com: 'com) =
-        let setup aggId (com: 'com) (channel: AsyncReplyChannel<Result<unit, exn>>) =
-            let comId = Guid.NewGuid()
+        let setup (aggId: Guid) (com: 'com) (channel: AsyncReplyChannel<Result<unit, exn>>) =
+            let aggId = aggId.ToString()
+            let comId = Guid.NewGuid().ToString()
             let comType = typeof<'com>.FullName
             let comData = JsonSerializer.SerializeToUtf8Bytes com
             let h = Headers()
-            let msg = Message<Guid, byte array>(Key = aggId, Value = comData, Headers = h)
-            msg.Headers.Add("comId", comId.ToByteArray())
+            let msg = Message<string, byte array>(Key = aggId, Value = comData, Headers = h)
+            msg.Headers.Add("comId", Encoding.ASCII.GetBytes comId)
             msg.Headers.Add("comType", Encoding.ASCII.GetBytes comType)
             msg.Headers.Add("partition", BitConverter.GetBytes sender.Partition)
             comId, msg, channel

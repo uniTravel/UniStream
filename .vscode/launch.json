@@ -105,6 +105,33 @@
             "cwd": "${workspaceFolder}/sample/Kafka/Account.Tests/",
             "stopAtEntry": false,
             "console": "internalConsole"
+        },
+        {
+            "name": "Kafka.Sender.Tests",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "bin/Debug/net8.0/Account.Sender.Tests.dll",
+            "env": {
+                "DOTNET_ENVIRONMENT": "Development"
+            },
+            "cwd": "${workspaceFolder}/sample/Kafka/Account.Sender.Tests/",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
+            "name": "Kafka.Sender.Debug",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "bin/Debug/net8.0/Account.Sender.Tests.dll",
+            "env": {
+                "DOTNET_ENVIRONMENT": "Development"
+            },
+            "args": [
+                "--debug"
+            ],
+            "cwd": "${workspaceFolder}/sample/Kafka/Account.Sender.Tests/",
+            "stopAtEntry": false,
+            "console": "internalConsole"
         }
     ]
 }

@@ -21,7 +21,10 @@ module Program =
 
         let ta =
             [ typeof<Account>; typeof<Transaction> ]
-            |> List.map (fun t -> TopicSpecification(Name = t.FullName, ReplicationFactor = 1s, NumPartitions = 1))
+            |> List.collect (fun t ->
+                [ TopicSpecification(Name = t.FullName, ReplicationFactor = 1s, NumPartitions = 1)
+                  TopicSpecification(Name = t.FullName + "_Post", ReplicationFactor = 1s, NumPartitions = 1)
+                  TopicSpecification(Name = t.FullName + "_Reply", ReplicationFactor = 1s, NumPartitions = 1) ])
 
         admin.CreateTopicsAsync(ta).Wait()
 
