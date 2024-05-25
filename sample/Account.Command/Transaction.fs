@@ -146,7 +146,6 @@ type TransferOut() =
     [<Required>]
     member val Amount = 0m with get, set
 
-    [<Required>]
     member val InCode = "" with get, set
 
     member me.Validate(agg: Transaction) =
@@ -174,7 +173,6 @@ type TransferIn() =
     [<Required>]
     member val Amount = 0m with get, set
 
-    [<Required>]
     member val OutCode = "" with get, set
 
     member me.Validate(agg: Transaction) =

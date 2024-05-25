@@ -1,0 +1,15 @@
+@baseUrl = https://localhost:7280/Transaction
+@aggId = {{$guid}}
+@acid = {{$guid}}
+
+
+###
+POST {{baseUrl}}/InitPeriod
+    ?aggId={{aggId}}
+Content-Type: application/json
+
+{
+  "accountId": "8c2bd911-ba24-459b-a7dd-da07c84b0f5f",
+  "period": "202405",
+  "limit": 1000
+}

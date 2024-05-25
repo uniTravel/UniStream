@@ -22,13 +22,22 @@ type Sender<'agg when 'agg :> Aggregate> =
         [<FromKeyedServices(Cons.Com)>] consumer: IConsumer<string, byte array> ->
             Sender<'agg>
 
-    /// <summary>聚合命令接收主题相应分区
-    /// </summary>
-    member Partition: int
-
     /// <summary>聚合命令发送代理
     /// </summary>
     member Agent: MailboxProcessor<string * Message<string, byte array> * AsyncReplyChannel<Result<unit, exn>>>
+
+    /// <summary>设置代理消息
+    /// </summary>
+    /// <param name="aggId">聚合ID。</param>
+    /// <param name="comType">命令类型全称。</param>
+    /// <param name="comData">命令数据。</param>
+    /// <param name="channel">返回消息处理结果的通道。</param>
+    member Setup:
+        aggId: Guid ->
+        comType: string ->
+        comData: byte array ->
+        channel: AsyncReplyChannel<Result<unit, exn>> ->
+            (string * Message<string, byte array> * AsyncReplyChannel<Result<unit, exn>>)
 
     interface IDisposable
 
