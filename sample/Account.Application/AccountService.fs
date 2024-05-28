@@ -17,36 +17,32 @@ type AccountService(stream: IStream, options: IOptionsMonitor<AggregateOptions>)
 
     /// <summary>创建账户
     /// </summary>
-    /// <param name="traceId">追踪ID。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>新账户</returns>
-    member _.CreateAccount traceId aggId com =
-        Aggregator.create<Account, CreateAccount, AccountCreated> agent traceId aggId com
+    member _.CreateAccount aggId com =
+        Aggregator.create<Account, CreateAccount, AccountCreated> agent aggId com
 
     /// <summary>审核账户
     /// </summary>
-    /// <param name="traceId">追踪ID。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>账户</returns>
-    member _.VerifyAccount traceId aggId com =
-        Aggregator.apply<Account, VerifyAccount, AccountVerified> agent traceId aggId com
+    member _.VerifyAccount aggId com =
+        Aggregator.apply<Account, VerifyAccount, AccountVerified> agent aggId com
 
     /// <summary>批准设立账户
     /// </summary>
-    /// <param name="traceId">追踪ID。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>账户</returns>
-    member _.ApproveAccount traceId aggId com =
-        Aggregator.apply<Account, ApproveAccount, AccountApproved> agent traceId aggId com
+    member _.ApproveAccount aggId com =
+        Aggregator.apply<Account, ApproveAccount, AccountApproved> agent aggId com
 
     /// <summary>设置账户限额
     /// </summary>
-    /// <param name="traceId">追踪ID。</param>
     /// <param name="aggId">聚合ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>账户</returns>
-    member _.LimitAccount traceId aggId com =
-        Aggregator.apply<Account, LimitAccount, AccountLimited> agent traceId aggId com
+    member _.LimitAccount aggId com =
+        Aggregator.apply<Account, LimitAccount, AccountLimited> agent aggId com

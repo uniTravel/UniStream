@@ -23,14 +23,7 @@ type Stream(admin: IAdmin, producer: IProducer<string, byte array>, consumer: IC
                     .Wait()
         }
 
-    let write
-        (traceId: Guid option)
-        (aggType: string)
-        (aggId: Guid)
-        (revision: uint64)
-        (evtType: string)
-        (evtData: byte array)
-        =
+    let write (aggType: string) (aggId: Guid) (revision: uint64) (evtType: string) (evtData: byte array) =
         let aggId = aggId.ToString()
         Async.Start <| createTopic aggType aggId revision
         let h = Headers()

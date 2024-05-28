@@ -18,9 +18,15 @@ module Program =
 
         builder.Services.AddControllers()
         builder.Services.AddSender(builder.Configuration)
-        builder.Services.AddSingleton<Sender<Transaction>>() |> ignore
+
+        builder.Services.AddKeyedSingleton<ISender, Sender<Transaction>>(typeof<Transaction>)
+        |> ignore
 
         let app = builder.Build()
+
+        using (app.Services.CreateScope()) (fun scope ->
+            let services = scope.ServiceProvider
+            services.GetRequiredKeyedService<ISender>(typeof<Transaction>))
 
         app.UseHttpsRedirection()
 

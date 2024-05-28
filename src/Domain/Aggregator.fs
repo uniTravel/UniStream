@@ -9,18 +9,8 @@ module Aggregator =
 
     type Msg<'agg when 'agg :> Aggregate> =
         | Register of string * ('agg -> ReadOnlyMemory<byte> -> unit)
-        | Create of
-            Guid option *
-            Guid *
-            ('agg -> unit) *
-            ('agg -> string * byte array) *
-            AsyncReplyChannel<Result<'agg, exn>>
-        | Apply of
-            Guid option *
-            Guid *
-            ('agg -> unit) *
-            ('agg -> string * byte array) *
-            AsyncReplyChannel<Result<'agg, exn>>
+        | Create of Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<'agg, exn>>
+        | Apply of Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<'agg, exn>>
 
     let inline validate<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>> (com: 'com) (agg: 'agg) = com.Validate agg
 
@@ -31,14 +21,13 @@ module Aggregator =
 
     let inline create<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>>
         (agent: MailboxProcessor<Msg<'agg>>)
-        traceId
         aggId
         (com: 'com)
         =
         async {
             match!
                 agent.PostAndAsyncReply
-                <| fun channel -> Create(traceId, aggId, validate com, execute com, channel)
+                <| fun channel -> Create(aggId, validate com, execute com, channel)
             with
             | Ok agg -> return agg
             | Error ex -> return raise ex
@@ -46,14 +35,13 @@ module Aggregator =
 
     let inline apply<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>>
         (agent: MailboxProcessor<Msg<'agg>>)
-        traceId
         aggId
         (com: 'com)
         =
         async {
             match!
                 agent.PostAndAsyncReply
-                <| fun channel -> Apply(traceId, aggId, validate com, execute com, channel)
+                <| fun channel -> Apply(aggId, validate com, execute com, channel)
             with
             | Ok agg -> return agg
             | Error ex -> return raise ex
@@ -99,10 +87,10 @@ module Aggregator =
                 act agg evtData
                 agg.Next())
 
-        let inline handle traceId (agg: 'agg) validate execute (channel: AsyncReplyChannel<Result<'agg, exn>>) =
+        let inline handle (agg: 'agg) validate execute (channel: AsyncReplyChannel<Result<'agg, exn>>) =
             validate agg
             let evtType, evtData = execute agg
-            stream.Writer traceId aggType agg.Id agg.Revision evtType evtData
+            stream.Writer aggType agg.Id agg.Revision evtType evtData
             agg.Next()
             channel.Reply <| Ok agg
 
@@ -113,19 +101,19 @@ module Aggregator =
                     async {
                         match! inbox.Receive() with
                         | Register(evtType, act) -> replayer[evtType] <- act
-                        | Create(traceId, aggId, validate, execute, channel) ->
+                        | Create(aggId, validate, execute, channel) ->
                             try
                                 let agg = creator aggId
-                                handle traceId agg validate execute channel
+                                handle agg validate execute channel
                                 repository.Add(agg.Id, agg)
                                 return! aggId :: op |> checkRepo |> loop
                             with ex ->
                                 channel.Reply <| Error ex
-                        | Apply(traceId, aggId, validate, execute, channel) ->
+                        | Apply(aggId, validate, execute, channel) ->
                             if repository.ContainsKey aggId then
                                 try
                                     let agg = repository[aggId]
-                                    handle traceId agg validate execute channel
+                                    handle agg validate execute channel
                                     repository[aggId] <- agg
                                     return! aggId :: op |> checkOp |> loop
                                 with ex ->
@@ -134,7 +122,7 @@ module Aggregator =
                                 try
                                     let agg = creator aggId
                                     replay aggType aggId agg
-                                    handle traceId agg validate execute channel
+                                    handle agg validate execute channel
                                     repository.Add(agg.Id, agg)
                                     return! aggId :: op |> checkRepo |> loop
                                 with ex ->

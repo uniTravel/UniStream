@@ -11,6 +11,13 @@ open Microsoft.FSharp.Core
 open UniStream.Domain
 
 
+type ISender =
+
+    abstract member Agent: MailboxProcessor<string * Message<string, byte array> * AsyncReplyChannel<Result<unit, exn>>>
+
+    abstract member Partition: int
+
+
 type Hub =
     | Add of string * AsyncReplyChannel<Result<unit, exn>>
     | Reply of string * Result<unit, exn>
@@ -84,25 +91,14 @@ type Sender<'agg when 'agg :> Aggregate>
         c.Subscribe(topic)
         Async.Start(consumer cts.Token, cts.Token)
 
-    member val Agent = agent
-
-    member _.Setup
-        (aggId: Guid)
-        (comType: string)
-        (comData: byte array)
-        (channel: AsyncReplyChannel<Result<unit, exn>>)
-        =
         while c.Assignment.Count = 0 do
-            Thread.Sleep 2000
+            Thread.Sleep 200
 
-        let aggId = aggId.ToString()
-        let comId = Guid.NewGuid().ToString()
-        let h = Headers()
-        let msg = Message<string, byte array>(Key = aggId, Value = comData, Headers = h)
-        msg.Headers.Add("comId", Encoding.ASCII.GetBytes comId)
-        msg.Headers.Add("comType", Encoding.ASCII.GetBytes comType)
-        msg.Headers.Add("partition", BitConverter.GetBytes c.Assignment[0].Partition.Value)
-        comId, msg, channel
+    interface ISender with
+
+        member val Agent = agent
+
+        member val Partition = c.Assignment[0].Partition.Value
 
     interface IDisposable with
         member _.Dispose() =
@@ -115,14 +111,29 @@ type Sender<'agg when 'agg :> Aggregate>
 
 module Sender =
 
-    let inline send<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>> (sender: Sender<'agg>) (aggId: Guid) (com: 'com) =
+    let inline send<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>> (sender: ISender) (aggId: Guid) (com: 'com) =
+        let setup
+            (aggId: Guid)
+            (comType: string)
+            (comData: byte array)
+            (channel: AsyncReplyChannel<Result<unit, exn>>)
+            =
+            let aggId = aggId.ToString()
+            let comId = Guid.NewGuid().ToString()
+            let h = Headers()
+            let msg = Message<string, byte array>(Key = aggId, Value = comData, Headers = h)
+            msg.Headers.Add("comId", Encoding.ASCII.GetBytes comId)
+            msg.Headers.Add("comType", Encoding.ASCII.GetBytes comType)
+            msg.Headers.Add("partition", BitConverter.GetBytes sender.Partition)
+            comId, msg, channel
+
         async {
             let comType = typeof<'com>.FullName
             let comData = JsonSerializer.SerializeToUtf8Bytes com
 
             match!
                 sender.Agent.PostAndAsyncReply
-                <| fun channel -> sender.Setup aggId comType comData channel
+                <| fun channel -> setup aggId comType comData channel
             with
             | Ok() -> return ()
             | Error ex -> return raise ex

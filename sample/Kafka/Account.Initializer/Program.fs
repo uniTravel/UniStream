@@ -36,7 +36,7 @@ module Program =
         use serviceScope = host.Services.CreateScope()
         let services = serviceScope.ServiceProvider
         use admin = services.GetRequiredService<IAdmin>().Client
-        let ta = spec Multi <| [ typeof<Account>; typeof<Transaction> ]
+        let ta = spec Single <| [ typeof<Account>; typeof<Transaction> ]
         admin.CreateTopicsAsync(ta).Wait()
 
         0 // exit code

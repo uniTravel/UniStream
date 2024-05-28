@@ -14,7 +14,7 @@ module Handler =
         (subscriber: ISubscriber)
         (logger: ILogger)
         (producer: IProducer<string, byte array>)
-        (commit: Guid option -> Guid -> 'com -> Async<'agg>)
+        (commit: Guid -> 'com -> Async<'agg>)
         =
         let aggType = typeof<'agg>.FullName
         let comType = typeof<'com>.FullName
@@ -34,7 +34,7 @@ module Handler =
                         let tp = TopicPartition(topic, Partition partition)
 
                         try
-                            do! commit None (Guid aggId) com |> Async.Ignore
+                            do! commit (Guid aggId) com |> Async.Ignore
                             reply tp comId ""
                             logger.LogInformation($"{comType} of {aggId} finished")
                         with ex ->
