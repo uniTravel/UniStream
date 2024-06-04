@@ -1,4 +1,4 @@
-namespace Account.Projector
+namespace Account.ComProjector
 
 open System.Threading
 open Microsoft.Extensions.Hosting

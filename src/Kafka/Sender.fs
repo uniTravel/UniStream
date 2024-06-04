@@ -15,12 +15,10 @@ type ISender =
 
     abstract member Agent: MailboxProcessor<string * Message<string, byte array> * AsyncReplyChannel<Result<unit, exn>>>
 
-    abstract member Partition: int
-
 
 type Hub =
     | Add of string * AsyncReplyChannel<Result<unit, exn>>
-    | Reply of string * Result<unit, exn>
+    | Reply of ConsumeResult<string, byte array>
 
 
 type Sender<'agg when 'agg :> Aggregate>
@@ -38,14 +36,35 @@ type Sender<'agg when 'agg :> Aggregate>
                 async {
                     match! inbox.Receive() with
                     | Add(comId, channel) -> dic.Add(comId, channel)
-                    | Reply(comId, result) ->
-                        dic[comId].Reply result
-                        dic.Remove(comId) |> ignore
+                    | Reply(cr) ->
+                        match cr.Message.Key with
+                        | comId when dic.ContainsKey comId ->
+                            match cr.Message.Value with
+                            | [||] ->
+                                logger.LogInformation($"{comId} of {aggType} finished")
+                                dic[comId].Reply <| Ok()
+                            | v ->
+                                let err = BitConverter.ToString v
+                                logger.LogError($"{comId} of {aggType} failed: {err}")
+                                dic[comId].Reply <| Error(failwith $"Apply command failed: {err}")
+
+                            dic.Remove comId |> ignore
+                        | _ -> ()
 
                     return! loop dic
                 }
 
             loop <| Dictionary<string, AsyncReplyChannel<Result<unit, exn>>>())
+
+    let consumer (ct: CancellationToken) =
+        async {
+            try
+                while true do
+                    let cr = c.Consume ct
+                    receiver.Post <| Reply cr
+            with ex ->
+                logger.LogError($"Consume loop breaked: {ex}")
+        }
 
     let agent =
         new MailboxProcessor<string * Message<string, byte array> * AsyncReplyChannel<Result<unit, exn>>>(fun inbox ->
@@ -57,7 +76,6 @@ type Sender<'agg when 'agg :> Aggregate>
 
                     try
                         p.Produce(topic, msg)
-                        p.Flush(TimeSpan.FromSeconds(10)) |> ignore
                         receiver.Post <| Add(comId, channel)
                     with ex ->
                         channel.Reply <| Error ex
@@ -66,24 +84,6 @@ type Sender<'agg when 'agg :> Aggregate>
                 }
 
             loop ())
-
-    let consumer (ct: CancellationToken) =
-        async {
-            try
-                while true do
-                    let cr = c.Consume ct
-                    let comId = cr.Message.Key
-
-                    match BitConverter.ToString cr.Message.Value with
-                    | "" ->
-                        logger.LogInformation($"{comId} of {aggType} finished")
-                        receiver.Post <| Reply(comId, Ok())
-                    | err ->
-                        logger.LogError($"{comId} of {aggType} failed: {err}")
-                        receiver.Post <| Reply(comId, Error(failwith $"Apply command failed: {err}"))
-            with ex ->
-                logger.LogError($"Consume loop breaked: {ex}")
-        }
 
     do
         receiver.Start()
@@ -95,10 +95,7 @@ type Sender<'agg when 'agg :> Aggregate>
             Thread.Sleep 200
 
     interface ISender with
-
         member val Agent = agent
-
-        member val Partition = c.Assignment[0].Partition.Value
 
     interface IDisposable with
         member _.Dispose() =
@@ -111,30 +108,26 @@ type Sender<'agg when 'agg :> Aggregate>
 
 module Sender =
 
-    let inline send<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>> (sender: ISender) (aggId: Guid) (com: 'com) =
-        let setup
-            (aggId: Guid)
-            (comType: string)
-            (comData: byte array)
-            (channel: AsyncReplyChannel<Result<unit, exn>>)
-            =
+    let inline send<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>>
+        (sender: ISender)
+        (aggId: Guid)
+        (comId: Guid)
+        (com: 'com)
+        =
+        let setup (comType: string) (comData: byte array) (channel: AsyncReplyChannel<Result<unit, exn>>) =
             let aggId = aggId.ToString()
-            let comId = Guid.NewGuid().ToString()
+            let comId = comId.ToString()
             let h = Headers()
             let msg = Message<string, byte array>(Key = aggId, Value = comData, Headers = h)
             msg.Headers.Add("comId", Encoding.ASCII.GetBytes comId)
             msg.Headers.Add("comType", Encoding.ASCII.GetBytes comType)
-            msg.Headers.Add("partition", BitConverter.GetBytes sender.Partition)
             comId, msg, channel
 
         async {
             let comType = typeof<'com>.FullName
             let comData = JsonSerializer.SerializeToUtf8Bytes com
 
-            match!
-                sender.Agent.PostAndAsyncReply
-                <| fun channel -> setup aggId comType comData channel
-            with
+            match! sender.Agent.PostAndAsyncReply <| fun channel -> setup comType comData channel with
             | Ok() -> return ()
             | Error ex -> return raise ex
         }

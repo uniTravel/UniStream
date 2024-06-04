@@ -1,6 +1,5 @@
 namespace UniStream.Domain
 
-open System
 open System.Collections.Generic
 open System.Text
 open System.Threading
@@ -11,7 +10,7 @@ open UniStream.Domain
 
 type ISubscriber =
     inherit IWorker
-    abstract member AddHandler: key: string -> handler: MailboxProcessor<string * string * int * byte array> -> unit
+    abstract member AddHandler: key: string -> handler: MailboxProcessor<string * string * byte array> -> unit
 
 
 type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, consumer: IConsumer<string, byte array>)
@@ -19,7 +18,7 @@ type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, 
     let c = consumer.Client
     let aggType = typeof<'agg>.FullName
     let topic = aggType + "_Post"
-    let dic = Dictionary<string, MailboxProcessor<string * string * int * byte array>>()
+    let dic = Dictionary<string, MailboxProcessor<string * string * byte array>>()
 
     let work (ct: CancellationToken) =
         async {
@@ -28,10 +27,9 @@ type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, 
                     let cr = c.Consume ct
                     let comId = Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes("comId"))
                     let comType = Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes("comType"))
-                    let partition = BitConverter.ToInt32(cr.Message.Headers.GetLastBytes("partition"))
 
                     try
-                        dic[comType].Post(cr.Message.Key, comId, partition, cr.Message.Value)
+                        dic[comType].Post(cr.Message.Key, comId, cr.Message.Value)
                     with ex ->
                         logger.LogCritical($"{ex}")
             with ex ->
@@ -40,7 +38,7 @@ type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, 
 
     interface ISubscriber with
 
-        member _.AddHandler (key: string) (handler: MailboxProcessor<string * string * int * byte array>) =
+        member _.AddHandler (key: string) (handler: MailboxProcessor<string * string * byte array>) =
             dic.Add(key, handler)
 
         member _.Launch(ct: CancellationToken) =

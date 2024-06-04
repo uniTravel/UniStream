@@ -1,4 +1,4 @@
-namespace Account.Projector
+namespace Account.AggProjector
 
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
@@ -15,10 +15,10 @@ module Program =
         builder.Services.AddHostedService<AccountWorker>() |> ignore
         builder.Services.AddHostedService<TransactionWorker>() |> ignore
 
-        builder.Services.AddKeyedSingleton<IWorker, Projector<Account>>(typeof<Account>)
+        builder.Services.AddKeyedSingleton<IWorker, AggProjector<Account>>(typeof<Account>)
         |> ignore
 
-        builder.Services.AddKeyedSingleton<IWorker, Projector<Transaction>>(typeof<Transaction>)
+        builder.Services.AddKeyedSingleton<IWorker, AggProjector<Transaction>>(typeof<Transaction>)
         |> ignore
 
         builder.Build().Run()

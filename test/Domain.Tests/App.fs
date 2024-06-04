@@ -8,7 +8,7 @@ open UniStream.Domain
 
 let repo = Dictionary<string, (uint64 * string * ReadOnlyMemory<byte>) list>(10000)
 
-let writer aggType (aggId: Guid) revision evtType evtData =
+let writer aggType (aggId: Guid) (comId: Guid) revision evtType evtData =
     let stream = aggType + "-" + aggId.ToString()
 
     if repo.ContainsKey stream then

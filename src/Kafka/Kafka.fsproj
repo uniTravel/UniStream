@@ -12,8 +12,10 @@
     <Compile Include="Producer.fs" />
     <Compile Include="Consumer.fsi" />
     <Compile Include="Consumer.fs" />
-    <Compile Include="Projector.fsi" />
-    <Compile Include="Projector.fs" />
+    <Compile Include="AggProjector.fsi" />
+    <Compile Include="AggProjector.fs" />
+    <Compile Include="ComProjector.fsi" />
+    <Compile Include="ComProjector.fs" />
     <Compile Include="Sender.fsi" />
     <Compile Include="Sender.fs" />
     <Compile Include="Subscriber.fsi" />

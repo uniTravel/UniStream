@@ -7,7 +7,7 @@
 # 37639c0f-c9f2-4fb6-b2d2-4ca19950de9a
 
 ###
-POST {{baseUrl}}/CreateAccount
+POST {{baseUrl}}/CreateAccount/{{$guid}}
     ?aggId={{aggId}}
 Content-Type: application/json
 
@@ -17,7 +17,7 @@ Content-Type: application/json
 
 
 ###
-POST {{baseUrl}}/VerifyAccount
+POST {{baseUrl}}/VerifyAccount/{{$guid}}
     ?aggId={{aggId}}
 Content-Type: application/json
 
@@ -28,7 +28,7 @@ Content-Type: application/json
 
 
 ###
-POST {{baseUrl}}/ApproveAccount
+POST {{baseUrl}}/ApproveAccount/{{$guid}}
     ?aggId={{aggId}}
 Content-Type: application/json
 
@@ -40,7 +40,7 @@ Content-Type: application/json
 
 
 ###
-POST {{baseUrl}}/LimitAccount
+POST {{baseUrl}}/LimitAccount/{{$guid}}
     ?aggId={{aggId}}
 Content-Type: application/json
 

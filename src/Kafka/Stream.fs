@@ -23,14 +23,15 @@ type Stream(admin: IAdmin, producer: IProducer<string, byte array>, consumer: IC
                     .Wait()
         }
 
-    let write (aggType: string) (aggId: Guid) (revision: uint64) (evtType: string) (evtData: byte array) =
+    let write (aggType: string) (aggId: Guid) (comId: Guid) (revision: uint64) (evtType: string) (evtData: byte array) =
         let aggId = aggId.ToString()
         Async.Start <| createTopic aggType aggId revision
+        let comId = comId.ToString()
         let h = Headers()
-        let msg = Message<string, byte array>(Key = aggId, Value = evtData, Headers = h)
+        let msg = Message<string, byte array>(Key = comId, Value = evtData, Headers = h)
+        msg.Headers.Add("aggId", Encoding.ASCII.GetBytes aggId)
         msg.Headers.Add("evtType", Encoding.ASCII.GetBytes evtType)
         p.Produce(aggType, msg)
-        p.Flush(TimeSpan.FromSeconds(10)) |> ignore
 
     let read aggType (aggId: Guid) =
         let topic = aggType + "-" + aggId.ToString()

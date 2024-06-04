@@ -1,7 +1,6 @@
 namespace UniStream.Domain
 
 open System
-open System.Text
 open System.Text.Json
 open Microsoft.Extensions.Logging
 open Confluent.Kafka
@@ -14,31 +13,26 @@ module Handler =
         (subscriber: ISubscriber)
         (logger: ILogger)
         (producer: IProducer<string, byte array>)
-        (commit: Guid -> 'com -> Async<'agg>)
+        (commit: Guid -> Guid -> 'com -> Async<'agg>)
         =
         let aggType = typeof<'agg>.FullName
         let comType = typeof<'com>.FullName
         let topic = aggType + "_Reply"
         let p = producer.Client
 
-        let reply (tp: TopicPartition) comId (v: string) =
-            p.Produce(tp, Message<string, byte array>(Key = comId, Value = Encoding.ASCII.GetBytes v))
-            p.Flush(TimeSpan.FromSeconds(10)) |> ignore
-
         let agent =
-            new MailboxProcessor<string * string * int * byte array>(fun inbox ->
+            new MailboxProcessor<string * string * byte array>(fun inbox ->
                 let rec loop () =
                     async {
-                        let! aggId, comId, partition, comData = inbox.Receive()
+                        let! aggId, comId, comData = inbox.Receive()
                         let com = JsonSerializer.Deserialize<'com> comData
-                        let tp = TopicPartition(topic, Partition partition)
 
                         try
-                            do! commit (Guid aggId) com |> Async.Ignore
-                            reply tp comId ""
-                            logger.LogInformation($"{comType} of {aggId} finished")
+                            do! commit (Guid aggId) (Guid comId) com |> Async.Ignore
+                            logger.LogInformation($"{comType} of {aggId} committed")
                         with ex ->
-                            reply tp comId ex.Message
+                            let v = JsonSerializer.SerializeToUtf8Bytes ex.Message
+                            p.Produce(topic, Message<string, byte array>(Key = comId, Value = v))
                             logger.LogError($"{comType} of {aggId} error: {ex}")
 
                         return! loop ()
@@ -46,5 +40,5 @@ module Handler =
 
                 loop ())
 
-        subscriber.AddHandler typeof<'com>.FullName agent
+        subscriber.AddHandler comType agent
         agent.Start()

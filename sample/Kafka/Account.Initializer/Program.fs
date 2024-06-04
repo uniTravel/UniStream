@@ -19,13 +19,13 @@ module Program =
         match mode with
         | Single ->
             tl
-            |> List.map (fun t -> TopicSpecification(Name = t.FullName, ReplicationFactor = 1s, NumPartitions = 1))
+            |> List.map (fun t -> TopicSpecification(Name = t.FullName, ReplicationFactor = 2s, NumPartitions = 1))
         | Multi ->
             tl
             |> List.collect (fun t ->
                 [ TopicSpecification(Name = t.FullName, ReplicationFactor = 2s, NumPartitions = 3)
                   TopicSpecification(Name = t.FullName + "_Post", ReplicationFactor = 2s, NumPartitions = 3)
-                  TopicSpecification(Name = t.FullName + "_Reply", ReplicationFactor = 2s, NumPartitions = 2) ])
+                  TopicSpecification(Name = t.FullName + "_Reply", ReplicationFactor = 2s, NumPartitions = 1) ])
 
     [<EntryPoint>]
     let main args =
@@ -36,7 +36,7 @@ module Program =
         use serviceScope = host.Services.CreateScope()
         let services = serviceScope.ServiceProvider
         use admin = services.GetRequiredService<IAdmin>().Client
-        let ta = spec Single <| [ typeof<Account>; typeof<Transaction> ]
+        let ta = spec Multi <| [ typeof<Account>; typeof<Transaction> ]
         admin.CreateTopicsAsync(ta).Wait()
 
         0 // exit code

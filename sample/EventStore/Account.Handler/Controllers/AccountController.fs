@@ -9,42 +9,42 @@ open Account.Domain
 
 
 [<ApiController>]
-[<Route("[controller]/[action]")>]
+[<Route("[controller]/[action]/{comId}")>]
 type AccountController(logger: ILogger<AccountController>, svc: AccountService) as me =
     inherit ControllerBase()
 
     [<HttpPost>]
     [<ProducesResponseType(StatusCodes.Status201Created)>]
     [<ProducesResponseType(StatusCodes.Status400BadRequest)>]
-    member _.CreateAccount(aggId: Guid, com: CreateAccount) =
+    member _.CreateAccount(aggId: Guid, comId: Guid, com: CreateAccount) =
         task {
-            let! result = svc.CreateAccount None aggId com
+            let! result = svc.CreateAccount aggId comId com
             return me.CreatedAtAction(nameof (me.CreateAccount), result)
         }
 
     [<HttpPost>]
     [<ProducesResponseType(StatusCodes.Status201Created)>]
     [<ProducesResponseType(StatusCodes.Status400BadRequest)>]
-    member _.VerifyAccount(aggId: Guid, com: VerifyAccount) =
+    member _.VerifyAccount(aggId: Guid, comId: Guid, com: VerifyAccount) =
         task {
-            let! result = svc.VerifyAccount None aggId com
+            let! result = svc.VerifyAccount aggId comId com
             return me.CreatedAtAction(nameof (me.VerifyAccount), result)
         }
 
     [<HttpPost>]
     [<ProducesResponseType(StatusCodes.Status201Created)>]
     [<ProducesResponseType(StatusCodes.Status400BadRequest)>]
-    member _.ApproveAccount(aggId: Guid, com: ApproveAccount) =
+    member _.ApproveAccount(aggId: Guid, comId: Guid, com: ApproveAccount) =
         task {
-            let! result = svc.ApproveAccount None aggId com
+            let! result = svc.ApproveAccount aggId comId com
             return me.CreatedAtAction(nameof (me.ApproveAccount), result)
         }
 
     [<HttpPost>]
     [<ProducesResponseType(StatusCodes.Status201Created)>]
     [<ProducesResponseType(StatusCodes.Status400BadRequest)>]
-    member _.LimitAccount(aggId: Guid, com: LimitAccount) =
+    member _.LimitAccount(aggId: Guid, comId: Guid, com: LimitAccount) =
         task {
-            let! result = svc.LimitAccount None aggId com
+            let! result = svc.LimitAccount aggId comId com
             return me.CreatedAtAction(nameof (me.LimitAccount), result)
         }

@@ -18,7 +18,7 @@ let inline handler aggId (com: 'com) =
     let comType = typeof<'com>.Name
     let content = new ByteArrayContent(JsonSerializer.SerializeToUtf8Bytes com)
     content.Headers.ContentType <- MediaTypeHeaderValue("application/json")
-    client.PostAsync($"{comType}?aggId={aggId}", content).Result
+    client.PostAsync($"{comType}/{Guid.NewGuid()}?aggId={aggId}", content).Result
 
 
 [<Tests>]

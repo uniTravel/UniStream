@@ -13,8 +13,8 @@ module Aggregator =
     /// <typeparam name="'agg">聚合类型。</typeparam>
     type Msg<'agg when 'agg :> Aggregate> =
         | Register of string * ('agg -> ReadOnlyMemory<byte> -> unit)
-        | Create of Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<'agg, exn>>
-        | Apply of Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<'agg, exn>>
+        | Create of Guid * Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<'agg, exn>>
+        | Apply of Guid * Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<'agg, exn>>
 
     /// <summary>创建聚合
     /// </summary>
@@ -23,10 +23,12 @@ module Aggregator =
     /// <typeparam name="'evt">事件类型。</typeparam>
     /// <param name="agent">聚合操作代理。</param>
     /// <param name="aggId">聚合ID。</param>
+    /// <param name="comId">命令ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>新聚合</returns>
     val inline create:
-        agent: MailboxProcessor<Msg<'agg>> -> aggId: Guid -> com: 'com -> Async<'agg> when Com<'agg, 'com, 'evt>
+        agent: MailboxProcessor<Msg<'agg>> -> aggId: Guid -> comId: Guid -> com: 'com -> Async<'agg>
+            when Com<'agg, 'com, 'evt>
 
     /// <summary>变更聚合
     /// </summary>
@@ -35,10 +37,12 @@ module Aggregator =
     /// <typeparam name="'evt">事件类型。</typeparam>
     /// <param name="agent">聚合操作代理。</param>
     /// <param name="aggId">聚合ID。</param>
+    /// <param name="comId">命令ID。</param>
     /// <param name="com">命令。</param>
     /// <returns>聚合</returns>
     val inline apply:
-        agent: MailboxProcessor<Msg<'agg>> -> aggId: Guid -> com: 'com -> Async<'agg> when Com<'agg, 'com, 'evt>
+        agent: MailboxProcessor<Msg<'agg>> -> aggId: Guid -> comId: Guid -> com: 'com -> Async<'agg>
+            when Com<'agg, 'com, 'evt>
 
     /// <summary>注册重播
     /// </summary>

@@ -15,7 +15,7 @@ type ISubscriber =
     /// </summary>
     /// <param name="key">命令类型全称。</param>
     /// <param name="hangler">聚合命令处理者。</param>
-    abstract member AddHandler: key: string -> handler: MailboxProcessor<string * string * int * byte array> -> unit
+    abstract member AddHandler: key: string -> handler: MailboxProcessor<string * string * byte array> -> unit
 
 
 /// <summary>聚合命令订阅者类型
