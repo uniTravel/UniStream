@@ -17,15 +17,13 @@ module Program =
 
     let spec (mode: Mode) (tl: Type list) =
         match mode with
-        | Single ->
-            tl
-            |> List.map (fun t -> TopicSpecification(Name = t.FullName, ReplicationFactor = 2s, NumPartitions = 1))
+        | Single -> tl |> List.map (fun t -> TopicSpecification(Name = t.FullName))
         | Multi ->
             tl
             |> List.collect (fun t ->
-                [ TopicSpecification(Name = t.FullName, ReplicationFactor = 2s, NumPartitions = 3)
-                  TopicSpecification(Name = t.FullName + "_Post", ReplicationFactor = 2s, NumPartitions = 3)
-                  TopicSpecification(Name = t.FullName + "_Reply", ReplicationFactor = 2s, NumPartitions = 1) ])
+                [ TopicSpecification(Name = t.FullName, NumPartitions = 3)
+                  TopicSpecification(Name = t.FullName + "_Post", NumPartitions = 3)
+                  TopicSpecification(Name = t.FullName + "_Reply") ])
 
     [<EntryPoint>]
     let main args =

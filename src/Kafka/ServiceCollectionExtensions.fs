@@ -81,7 +81,6 @@ type ServiceCollectionExtensions =
         Cfg.admin services config
         Cfg.aggregateProducer services config
         Cfg.aggregateConsumer services config
-        services.AddSingleton<IStream, Stream>() |> ignore
 
     /// <summary>注入聚合投影者相关配置
     /// </summary>
@@ -103,4 +102,3 @@ type ServiceCollectionExtensions =
         Cfg.aggregateConsumer services config
         Cfg.commandProducer services config
         Cfg.commandConsumer services config
-        services.AddSingleton<IStream, Stream>() |> ignore

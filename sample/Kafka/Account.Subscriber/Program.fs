@@ -20,6 +20,9 @@ module Program =
         builder.Services.AddKeyedSingleton<ISubscriber, Subscriber<Transaction>>(typeof<Transaction>)
         |> ignore
 
+        builder.Services.AddKeyedSingleton<IStream, Stream<Transaction>>(typeof<Transaction>)
+        |> ignore
+
         builder.Build().Run()
 
         0 // exit code

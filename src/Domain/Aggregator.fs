@@ -9,8 +9,8 @@ module Aggregator =
 
     type Msg<'agg when 'agg :> Aggregate> =
         | Register of string * ('agg -> ReadOnlyMemory<byte> -> unit)
-        | Create of Guid * Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<'agg, exn>>
-        | Apply of Guid * Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<'agg, exn>>
+        | Create of Guid * Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<unit, exn>>
+        | Apply of Guid * Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<Result<unit, exn>>
 
     let inline validate<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>> (com: 'com) (agg: 'agg) = com.Validate agg
 
@@ -57,82 +57,92 @@ module Aggregator =
         (stream: 'stream)
         (options: AggregateOptions)
         =
-        let aggType = typeof<'agg>.FullName
         let capacity = options.Capacity
         let multiple = options.Multiple
         let half = capacity >>> 1
         let upper = capacity * multiple + half
+        let ch = HashSet<Guid>()
         let replayer = Dictionary<string, 'agg -> ReadOnlyMemory<byte> -> unit>()
         let repository = Dictionary<Guid, 'agg>(capacity)
 
-        let reduce op =
-            let op = List.distinct op
-            let l, r = List.splitAt half op
+        let reduce ao co =
+            let ao = List.distinct ao
+            let aol, aor = List.splitAt half ao
+            let col, cor = List.splitAt half co
 
-            r
+            aor
             |> List.iter (fun id ->
                 if repository.ContainsKey id then
                     repository.Remove(id) |> ignore)
 
-            l
+            cor |> List.iter (fun id -> ch.Remove id |> ignore)
+            aol, col
 
-        let checkRepo op =
-            if repository.Count = capacity then reduce op else op
+        let checkRepo ao co =
+            if repository.Count = capacity then reduce ao co else ao, co
 
-        let checkOp op =
-            if List.length op = upper then reduce op else op
+        let checkOp ao co =
+            if List.length ao = upper then reduce ao co else ao, co
 
-        let inline replay aggType aggId agg =
-            stream.Reader aggType aggId
+        let inline replay aggId agg =
+            stream.Reader aggId
             |> List.iter (fun (evtType, evtData) ->
                 let act = replayer[evtType]
                 act agg evtData
                 agg.Next())
 
-        let inline handle (agg: 'agg) comId validate execute (channel: AsyncReplyChannel<Result<'agg, exn>>) =
+        let inline handle (agg: 'agg) comId validate execute (channel: AsyncReplyChannel<Result<unit, exn>>) =
             validate agg
             let evtType, evtData = execute agg
-            stream.Writer aggType agg.Id comId agg.Revision evtType evtData
+            stream.Writer agg.Id comId agg.Revision evtType evtData
             agg.Next()
-            channel.Reply <| Ok agg
+            channel.Reply <| Ok()
 
         let agent =
             MailboxProcessor<Msg<'agg>>.Start
             <| fun inbox ->
-                let rec loop op =
+                let rec loop (ao, co) =
                     async {
                         match! inbox.Receive() with
                         | Register(evtType, act) -> replayer[evtType] <- act
                         | Create(aggId, comId, validate, execute, channel) ->
-                            try
-                                let agg = creator aggId
-                                handle agg comId validate execute channel
-                                repository.Add(agg.Id, agg)
-                                return! aggId :: op |> checkRepo |> loop
-                            with ex ->
-                                channel.Reply <| Error ex
+                            if ch.Contains comId then
+                                channel.Reply <| Ok()
+                            else
+                                try
+                                    let agg = creator aggId
+                                    handle agg comId validate execute channel
+                                    repository.Add(agg.Id, agg)
+                                    ch.Add comId |> ignore
+                                    return! checkRepo (aggId :: ao) (comId :: co) |> loop
+                                with ex ->
+                                    channel.Reply <| Error ex
                         | Apply(aggId, comId, validate, execute, channel) ->
-                            if repository.ContainsKey aggId then
+                            if ch.Contains comId then
+                                channel.Reply <| Ok()
+                            elif repository.ContainsKey aggId then
                                 try
                                     let agg = repository[aggId]
                                     handle agg comId validate execute channel
                                     repository[aggId] <- agg
-                                    return! aggId :: op |> checkOp |> loop
+                                    ch.Add comId |> ignore
+                                    return! checkOp (aggId :: ao) (comId :: co) |> loop
                                 with ex ->
                                     channel.Reply <| Error ex
                             else
                                 try
                                     let agg = creator aggId
-                                    replay aggType aggId agg
+                                    replay aggId agg
                                     handle agg comId validate execute channel
                                     repository.Add(agg.Id, agg)
-                                    return! aggId :: op |> checkRepo |> loop
+                                    ch.Add comId |> ignore
+                                    return! checkRepo (aggId :: ao) (comId :: co) |> loop
                                 with ex ->
                                     channel.Reply <| Error ex
 
-                        return! loop op
+                        return! loop (ao, co)
                     }
 
-                loop []
+                loop ([], stream.Restore ch options.Count)
 
         agent

@@ -8,8 +8,9 @@ open Domain
 
 let stream =
     { new IStream with
-        member _.Writer = writer
-        member _.Reader = reader }
+        member _.Writer = writer "Note"
+        member _.Reader = reader "Note"
+        member _.Restore = restore "Note" }
 
 let opt = AggregateOptions(Capacity = 3)
 let agent = Aggregator.init Note stream opt
@@ -30,11 +31,8 @@ let test =
                 Content = "c"
                 Grade = 1 }
 
-          let agg = create agent id1 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.Revision, agg.Title, agg.Content, agg.Grade) (0UL, "t", "c", 1) "聚合值有误"
-          let agg = create agent id2 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.Revision, agg.Title, agg.Content, agg.Grade) (0UL, "t", "c", 1) "聚合值有误"
-          Expect.notEqual id1 id2 "两个Id值有误"
+          create agent id1 (Guid.NewGuid()) com |> Async.RunSynchronously
+          create agent id2 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "创建第三个聚合，存在不合验证逻辑的数据"
       <| fun _ ->
           let com =
@@ -49,8 +47,7 @@ let test =
       testCase "第一个聚合应用第一条不会导致验证错误的变更"
       <| fun _ ->
           let com = { Up = 2 }
-          let agg = upgrade agent id1 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.Id, agg.Revision, agg.Title, agg.Content, agg.Grade) (id1, 1UL, "t", "c", 3) "聚合值有误"
+          upgrade agent id1 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "第二个聚合应用第一条会导致验证错误的变更"
       <| fun _ ->
           let com = { Up = 3 }
@@ -62,23 +59,19 @@ let test =
       testCase "第一个聚合应用第二条变更"
       <| fun _ ->
           let com = { Content = "c1" }
-          let agg = change agent id1 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.Id, agg.Revision, agg.Title, agg.Content, agg.Grade) (id1, 2UL, "t", "c1", 3) "聚合值有误"
+          change agent id1 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "第二个聚合应用第二条变更"
       <| fun _ ->
           let com = { Content = "c1" }
-          let agg = change agent id2 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.Id, agg.Revision, agg.Title, agg.Content, agg.Grade) (id2, 1UL, "t", "c1", 1) "聚合值有误"
+          change agent id2 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "第一个聚合应用第三条变更"
       <| fun _ ->
           let com = { Content = "c2" }
-          let agg = change agent id1 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.Id, agg.Revision, agg.Title, agg.Content, agg.Grade) (id1, 3UL, "t", "c2", 3) "聚合值有误"
+          change agent id1 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "第二个聚合应用第三条变更"
       <| fun _ ->
           let com = { Content = "c2" }
-          let agg = change agent id2 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.Id, agg.Revision, agg.Title, agg.Content, agg.Grade) (id2, 2UL, "t", "c2", 1) "聚合值有误"
+          change agent id2 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCaseAsync "并行应用领域变更"
       <| async {
           let coms =
@@ -87,13 +80,11 @@ let test =
                       Content = $"c{i}"
                       Grade = 1 } ]
 
-          let! r =
+          do!
               coms
               |> List.map (fun c -> create agent (Guid.NewGuid()) (Guid.NewGuid()) c)
               |> Async.Parallel
-
-          Expect.allEqual (r |> Array.map (fun n -> n.Revision)) 0UL "聚合版本有误"
-          Expect.hasLength r 1000 "返回集合长度有误"
+              |> Async.Ignore
       } ]
     |> testList "Write"
     |> testSequenced

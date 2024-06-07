@@ -25,6 +25,9 @@ module Program =
         builder.Services.AddAggregate<Account>(builder.Configuration)
         builder.Services.AddSingleton<AccountService>()
 
+        builder.Services.AddKeyedSingleton<IStream, Stream<Account>>(typeof<Account>)
+        |> ignore
+
         let app = builder.Build()
 
         if app.Environment.IsDevelopment() then

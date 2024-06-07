@@ -23,6 +23,6 @@ module Handler =
         subscriber: ISubscriber ->
         logger: ILogger ->
         producer: IProducer<string, byte array> ->
-        commit: (Guid -> Guid -> 'com -> Async<'agg>) ->
+        commit: (Guid -> Guid -> 'com -> Async<unit>) ->
             unit
             when Com<'agg, 'com, 'evt>

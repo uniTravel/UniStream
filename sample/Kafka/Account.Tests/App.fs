@@ -14,4 +14,11 @@ let host =
     builder.Services.AddSingleton<AccountService>() |> ignore
     builder.Services.AddAggregate<Transaction>(builder.Configuration)
     builder.Services.AddSingleton<TransactionService>() |> ignore
+
+    builder.Services.AddKeyedSingleton<IStream, Stream<Account>>(typeof<Account>)
+    |> ignore
+
+    builder.Services.AddKeyedSingleton<IStream, Stream<Transaction>>(typeof<Transaction>)
+    |> ignore
+
     builder.Build()

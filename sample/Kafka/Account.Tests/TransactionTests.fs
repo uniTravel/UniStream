@@ -19,8 +19,7 @@ let test1 =
       <| fun _ ->
           let next = DateTime.Today.AddMonths(1)
           let com = OpenPeriod(AccountId = acid, Period = $"{next:yyyyMM}")
-          let agg = svc.OpenPeriod id1 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 0m, 0m, 0m) "聚合值有误"
+          svc.OpenPeriod id1 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "打开但未生效的交易期间执行存款命令"
       <| fun _ ->
           let com = Deposit(Amount = 5m)
@@ -32,28 +31,23 @@ let test1 =
       testCase "过账限额、余额以生效交易期间"
       <| fun _ ->
           let com = SetLimit(Limit = 1000m, TransLimit = 1000m, Balance = 94m)
-          let agg = svc.SetLimit id1 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 1000m, 1000m, 94m) "聚合值有误"
+          svc.SetLimit id1 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "再次执行存款"
       <| fun _ ->
           let com = Deposit(Amount = 5m)
-          let agg = svc.Deposit id1 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 1000m, 1000m, 99m) "聚合值有误"
+          svc.Deposit id1 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "取款"
       <| fun _ ->
           let com = Withdraw(Amount = 1m)
-          let agg = svc.Withdraw id1 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 1000m, 1000m, 98m) "聚合值有误"
+          svc.Withdraw id1 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "转入"
       <| fun _ ->
           let com = TransferIn(Amount = 100m)
-          let agg = svc.TransferIn id1 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 1000m, 1000m, 198m) "聚合值有误"
+          svc.TransferIn id1 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "转出"
       <| fun _ ->
           let com = TransferOut(Amount = 10m)
-          let agg = svc.TransferOut id1 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 1000m, 1000m, 188m) "聚合值有误" ]
+          svc.TransferOut id1 (Guid.NewGuid()) com |> Async.RunSynchronously ]
     |> testList "打开新的交易期间"
     |> testSequenced
     |> testLabel "Transaction"
@@ -66,28 +60,23 @@ let test2 =
           let com =
               InitPeriod(AccountId = acid, Period = $"{DateTime.Today:yyyyMM}", Limit = 1000m)
 
-          let agg = svc.InitPeriod id2 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 1000m, 1000m, 0m) "聚合值有误"
+          svc.InitPeriod id2 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "存款"
       <| fun _ ->
           let com = Deposit(Amount = 5m)
-          let agg = svc.Deposit id2 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 1000m, 1000m, 5m) "聚合值有误"
+          svc.Deposit id2 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "取款"
       <| fun _ ->
           let com = Withdraw(Amount = 1m)
-          let agg = svc.Withdraw id2 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 1000m, 1000m, 4m) "聚合值有误"
+          svc.Withdraw id2 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "转入"
       <| fun _ ->
           let com = TransferIn(Amount = 100m)
-          let agg = svc.TransferIn id2 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 1000m, 1000m, 104m) "聚合值有误"
+          svc.TransferIn id2 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "转出"
       <| fun _ ->
           let com = TransferOut(Amount = 10m)
-          let agg = svc.TransferOut id2 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 1000m, 1000m, 94m) "聚合值有误"
+          svc.TransferOut id2 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "设置的交易限额超过账户限额"
       <| fun _ ->
           let com = SetTransLimit(TransLimit = 1050m)
@@ -99,18 +88,15 @@ let test2 =
       testCase "设置交易限额"
       <| fun _ ->
           let com = SetTransLimit(TransLimit = 500m)
-          let agg = svc.SetTransLimit id2 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 1000m, 500m, 94m) "聚合值有误"
+          svc.SetTransLimit id2 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "变更的限额大于交易限额"
       <| fun _ ->
           let com = ChangeLimit(Limit = 700m)
-          let agg = svc.ChangeLimit id2 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 700m, 500m, 94m) "聚合值有误"
+          svc.ChangeLimit id2 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "变更的限额小于交易限额"
       <| fun _ ->
           let com = ChangeLimit(Limit = 300m)
-          let agg = svc.ChangeLimit id2 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.AccountId, agg.Limit, agg.TransLimit, agg.Balance) (acid, 300m, 300m, 94m) "聚合值有误"
+          svc.ChangeLimit id2 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "取款金额超过余额"
       <| fun _ ->
           let com = Withdraw(Amount = 100m)

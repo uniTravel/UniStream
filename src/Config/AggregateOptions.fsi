@@ -13,7 +13,7 @@ type AggregateOptions =
     /// </summary>
     new: unit -> AggregateOptions
 
-    /// <summary>聚合缓存容量，缺省为10000
+    /// <summary>聚合缓存容量，缺省为4096
     /// </summary>
     [<Range(2, Int32.MaxValue >>> 3)>]
     member Capacity: int with get, set
@@ -26,3 +26,11 @@ type AggregateOptions =
     /// </remarks>
     [<Range(2, 7)>]
     member Multiple: int with get, set
+
+    /// <summary>初始化命令操作缓存的数量，缺省为64
+    /// </summary>
+    /// <remarks>
+    /// <para> 用于命令去重。</para>
+    /// </remarks>
+    [<Range(2, Int32.MaxValue >>> 3)>]
+    member Count: int with get, set

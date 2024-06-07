@@ -1,10 +1,13 @@
 namespace UniStream.Domain
 
 open System
+open System.Collections.Generic
 
 
 type IStream =
 
-    abstract member Writer: (string -> Guid -> Guid -> uint64 -> string -> byte array -> unit)
+    abstract member Writer: (Guid -> Guid -> uint64 -> string -> byte array -> unit)
 
-    abstract member Reader: (string -> Guid -> (string * ReadOnlyMemory<byte>) list)
+    abstract member Reader: (Guid -> (string * ReadOnlyMemory<byte>) list)
+
+    abstract member Restore: (HashSet<Guid> -> int -> Guid list)

@@ -24,6 +24,8 @@ let reader aggType (aggId: Guid) =
     else
         failwith $"The key {stream} is wrong."
 
+let restore aggType ch count = []
+
 let create = Aggregator.create<Note, CreateNote, NoteCreated>
 let change = Aggregator.apply<Note, ChangeNote, NoteChanged>
 let upgrade = Aggregator.apply<Note, UpgradeNote, NoteUpgraded>

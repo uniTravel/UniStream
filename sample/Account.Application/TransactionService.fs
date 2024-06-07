@@ -1,11 +1,13 @@
 namespace Account.Application
 
+open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Options
 open UniStream.Domain
 open Account.Domain
 
 
-type TransactionService(stream: IStream, options: IOptionsMonitor<AggregateOptions>) =
+type TransactionService
+    ([<FromKeyedServices(typeof<Transaction>)>] stream: IStream, options: IOptionsMonitor<AggregateOptions>) =
     let options = options.Get(nameof Transaction)
     let agent = Aggregator.init Transaction stream options
 

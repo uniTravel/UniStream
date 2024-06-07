@@ -13,7 +13,7 @@ module Handler =
         (subscriber: ISubscriber)
         (logger: ILogger)
         (producer: IProducer<string, byte array>)
-        (commit: Guid -> Guid -> 'com -> Async<'agg>)
+        (commit: Guid -> Guid -> 'com -> Async<unit>)
         =
         let aggType = typeof<'agg>.FullName
         let comType = typeof<'com>.FullName
@@ -28,7 +28,7 @@ module Handler =
                         let com = JsonSerializer.Deserialize<'com> comData
 
                         try
-                            do! commit (Guid aggId) (Guid comId) com |> Async.Ignore
+                            do! commit (Guid aggId) (Guid comId) com
                             logger.LogInformation($"{comType} of {aggId} committed")
                         with ex ->
                             let v = JsonSerializer.SerializeToUtf8Bytes ex.Message

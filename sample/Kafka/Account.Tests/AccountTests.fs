@@ -18,27 +18,15 @@ let test1 =
     [ testCase "初始化"
       <| fun _ ->
           let com = CreateAccount(Owner = "张三")
-          let agg = svc.CreateAccount id1 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal agg.Owner "张三" "聚合值有误"
+          svc.CreateAccount id1 (Guid.NewGuid()) com |> Async.RunSynchronously
           let com = VerifyAccount(VerifiedBy = "王五", Conclusion = true)
-          let agg = svc.VerifyAccount id1 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.Owner, agg.VerifiedBy, agg.Verified, agg.VerifyConclusion) ("张三", "王五", true, true) "聚合值有误"
+          svc.VerifyAccount id1 (Guid.NewGuid()) com |> Async.RunSynchronously
           let com = ApproveAccount(ApprovedBy = "赵六", Approved = true, Limit = 10m)
-          let agg = svc.ApproveAccount id1 (Guid.NewGuid()) com |> Async.RunSynchronously
-
-          Expect.equal
-              (agg.Owner, agg.VerifiedBy, agg.Verified, agg.VerifyConclusion, agg.ApprovedBy, agg.Approved, agg.Limit)
-              ("张三", "王五", true, true, "赵六", true, 10m)
-              "聚合值有误"
+          svc.ApproveAccount id1 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "提交设置限额命令"
       <| fun _ ->
           let com = LimitAccount(Limit = 20m)
-          let agg = svc.LimitAccount id1 (Guid.NewGuid()) com |> Async.RunSynchronously
-
-          Expect.equal
-              (agg.Owner, agg.VerifiedBy, agg.Verified, agg.VerifyConclusion, agg.ApprovedBy, agg.Approved, agg.Limit)
-              ("张三", "王五", true, true, "赵六", true, 20m)
-              "聚合值有误"
+          svc.LimitAccount id1 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "提交的限额不变"
       <| fun _ ->
           let com = LimitAccount(Limit = 20m)
@@ -65,18 +53,11 @@ let test2 =
     [ testCase "初始化"
       <| fun _ ->
           let com = CreateAccount(Owner = "张三")
-          let agg = svc.CreateAccount id2 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal agg.Owner "张三" "聚合值有误"
+          svc.CreateAccount id2 (Guid.NewGuid()) com |> Async.RunSynchronously
           let com = VerifyAccount(VerifiedBy = "王五", Conclusion = true)
-          let agg = svc.VerifyAccount id2 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.Owner, agg.VerifiedBy, agg.Verified, agg.VerifyConclusion) ("张三", "王五", true, true) "聚合值有误"
+          svc.VerifyAccount id2 (Guid.NewGuid()) com |> Async.RunSynchronously
           let com = ApproveAccount(ApprovedBy = "赵六", Approved = false, Limit = 10m)
-          let agg = svc.ApproveAccount id2 (Guid.NewGuid()) com |> Async.RunSynchronously
-
-          Expect.equal
-              (agg.Owner, agg.VerifiedBy, agg.Verified, agg.VerifyConclusion, agg.ApprovedBy, agg.Approved, agg.Limit)
-              ("张三", "王五", true, true, "赵六", false, 0m)
-              "聚合值有误"
+          svc.ApproveAccount id2 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "提交设置限额命令"
       <| fun _ ->
           let com = LimitAccount(Limit = 20m)
@@ -96,12 +77,7 @@ let test3 =
       <| fun _ ->
           let com = LimitAccount(Limit = 15m)
           Threading.Thread.Sleep 1000
-          let agg = svc.LimitAccount id1 (Guid.NewGuid()) com |> Async.RunSynchronously
-
-          Expect.equal
-              (agg.Owner, agg.VerifiedBy, agg.Verified, agg.VerifyConclusion, agg.ApprovedBy, agg.Approved, agg.Limit)
-              ("张三", "王五", true, true, "赵六", true, 15m)
-              "聚合值有误" ]
+          svc.LimitAccount id1 (Guid.NewGuid()) com |> Async.RunSynchronously ]
     |> testList "验证缓存刷新后处理"
     |> testSequenced
     |> testLabel "Account"
@@ -112,11 +88,9 @@ let test4 =
     [ testCase "初始化"
       <| fun _ ->
           let com = CreateAccount(Owner = "张三")
-          let agg = svc.CreateAccount id3 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal agg.Owner "张三" "聚合值有误"
+          svc.CreateAccount id3 (Guid.NewGuid()) com |> Async.RunSynchronously
           let com = VerifyAccount(VerifiedBy = "王五", Conclusion = false)
-          let agg = svc.VerifyAccount id3 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.Owner, agg.VerifiedBy, agg.Verified, agg.VerifyConclusion) ("张三", "王五", true, false) "聚合值有误"
+          svc.VerifyAccount id3 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "提交审批命令"
       <| fun _ ->
           let com = ApproveAccount(ApprovedBy = "赵六", Approved = true, Limit = 10m)

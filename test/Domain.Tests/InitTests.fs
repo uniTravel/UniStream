@@ -9,8 +9,9 @@ open Domain
 
 let stream =
     { new IStream with
-        member _.Writer = writer
-        member _.Reader = reader }
+        member _.Writer = writer "Note"
+        member _.Reader = reader "Note"
+        member _.Restore = restore "Note" }
 
 let opt = AggregateOptions(Capacity = 3)
 let agent = Aggregator.init Note stream opt
@@ -27,8 +28,7 @@ let test =
                 Content = "c"
                 Grade = 1 }
 
-          let agg = create agent i1 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.Revision, agg.Title, agg.Content, agg.Grade) (0UL, "t", "c", 1) "聚合值有误"
+          create agent i1 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "创建第二个聚合"
       <| fun _ ->
           let com =
@@ -36,18 +36,14 @@ let test =
                 Content = "c"
                 Grade = 1 }
 
-          let agg = create agent i2 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.Revision, agg.Title, agg.Content, agg.Grade) (0UL, "t", "c", 1) "聚合值有误"
+          create agent i2 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "第二个聚合持续应用八条变更，以便触发缩容"
       <| fun _ ->
           let c = [ for i in 1..8 -> { Content = $"c{i}" } ]
 
-          let r =
-              c
-              |> List.map (fun c -> change agent i2 (Guid.NewGuid()) c |> Async.RunSynchronously)
+          c
+          |> List.iter (fun c -> change agent i2 (Guid.NewGuid()) c |> Async.RunSynchronously)
 
-          let agg = r[7]
-          Expect.equal (agg.Revision, agg.Title, agg.Content, agg.Grade) (8UL, "t", "c8", 1) "聚合值有误"
       testCase "第一个聚合应用第一条变更"
       <| fun _ ->
           let com = { Content = "c1" }
@@ -61,23 +57,18 @@ let test =
           Aggregator.register agent <| Replay<Note, NoteCreated>()
           Aggregator.register agent <| Replay<Note, NoteChanged>()
           let com = { Content = "c1" }
-          let agg = change agent i1 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.Id, agg.Revision, agg.Title, agg.Content, agg.Grade) (i1, 1UL, "t", "c1", 1) "聚合值有误"
+          change agent i1 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "第二个聚合应用第九条未注册重播的变更"
       <| fun _ ->
           let com = { Up = 1 }
-          let agg = upgrade agent i2 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.Id, agg.Revision, agg.Title, agg.Content, agg.Grade) (i2, 9UL, "t", "c8", 2) "聚合值有误"
+          upgrade agent i2 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "第一个聚合持续应用八条变更，以便触发缩容"
       <| fun _ ->
           let c = [ for i in 1..8 -> { Content = $"c{i}" } ]
 
-          let r =
-              c
-              |> List.map (fun c -> change agent i1 (Guid.NewGuid()) c |> Async.RunSynchronously)
+          c
+          |> List.iter (fun c -> change agent i1 (Guid.NewGuid()) c |> Async.RunSynchronously)
 
-          let agg = r[7]
-          Expect.equal (agg.Revision, agg.Title, agg.Content, agg.Grade) (9UL, "t", "c8", 1) "聚合值有误"
       testCase "第二个聚合应用第十条变更"
       <| fun _ ->
           let com = { Content = "c2" }
@@ -90,8 +81,7 @@ let test =
       <| fun _ ->
           Aggregator.register agent <| Replay<Note, NoteUpgraded>()
           let com = { Content = "c2" }
-          let agg = change agent i2 (Guid.NewGuid()) com |> Async.RunSynchronously
-          Expect.equal (agg.Id, agg.Revision, agg.Title, agg.Content, agg.Grade) (i2, 10UL, "t", "c2", 2) "聚合值有误" ]
+          change agent i2 (Guid.NewGuid()) com |> Async.RunSynchronously ]
     |> testList "Init"
     |> testSequenced
     |> testLabel "Domain"
