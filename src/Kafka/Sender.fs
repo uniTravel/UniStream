@@ -6,93 +6,111 @@ open System.Text
 open System.Text.Json
 open System.Threading
 open Microsoft.Extensions.Logging
+open Microsoft.Extensions.Options
 open Confluent.Kafka
 open Microsoft.FSharp.Core
 open UniStream.Domain
 
 
+type Msg =
+    | Send of string * Message<string, byte array> * AsyncReplyChannel<Result<unit, exn>>
+    | Receive of ConsumeResult<string, byte array>
+    | Refresh of DateTime
+
+
 type ISender =
 
-    abstract member Agent: MailboxProcessor<string * Message<string, byte array> * AsyncReplyChannel<Result<unit, exn>>>
-
-
-type Hub =
-    | Add of string * AsyncReplyChannel<Result<unit, exn>>
-    | Reply of ConsumeResult<string, byte array>
+    abstract member Agent: MailboxProcessor<Msg>
 
 
 type Sender<'agg when 'agg :> Aggregate>
-    (logger: ILogger<Sender<'agg>>, producer: IProducer<string, byte array>, consumer: IConsumer<string, byte array>) =
+    (
+        logger: ILogger<Sender<'agg>>,
+        options: IOptionsMonitor<CommandOptions>,
+        producer: IProducer<string, byte array>,
+        consumer: IConsumer<string, byte array>
+    ) =
     let p = producer.Client
     let c = consumer.Client
+    let options = options.Get(typeof<'agg>.Name)
+    let interval = options.Interval * 1000
     let aggType = typeof<'agg>.FullName
     let cts = new CancellationTokenSource()
-    let topic = aggType + "_Reply"
     let mutable dispose = false
 
-    let receiver =
-        new MailboxProcessor<Hub>(fun inbox ->
-            let rec loop (dic: Dictionary<string, AsyncReplyChannel<Result<unit, exn>>>) =
-                async {
-                    match! inbox.Receive() with
-                    | Add(comId, channel) -> dic.Add(comId, channel)
-                    | Reply(cr) ->
-                        match cr.Message.Key with
-                        | comId when dic.ContainsKey comId ->
-                            match cr.Message.Value with
-                            | [||] ->
-                                logger.LogInformation($"{comId} of {aggType} finished")
-                                dic[comId].Reply <| Ok()
-                            | v ->
-                                let err = BitConverter.ToString v
-                                logger.LogError($"{comId} of {aggType} failed: {err}")
-                                dic[comId].Reply <| Error(failwith $"Apply command failed: {err}")
-
-                            dic.Remove comId |> ignore
-                        | _ -> ()
-
-                    return! loop dic
-                }
-
-            loop <| Dictionary<string, AsyncReplyChannel<Result<unit, exn>>>())
-
-    let consumer (ct: CancellationToken) =
-        async {
-            try
-                while true do
-                    let cr = c.Consume ct
-                    receiver.Post <| Reply cr
-            with ex ->
-                logger.LogError($"Consume loop breaked: {ex}")
-        }
-
     let agent =
-        new MailboxProcessor<string * Message<string, byte array> * AsyncReplyChannel<Result<unit, exn>>>(fun inbox ->
+        new MailboxProcessor<Msg>(fun inbox ->
             let topic = aggType + "_Post"
+            let todo = Dictionary<string, AsyncReplyChannel<Result<unit, exn>>>()
+            let cache = Dictionary<string, DateTime * ConsumeResult<string, byte array>>()
+
+            let reply comId =
+                function
+                | [||] ->
+                    logger.LogInformation($"{comId} of {aggType} finished")
+                    todo[comId].Reply <| Ok()
+                | v ->
+                    let err = BitConverter.ToString v
+                    logger.LogError($"{comId} of {aggType} failed: {err}")
+                    todo[comId].Reply <| Error(failwith $"Apply command failed: {err}")
 
             let rec loop () =
                 async {
-                    let! comId, msg, channel = inbox.Receive()
-
-                    try
-                        p.Produce(topic, msg)
-                        receiver.Post <| Add(comId, channel)
-                    with ex ->
-                        channel.Reply <| Error ex
+                    match! inbox.Receive() with
+                    | Send(comId, msg, channel) ->
+                        if cache.ContainsKey comId then
+                            let _, cr = cache[comId]
+                            reply comId cr.Message.Value
+                            cache.Remove comId |> ignore
+                        else
+                            try
+                                p.Produce(topic, msg)
+                                todo.Add(comId, channel)
+                            with ex ->
+                                channel.Reply <| Error ex
+                    | Receive(cr) ->
+                        match cr.Message.Key with
+                        | comId when todo.ContainsKey comId ->
+                            reply comId cr.Message.Value
+                            todo.Remove comId |> ignore
+                        | comId -> cache.Add(comId, (DateTime.UtcNow.AddMilliseconds interval, cr)) |> ignore
+                    | Refresh(now) ->
+                        cache
+                        |> Seq.iter (fun (KeyValue(comId, (expire, _))) ->
+                            if expire < now then
+                                cache.Remove comId |> ignore)
 
                     return! loop ()
                 }
 
             loop ())
 
+    let consumer (ct: CancellationToken) =
+        async {
+            try
+                while true do
+                    let cr = c.Consume ct
+                    agent.Post <| Receive cr
+            with ex ->
+                logger.LogError($"Consume loop breaked: {ex}")
+        }
+
+    let createTimer (interval: float) work =
+        let timer = new Timers.Timer(interval)
+        timer.AutoReset <- true
+        timer.Elapsed.Add work
+        async { timer.Start() }
+
     do
-        receiver.Start()
         agent.Start()
-        c.Subscribe(topic)
+        c.Subscribe(aggType + "_Reply")
         Async.Start(consumer cts.Token, cts.Token)
+        Async.Start(createTimer interval (fun _ -> agent.Post <| Refresh(DateTime.UtcNow)), cts.Token)
 
         while c.Assignment.Count = 0 do
             Thread.Sleep 200
+
+        logger.LogInformation($"Reply of {aggType} Subscribed")
 
     interface ISender with
         member val Agent = agent
@@ -102,7 +120,6 @@ type Sender<'agg when 'agg :> Aggregate>
             if not dispose then
                 cts.Cancel()
                 agent.Dispose()
-                receiver.Dispose()
                 dispose <- true
 
 
@@ -121,7 +138,7 @@ module Sender =
             let msg = Message<string, byte array>(Key = aggId, Value = comData, Headers = h)
             msg.Headers.Add("comId", Encoding.ASCII.GetBytes comId)
             msg.Headers.Add("comType", Encoding.ASCII.GetBytes comType)
-            comId, msg, channel
+            Send(comId, msg, channel)
 
         async {
             let comType = typeof<'com>.FullName

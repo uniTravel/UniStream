@@ -23,3 +23,17 @@ type ServiceCollectionExtensions =
             .ValidateDataAnnotations()
             .ValidateOnStart()
         |> ignore
+
+    /// <summary>命令注入配置
+    /// </summary>
+    /// <typeparam name="'agg">聚合类型。</typeparam>
+    [<Extension>]
+    static member AddCommand<'agg when 'agg :> Aggregate>(services: IServiceCollection, config: IConfiguration) =
+        let name = typeof<'agg>.Name
+
+        services
+            .AddOptions<CommandOptions>(name)
+            .Bind(config.GetSection("Command:" + name))
+            .ValidateDataAnnotations()
+            .ValidateOnStart()
+        |> ignore

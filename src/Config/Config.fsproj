@@ -7,6 +7,8 @@
   <ItemGroup>
     <Compile Include="AggregateOptions.fsi" />
     <Compile Include="AggregateOptions.fs" />
+    <Compile Include="CommandOptions.fsi" />
+    <Compile Include="CommandOptions.fs" />
     <Compile Include="ServiceCollectionExtensions.fs" />
   </ItemGroup>
   <ItemGroup>

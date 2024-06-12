@@ -23,6 +23,12 @@ module Program =
         builder.Services.AddKeyedSingleton<IStream, Stream<Transaction>>(typeof<Transaction>)
         |> ignore
 
-        builder.Build().Run()
+        let app = builder.Build()
+
+        using (app.Services.CreateScope()) (fun scope ->
+            let services = scope.ServiceProvider
+            services.GetRequiredService<TransactionService>() |> ignore)
+
+        app.Run()
 
         0 // exit code

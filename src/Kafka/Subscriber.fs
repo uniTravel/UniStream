@@ -17,7 +17,6 @@ type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, 
     =
     let c = consumer.Client
     let aggType = typeof<'agg>.FullName
-    let topic = aggType + "_Post"
     let dic = Dictionary<string, MailboxProcessor<string * string * byte array>>()
 
     let work (ct: CancellationToken) =
@@ -43,7 +42,7 @@ type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, 
 
         member _.Launch(ct: CancellationToken) =
             task {
-                c.Subscribe(topic)
+                c.Subscribe(aggType + "_Post")
                 Async.Start(work ct, ct)
                 logger.LogInformation($"Subscribe {aggType} started")
             }

@@ -21,4 +21,11 @@ let host =
     builder.Services.AddKeyedSingleton<IStream, Stream<Transaction>>(typeof<Transaction>)
     |> ignore
 
-    builder.Build()
+    let app = builder.Build()
+
+    using (app.Services.CreateScope()) (fun scope ->
+        let services = scope.ServiceProvider
+        services.GetRequiredService<AccountService>() |> ignore
+        services.GetRequiredService<TransactionService>() |> ignore)
+
+    app

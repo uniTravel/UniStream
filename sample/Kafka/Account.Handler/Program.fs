@@ -30,6 +30,10 @@ module Program =
 
         let app = builder.Build()
 
+        using (app.Services.CreateScope()) (fun scope ->
+            let services = scope.ServiceProvider
+            services.GetRequiredService<AccountService>())
+
         if app.Environment.IsDevelopment() then
             app.UseSwagger()
             app.UseSwaggerUI()

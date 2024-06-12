@@ -3,6 +3,7 @@ namespace UniStream.Domain
 open System
 open System.Collections.Generic
 open System.Text
+open Microsoft.Extensions.Logging
 open Microsoft.Extensions.Options
 open Confluent.Kafka
 open Confluent.Kafka.Admin
@@ -12,6 +13,7 @@ open UniStream.Domain
 [<Sealed>]
 type Stream<'agg when 'agg :> Aggregate>
     (
+        logger: ILogger<Stream<'agg>>,
         options: IOptionsMonitor<ConsumerConfig>,
         admin: IAdmin,
         producer: IProducer<string, byte array>,
@@ -77,15 +79,18 @@ type Stream<'agg when 'agg :> Aggregate>
 
         consumer.Assign(TopicPartitionOffset(tp, start))
 
-        [ while d do
-              let cr = consumer.Consume(2000)
+        let cached =
+            [ while d do
+                let cr = consumer.Consume(2000)
 
-              if cr.Offset = last then
-                  d <- false
-              else
-                  let comId = Guid cr.Message.Key
-                  ch.Add(comId) |> ignore
-                  yield comId ]
+                if cr.Offset = last then
+                    d <- false
+                else
+                    let comId = Guid cr.Message.Key
+                    ch.Add(comId) |> ignore
+                    yield comId ]
+        logger.LogInformation($"{cached.Length} comId cached")
+        cached
 
     interface IStream with
         member _.Reader = read
