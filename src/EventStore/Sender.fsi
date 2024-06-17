@@ -2,17 +2,15 @@ namespace UniStream.Domain
 
 open System
 open Microsoft.Extensions.Logging
-open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Options
-open Confluent.Kafka
-open UniStream.Domain
+open EventStore.Client
 
 
 /// <summary>聚合命令发送者消息类型
 /// </summary>
 type Msg =
-    | Send of string * Message<string, byte array> * AsyncReplyChannel<Result<unit, exn>>
-    | Receive of ConsumeResult<string, byte array>
+    | Send of Guid * Uuid * string * byte array * AsyncReplyChannel<Result<unit, exn>>
+    | Receive of EventRecord
     | Refresh of DateTime
 
 
@@ -34,14 +32,16 @@ type Sender<'agg when 'agg :> Aggregate> =
     /// <summary>主构造函数
     /// </summary>
     /// <param name="logger">日志记录器。</param>
+    /// <param name="cfg">EventStore配置选项。</param>
     /// <param name="options">命令配置选项。</param>
-    /// <param name="producer">Kafka命令生产者。</param>
-    /// <param name="consumer">Kafka命令消费者。</param>
+    /// <param name="sub">EventStore持久订阅客户端。</param>
+    /// <param name="client">EventStore客户端。</param>
     new:
         logger: ILogger<Sender<'agg>> *
+        cfg: IOptions<EventStoreOptions> *
         options: IOptionsMonitor<CommandOptions> *
-        [<FromKeyedServices(Cons.Com)>] producer: IProducer<string, byte array> *
-        [<FromKeyedServices(Cons.Com)>] consumer: IConsumer<string, byte array> ->
+        sub: IPersistent *
+        client: IClient ->
             Sender<'agg>
 
     interface ISender

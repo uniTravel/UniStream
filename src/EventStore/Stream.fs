@@ -1,43 +1,54 @@
 namespace UniStream.Domain
 
 open System
-open System.Text
+open System.Collections.Generic
+open Microsoft.Extensions.Logging
 open EventStore.Client
 
 
 [<Sealed>]
-type Stream(client: IClient) =
-    let write (traceId: Guid option) aggType (aggId: Guid) revision evtType (evtData: byte array) =
+type Stream<'agg when 'agg :> Aggregate>(logger: ILogger<Stream<'agg>>, client: IClient) =
+    let aggType = typeof<'agg>.FullName
+    let client = client.Client
+
+    let write (aggId: Guid) (comId: Guid) revision evtType (evtData: byte array) =
         let stream = aggType + "-" + aggId.ToString()
+        let data = EventData(Uuid.FromGuid comId, evtType, evtData)
+        client.AppendToStreamAsync(stream, StreamRevision revision, [ data ]).Wait()
 
-        let data =
-            match traceId with
-            | Some traceId ->
-                let metadata =
-                    $"{{\"$correlationId\":\"{traceId}\"}}"
-                    |> Encoding.ASCII.GetBytes
-                    |> ReadOnlyMemory
-                    |> Nullable
-
-                EventData(Uuid.NewUuid(), evtType, evtData, metadata)
-            | None -> EventData(Uuid.NewUuid(), evtType, evtData)
-
-        client.Client
-            .AppendToStreamAsync(stream, StreamRevision revision, [ data ])
-            .Wait()
-
-    let read aggType (aggId: Guid) =
+    let read (aggId: Guid) =
         let stream = aggType + "-" + aggId.ToString()
 
         let e =
-            client.Client
+            client
                 .ReadStreamAsync(Direction.Forwards, stream, StreamPosition.Start)
                 .GetAsyncEnumerator()
 
         [ while (let vt = e.MoveNextAsync() in if vt.IsCompleted then vt.Result else vt.AsTask().Result) do
               yield e.Current.Event.EventType, e.Current.Event.Data ]
 
+    let restore (ch: HashSet<Guid>) count =
+        let count = int64 count
+        let stream = "$ce-" + aggType
+
+        let r =
+            client.ReadStreamAsync(Direction.Backwards, stream, StreamPosition.End, count, true)
+
+        let cached =
+            match r.ReadState.Result with
+            | ReadState.Ok ->
+                let e = r.GetAsyncEnumerator()
+
+                [ while (let vt = e.MoveNextAsync() in if vt.IsCompleted then vt.Result else vt.AsTask().Result) do
+                      let comId = e.Current.Event.EventId.ToGuid()
+                      ch.Add(comId) |> ignore
+                      yield comId ]
+            | _ -> []
+
+        logger.LogInformation($"{cached.Length} comId cached")
+        cached
 
     interface IStream with
         member _.Reader = read
         member _.Writer = write
+        member _.Restore = restore

@@ -6,6 +6,7 @@ open Microsoft.Extensions.DependencyInjection
 
 /// <summary>命令投影者类型
 /// </summary>
+[<Sealed>]
 type ComProjector<'agg when 'agg :> Aggregate> =
 
     /// <summary>主构造函数

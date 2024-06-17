@@ -4,6 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Controllers\AccountController.fs" />
+    <Compile Include="Controllers\TransactionController.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

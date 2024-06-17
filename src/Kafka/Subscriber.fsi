@@ -20,6 +20,7 @@ type ISubscriber =
 
 /// <summary>聚合命令订阅者类型
 /// </summary>
+[<Sealed>]
 type Subscriber<'agg when 'agg :> Aggregate> =
 
     /// <summary>主构造函数

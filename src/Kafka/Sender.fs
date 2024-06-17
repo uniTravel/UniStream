@@ -23,6 +23,7 @@ type ISender =
     abstract member Agent: MailboxProcessor<Msg>
 
 
+[<Sealed>]
 type Sender<'agg when 'agg :> Aggregate>
     (
         logger: ILogger<Sender<'agg>>,
@@ -58,11 +59,13 @@ type Sender<'agg when 'agg :> Aggregate>
                 async {
                     match! inbox.Receive() with
                     | Send(comId, msg, channel) ->
-                        if cache.ContainsKey comId then
+                        match comId with
+                        | _ when cache.ContainsKey comId ->
                             let _, cr = cache[comId]
                             reply comId cr.Message.Value
                             cache.Remove comId |> ignore
-                        else
+                        | _ when todo.ContainsKey comId -> todo[comId] <- channel
+                        | _ ->
                             try
                                 p.Produce(topic, msg)
                                 todo.Add(comId, channel)

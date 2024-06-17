@@ -24,6 +24,7 @@ type ServiceCollectionExtensions =
 
         services.AddSingleton<ISettings, Settings>() |> ignore
         services.AddSingleton<IClient, Client>() |> ignore
+        services.AddSingleton<IPersistent, Persistent>() |> ignore
 
     /// <summary>注入EventStore初始化相关配置
     /// </summary>
@@ -40,8 +41,6 @@ type ServiceCollectionExtensions =
 
         services.AddSingleton<ISettings, Settings>() |> ignore
         services.AddSingleton<IManager, Manager>() |> ignore
-        services.AddSingleton<ISubscriber, Subscriber>() |> ignore
-
 
     /// <summary>注入命令处理者相关配置
     /// </summary>
@@ -58,7 +57,6 @@ type ServiceCollectionExtensions =
 
         services.AddSingleton<ISettings, Settings>() |> ignore
         services.AddSingleton<IClient, Client>() |> ignore
-        services.AddSingleton<IStream, Stream>() |> ignore
 
     /// <summary>注入命令订阅者相关配置
     /// </summary>
@@ -75,5 +73,4 @@ type ServiceCollectionExtensions =
 
         services.AddSingleton<ISettings, Settings>() |> ignore
         services.AddSingleton<IClient, Client>() |> ignore
-        services.AddSingleton<IStream, Stream>() |> ignore
-        services.AddSingleton<ISubscriber, Subscriber>() |> ignore
+        services.AddSingleton<IPersistent, Persistent>() |> ignore

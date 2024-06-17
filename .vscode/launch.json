@@ -26,73 +26,19 @@
             "console": "internalConsole"
         },
         {
-            "name": "EventStore.Tests",
+            "name": "Account.Tests",
             "type": "coreclr",
             "request": "launch",
             "program": "bin/Debug/net8.0/Account.Tests.dll",
             "env": {
                 "DOTNET_ENVIRONMENT": "Development"
             },
-            "cwd": "${workspaceFolder}/sample/EventStore/Account.Tests/",
+            "cwd": "${workspaceFolder}/sample/Account.Tests/",
             "stopAtEntry": false,
             "console": "internalConsole"
         },
         {
-            "name": "EventStore.Debug",
-            "type": "coreclr",
-            "request": "launch",
-            "program": "bin/Debug/net8.0/Account.Tests.dll",
-            "env": {
-                "DOTNET_ENVIRONMENT": "Development"
-            },
-            "args": [
-                "--debug"
-            ],
-            "cwd": "${workspaceFolder}/sample/EventStore/Account.Tests/",
-            "stopAtEntry": false,
-            "console": "internalConsole"
-        },
-        {
-            "name": "EventStore.Sender.Tests",
-            "type": "coreclr",
-            "request": "launch",
-            "program": "bin/Debug/net8.0/Account.Sender.Tests.dll",
-            "env": {
-                "DOTNET_ENVIRONMENT": "Development"
-            },
-            "cwd": "${workspaceFolder}/sample/EventStore/Account.Sender.Tests/",
-            "stopAtEntry": false,
-            "console": "internalConsole"
-        },
-        {
-            "name": "EventStore.Sender.Debug",
-            "type": "coreclr",
-            "request": "launch",
-            "program": "bin/Debug/net8.0/Account.Sender.Tests.dll",
-            "env": {
-                "DOTNET_ENVIRONMENT": "Development"
-            },
-            "args": [
-                "--debug"
-            ],
-            "cwd": "${workspaceFolder}/sample/EventStore/Account.Sender.Tests/",
-            "stopAtEntry": false,
-            "console": "internalConsole"
-        },
-        {
-            "name": "Kafka.Tests",
-            "type": "coreclr",
-            "request": "launch",
-            "program": "bin/Debug/net8.0/Account.Tests.dll",
-            "env": {
-                "DOTNET_ENVIRONMENT": "Development"
-            },
-            "cwd": "${workspaceFolder}/sample/Kafka/Account.Tests/",
-            "stopAtEntry": false,
-            "console": "internalConsole"
-        },
-        {
-            "name": "Kafka.Debug",
+            "name": "Account.Debug",
             "type": "coreclr",
             "request": "launch",
             "program": "bin/Debug/net8.0/Account.Tests.dll",
@@ -102,24 +48,24 @@
             "args": [
                 "--debug"
             ],
-            "cwd": "${workspaceFolder}/sample/Kafka/Account.Tests/",
+            "cwd": "${workspaceFolder}/sample/Account.Tests/",
             "stopAtEntry": false,
             "console": "internalConsole"
         },
         {
-            "name": "Kafka.Sender.Tests",
+            "name": "Account.Sender.Tests",
             "type": "coreclr",
             "request": "launch",
             "program": "bin/Debug/net8.0/Account.Sender.Tests.dll",
             "env": {
                 "DOTNET_ENVIRONMENT": "Development"
             },
-            "cwd": "${workspaceFolder}/sample/Kafka/Account.Sender.Tests/",
+            "cwd": "${workspaceFolder}/sample/Account.Sender.Tests/",
             "stopAtEntry": false,
             "console": "internalConsole"
         },
         {
-            "name": "Kafka.Sender.Debug",
+            "name": "Account.Sender.Debug",
             "type": "coreclr",
             "request": "launch",
             "program": "bin/Debug/net8.0/Account.Sender.Tests.dll",
@@ -129,7 +75,7 @@
             "args": [
                 "--debug"
             ],
-            "cwd": "${workspaceFolder}/sample/Kafka/Account.Sender.Tests/",
+            "cwd": "${workspaceFolder}/sample/Account.Sender.Tests/",
             "stopAtEntry": false,
             "console": "internalConsole"
         }

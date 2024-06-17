@@ -6,6 +6,7 @@ open Confluent.Kafka
 open UniStream.Domain
 
 
+[<Sealed>]
 type ComProjector<'agg when 'agg :> Aggregate>
     (
         logger: ILogger<ComProjector<'agg>>,

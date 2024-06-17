@@ -34,3 +34,7 @@ type EventStoreOptions =
     /// <summary>是否验证证书
     /// </summary>
     member VerifyCert: bool with get, set
+
+    /// <summary>持久化订阅组名称
+    /// </summary>
+    member GroupName: string with get, set

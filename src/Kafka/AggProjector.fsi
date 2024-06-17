@@ -6,6 +6,7 @@ open Microsoft.Extensions.DependencyInjection
 
 /// <summary>聚合投影者类型
 /// </summary>
+[<Sealed>]
 type AggProjector<'agg when 'agg :> Aggregate> =
 
     /// <summary>主构造函数

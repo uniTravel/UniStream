@@ -13,6 +13,7 @@ type ISubscriber =
     abstract member AddHandler: key: string -> handler: MailboxProcessor<string * string * byte array> -> unit
 
 
+[<Sealed>]
 type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, consumer: IConsumer<string, byte array>)
     =
     let c = consumer.Client

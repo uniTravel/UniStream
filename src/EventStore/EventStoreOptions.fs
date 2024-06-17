@@ -15,3 +15,5 @@ type EventStoreOptions() =
     member val Host = String.Empty with get, set
 
     member val VerifyCert = true with get, set
+
+    member val GroupName = "" with get, set

@@ -1,23 +1,54 @@
 namespace UniStream.Domain
 
-open System
+open System.Threading
+open System.Collections.Generic
+open Microsoft.Extensions.Logging
 open EventStore.Client
 
 
 type ISubscriber =
-
-    abstract member Subscriber: EventStorePersistentSubscriptionsClient
+    inherit IWorker
+    abstract member AddHandler: key: string -> handler: MailboxProcessor<Uuid * EventRecord> -> unit
 
 
 [<Sealed>]
-type Subscriber(settings: ISettings) =
-    let mutable dispose = false
+type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, sub: IPersistent) =
+    let sub = sub.Subscriber
+    let aggType = typeof<'agg>.FullName
+    let dic = Dictionary<string, MailboxProcessor<Uuid * EventRecord>>()
+    let group = "UniStream"
+
+    let subscribe (ct: CancellationToken) =
+        task {
+            try
+                sub.GetInfoToStreamAsync(aggType, group).Wait()
+            with _ ->
+                let settings =
+                    PersistentSubscriptionSettings(true, consumerStrategyName = SystemConsumerStrategies.Pinned)
+
+                sub.CreateToStreamAsync(aggType, group, settings).Wait()
+
+            let sub = sub.SubscribeToStream(aggType, group, cancellationToken = ct)
+            let e = sub.Messages.GetAsyncEnumerator()
+
+            while! e.MoveNextAsync() do
+                match e.Current with
+                | :? PersistentSubscriptionMessage.Event as ev ->
+                    let comType = ev.ResolvedEvent.Event.EventType
+                    dic[comType].Post(ev.ResolvedEvent.Event.EventId, ev.ResolvedEvent.Event)
+                    sub.Ack(ev.ResolvedEvent) |> ignore
+                | :? PersistentSubscriptionMessage.SubscriptionConfirmation as confirm ->
+                    logger.LogInformation($"Subscription {confirm.SubscriptionId} for {aggType} started")
+                | :? PersistentSubscriptionMessage.NotFound -> logger.LogError("Stream was not found")
+                | _ -> logger.LogError("Unknown error")
+        }
 
     interface ISubscriber with
-        member _.Subscriber = new EventStorePersistentSubscriptionsClient(settings.Settings)
 
-    interface IDisposable with
-        member me.Dispose() =
-            if not dispose then
-                (me :> ISubscriber).Subscriber.Dispose()
-                dispose <- true
+        member _.AddHandler (key: string) (handler: MailboxProcessor<Uuid * EventRecord>) = dic.Add(key, handler)
+
+        member _.Launch(ct: CancellationToken) =
+            task {
+                Async.Start(subscribe ct |> Async.AwaitTask, ct)
+                logger.LogInformation($"Subscribe {aggType} started")
+            }
