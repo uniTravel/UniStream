@@ -4,7 +4,6 @@
     <UserSecretsId>de33a9d3-1147-4763-a2f9-9ae1c5bb8090</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Constant.fs" />
     <Compile Include="TransactionWorker.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

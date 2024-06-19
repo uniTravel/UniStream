@@ -1,6 +1,5 @@
 namespace UniStream.Domain
 
-open System
 open Microsoft.Extensions.Logging
 open EventStore.Client
 

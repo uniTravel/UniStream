@@ -1,6 +1,7 @@
 namespace UniStream.Domain
 
 open System
+open System.Text
 open System.Text.Json
 open Microsoft.Extensions.Logging
 open EventStore.Client
@@ -25,12 +26,11 @@ module Handler =
                 let rec loop () =
                     async {
                         let! comId, evt = inbox.Receive()
-                        
-                        let aggId = Guid.NewGuid()
+                        let aggId = Encoding.ASCII.GetString(evt.Metadata.Span)[19..54]
                         let com = JsonSerializer.Deserialize<'com> evt.Data.Span
 
                         try
-                            do! commit aggId (comId.ToGuid()) com
+                            do! commit (Guid aggId) (comId.ToGuid()) com
                             logger.LogInformation($"{comType} of {aggId} committed")
                         with ex ->
                             let data = EventData(comId, "Fail", JsonSerializer.SerializeToUtf8Bytes ex.Message)

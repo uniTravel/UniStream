@@ -8,8 +8,6 @@ open Account.Application
 
 
 module Program =
-    let exitCode = 0
-
     [<EntryPoint>]
     let main args =
         let builder = Host.CreateApplicationBuilder(args)
@@ -19,6 +17,18 @@ module Program =
         builder.Services.AddAggregate<Transaction>(builder.Configuration)
         builder.Services.AddSingleton<TransactionService>() |> ignore
 
-        builder.Build().Run()
+        builder.Services.AddKeyedSingleton<ISubscriber, Subscriber<Transaction>>(typeof<Transaction>)
+        |> ignore
 
-        exitCode
+        builder.Services.AddKeyedSingleton<IStream, Stream<Transaction>>(typeof<Transaction>)
+        |> ignore
+
+        let app = builder.Build()
+
+        using (app.Services.CreateScope()) (fun scope ->
+            let services = scope.ServiceProvider
+            services.GetRequiredService<TransactionService>() |> ignore)
+
+        app.Run()
+
+        0 // exit code

@@ -25,15 +25,21 @@ module Program =
         builder.Services.AddHandler(builder.Configuration)
         builder.Services.AddAggregate<Account>(builder.Configuration)
         builder.Services.AddSingleton<AccountService>()
+        builder.Services.AddAggregate<Transaction>(builder.Configuration)
+        builder.Services.AddSingleton<TransactionService>()
 
         builder.Services.AddKeyedSingleton<IStream, Stream<Account>>(typeof<Account>)
+        |> ignore
+
+        builder.Services.AddKeyedSingleton<IStream, Stream<Transaction>>(typeof<Transaction>)
         |> ignore
 
         let app = builder.Build()
 
         using (app.Services.CreateScope()) (fun scope ->
             let services = scope.ServiceProvider
-            services.GetRequiredService<AccountService>())
+            services.GetRequiredService<AccountService>()
+            services.GetRequiredService<TransactionService>())
 
         if app.Environment.IsDevelopment() then
             app.UseSwagger()

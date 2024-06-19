@@ -20,14 +20,6 @@ type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, 
 
     let subscribe (ct: CancellationToken) =
         task {
-            try
-                sub.GetInfoToStreamAsync(aggType, group).Wait()
-            with _ ->
-                let settings =
-                    PersistentSubscriptionSettings(true, consumerStrategyName = SystemConsumerStrategies.Pinned)
-
-                sub.CreateToStreamAsync(aggType, group, settings).Wait()
-
             let sub = sub.SubscribeToStream(aggType, group, cancellationToken = ct)
             let e = sub.Messages.GetAsyncEnumerator()
 

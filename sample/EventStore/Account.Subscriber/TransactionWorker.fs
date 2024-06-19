@@ -1,6 +1,7 @@
 namespace Account.Subscriber
 
 open System.Threading
+open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open UniStream.Domain
@@ -8,17 +9,23 @@ open Account.Domain
 open Account.Application
 
 
-type TransactionWorker(logger: ILogger<TransactionWorker>, client: IClient, sub: ISubscriber, svc: TransactionService) =
+type TransactionWorker
+    (
+        logger: ILogger<TransactionWorker>,
+        client: IClient,
+        [<FromKeyedServices(typeof<Transaction>)>] subscriber: ISubscriber,
+        svc: TransactionService
+    ) =
     inherit BackgroundService()
 
     override _.ExecuteAsync(ct: CancellationToken) =
-        Worker.run<Transaction> ct logger sub Cons.Group
-        <| [ Worker.register logger client svc.InitPeriod
-             Worker.register logger client svc.OpenPeriod
-             Worker.register logger client svc.SetLimit
-             Worker.register logger client svc.ChangeLimit
-             Worker.register logger client svc.SetTransLimit
-             Worker.register logger client svc.Deposit
-             Worker.register logger client svc.Withdraw
-             Worker.register logger client svc.TransferOut
-             Worker.register logger client svc.TransferIn ]
+        Handler.register subscriber logger client svc.InitPeriod
+        Handler.register subscriber logger client svc.OpenPeriod
+        Handler.register subscriber logger client svc.SetLimit
+        Handler.register subscriber logger client svc.ChangeLimit
+        Handler.register subscriber logger client svc.SetTransLimit
+        Handler.register subscriber logger client svc.Deposit
+        Handler.register subscriber logger client svc.Withdraw
+        Handler.register subscriber logger client svc.TransferOut
+        Handler.register subscriber logger client svc.TransferIn
+        subscriber.Launch ct

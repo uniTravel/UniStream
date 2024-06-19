@@ -8,6 +8,7 @@ open System.Threading
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.Options
 open EventStore.Client
+open FSharp.Control
 
 
 type Msg =
@@ -91,6 +92,8 @@ type Sender<'agg when 'agg :> Aggregate>
                         |> Seq.iter (fun (KeyValue(comId, (expire, _))) ->
                             if expire < now then
                                 cache.Remove comId |> ignore)
+
+                    return! loop ()
                 }
 
             loop ())
@@ -100,19 +103,17 @@ type Sender<'agg when 'agg :> Aggregate>
             try
                 sub.GetInfoToStreamAsync(stream, group).Wait()
             with _ ->
-                let settings =
-                    PersistentSubscriptionSettings(true, consumerStrategyName = SystemConsumerStrategies.Pinned)
-
+                let settings = PersistentSubscriptionSettings(true)
                 sub.CreateToStreamAsync(stream, group, settings).Wait()
 
-            let sub = sub.SubscribeToStream(stream, group, cancellationToken = ct)
+            use sub = sub.SubscribeToStream(stream, group, cancellationToken = ct)
             let e = sub.Messages.GetAsyncEnumerator()
 
             while! e.MoveNextAsync() do
                 match e.Current with
                 | :? PersistentSubscriptionMessage.Event as ev ->
                     agent.Post <| Receive(ev.ResolvedEvent.Event)
-                    sub.Ack(ev.ResolvedEvent) |> ignore
+                    sub.Ack(ev.ResolvedEvent).Wait()
                 | :? PersistentSubscriptionMessage.SubscriptionConfirmation as confirm ->
                     logger.LogInformation($"Subscription {confirm.SubscriptionId} for {stream} started")
                 | :? PersistentSubscriptionMessage.NotFound -> logger.LogError("Stream was not found")
@@ -129,7 +130,6 @@ type Sender<'agg when 'agg :> Aggregate>
         agent.Start()
         Async.Start(subscribe cts.Token |> Async.AwaitTask, cts.Token)
         Async.Start(createTimer interval (fun _ -> agent.Post <| Refresh(DateTime.UtcNow)), cts.Token)
-        logger.LogInformation($"Reply of {aggType} Subscribed")
 
     interface ISender with
         member val Agent = agent
