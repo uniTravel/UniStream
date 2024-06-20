@@ -43,7 +43,7 @@ type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, 
 
         member _.Launch(ct: CancellationToken) =
             task {
-                c.Subscribe(aggType + "_Post")
+                c.Subscribe(aggType + "_Command")
                 Async.Start(work ct, ct)
-                logger.LogInformation($"Subscribe {aggType} started")
+                logger.LogInformation($"Subscription of command for {aggType} started")
             }

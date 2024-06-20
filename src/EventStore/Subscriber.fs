@@ -28,7 +28,7 @@ type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, 
                 | :? PersistentSubscriptionMessage.Event as ev ->
                     let comType = ev.ResolvedEvent.Event.EventType
                     dic[comType].Post(ev.ResolvedEvent.Event.EventId, ev.ResolvedEvent.Event)
-                    sub.Ack(ev.ResolvedEvent) |> ignore
+                    sub.Ack(ev.ResolvedEvent).Wait()
                 | :? PersistentSubscriptionMessage.SubscriptionConfirmation as confirm ->
                     logger.LogInformation($"Subscription {confirm.SubscriptionId} for {aggType} started")
                 | :? PersistentSubscriptionMessage.NotFound -> logger.LogError("Stream was not found")
@@ -40,7 +40,4 @@ type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, 
         member _.AddHandler (key: string) (handler: MailboxProcessor<Uuid * EventRecord>) = dic.Add(key, handler)
 
         member _.Launch(ct: CancellationToken) =
-            task {
-                Async.Start(subscribe ct |> Async.AwaitTask, ct)
-                logger.LogInformation($"Subscribe {aggType} started")
-            }
+            task { Async.Start(subscribe ct |> Async.AwaitTask, ct) }

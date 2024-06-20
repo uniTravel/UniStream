@@ -23,22 +23,25 @@ type Stream<'agg when 'agg :> Aggregate>
     let c = consumer.Client
     let admin = admin.Client
     let aggType = typeof<'agg>.FullName
-    let topic = aggType + "_Reply"
 
     let init (cfg: ConsumerConfig) =
         cfg.GroupId <- cfg.GroupId + "_" + aggType
         let c = ConsumerBuilder<string, byte array>(cfg).Build()
-        c.Subscribe(topic)
+        c.Subscribe(aggType)
         c
 
     let consumer = init <| options.Get(Cons.Agg)
-    let tp = TopicPartition(topic, 0)
+    let tp = TopicPartition(aggType, 0)
 
     let createTopic aggId (revision: uint64) =
         async {
             if revision = UInt64.MaxValue then
                 let topic = aggType + "-" + aggId
-                admin.CreateTopicsAsync([ TopicSpecification(Name = topic) ]).Wait()
+                let cfg = Dictionary(dict [ ("retention.ms", "-1") ])
+
+                admin
+                    .CreateTopicsAsync([ TopicSpecification(Name = topic, Configs = cfg) ])
+                    .Wait()
         }
 
     let write (aggId: Guid) (comId: Guid) (revision: uint64) (evtType: string) (evtData: byte array) =
@@ -81,14 +84,15 @@ type Stream<'agg when 'agg :> Aggregate>
 
         let cached =
             [ while d do
-                let cr = consumer.Consume(2000)
+                  let cr = consumer.Consume(2000)
 
-                if cr.Offset = last then
-                    d <- false
-                else
-                    let comId = Guid cr.Message.Key
-                    ch.Add(comId) |> ignore
-                    yield comId ]
+                  if cr.Offset = last then
+                      d <- false
+                  else
+                      let comId = Guid cr.Message.Key
+                      ch.Add(comId) |> ignore
+                      yield comId ]
+
         logger.LogInformation($"{cached.Length} comId cached")
         cached
 

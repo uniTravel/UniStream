@@ -22,8 +22,7 @@ module Program =
             tl
             |> List.collect (fun t ->
                 [ TopicSpecification(Name = t.FullName, NumPartitions = 3)
-                  TopicSpecification(Name = t.FullName + "_Post", NumPartitions = 3)
-                  TopicSpecification(Name = t.FullName + "_Reply") ])
+                  TopicSpecification(Name = t.FullName + "_Command", NumPartitions = 3) ])
 
     [<EntryPoint>]
     let main args =

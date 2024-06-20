@@ -8,12 +8,9 @@ open UniStream.Domain
 
 
 [<Sealed>]
-type AggProjector<'agg when 'agg :> Aggregate>
-    (
-        logger: ILogger<AggProjector<'agg>>,
-        producer: IProducer<string, byte array>,
-        consumer: IConsumer<string, byte array>
-    ) =
+type Projector<'agg when 'agg :> Aggregate>
+    (logger: ILogger<Projector<'agg>>, producer: IProducer<string, byte array>, consumer: IConsumer<string, byte array>)
+    =
     let p = producer.Client
     let c = consumer.Client
     let aggType = typeof<'agg>.FullName
@@ -25,8 +22,12 @@ type AggProjector<'agg when 'agg :> Aggregate>
                     let cr = c.Consume ct
                     let aggId = Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes("aggId"))
                     let evtType = Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes("evtType"))
-                    let topic = aggType + "-" + aggId
-                    p.Produce(topic, Message<string, byte array>(Key = evtType, Value = cr.Message.Value))
+
+                    match evtType with
+                    | "Fail" -> ()
+                    | _ ->
+                        let topic = aggType + "-" + aggId
+                        p.Produce(topic, Message<string, byte array>(Key = evtType, Value = cr.Message.Value))
             with ex ->
                 logger.LogError($"Consume loop breaked: {ex}")
         }
@@ -36,5 +37,5 @@ type AggProjector<'agg when 'agg :> Aggregate>
             task {
                 c.Subscribe(aggType)
                 Async.Start(work ct, ct)
-                logger.LogInformation($"Subscribe {aggType} started")
+                logger.LogInformation($"Subscription for {aggType} started")
             }

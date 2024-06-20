@@ -41,19 +41,19 @@ type Sender<'agg when 'agg :> Aggregate>
 
     let agent =
         new MailboxProcessor<Msg>(fun inbox ->
-            let topic = aggType + "_Post"
+            let topic = aggType + "_Command"
             let todo = Dictionary<string, AsyncReplyChannel<Result<unit, exn>>>()
             let cache = Dictionary<string, DateTime * ConsumeResult<string, byte array>>()
 
-            let reply comId =
-                function
-                | [||] ->
-                    logger.LogInformation($"{comId} of {aggType} finished")
-                    todo[comId].Reply <| Ok()
-                | v ->
-                    let err = BitConverter.ToString v
+            let reply comId (cr: ConsumeResult<string, byte array>) =
+                match Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes("evtType")) with
+                | "Fail" ->
+                    let err = BitConverter.ToString cr.Message.Value
                     logger.LogError($"{comId} of {aggType} failed: {err}")
                     todo[comId].Reply <| Error(failwith $"Apply command failed: {err}")
+                | _ ->
+                    logger.LogInformation($"{comId} of {aggType} finished")
+                    todo[comId].Reply <| Ok()
 
             let rec loop () =
                 async {
@@ -62,7 +62,7 @@ type Sender<'agg when 'agg :> Aggregate>
                         match comId with
                         | _ when cache.ContainsKey comId ->
                             let _, cr = cache[comId]
-                            reply comId cr.Message.Value
+                            reply comId cr
                             cache.Remove comId |> ignore
                         | _ when todo.ContainsKey comId -> todo[comId] <- channel
                         | _ ->
@@ -74,7 +74,7 @@ type Sender<'agg when 'agg :> Aggregate>
                     | Receive(cr) ->
                         match cr.Message.Key with
                         | comId when todo.ContainsKey comId ->
-                            reply comId cr.Message.Value
+                            reply comId cr
                             todo.Remove comId |> ignore
                         | comId -> cache.Add(comId, (DateTime.UtcNow.AddMilliseconds interval, cr)) |> ignore
                     | Refresh(now) ->
@@ -106,14 +106,14 @@ type Sender<'agg when 'agg :> Aggregate>
 
     do
         agent.Start()
-        c.Subscribe(aggType + "_Reply")
+        c.Subscribe(aggType)
         Async.Start(consumer cts.Token, cts.Token)
         Async.Start(createTimer interval (fun _ -> agent.Post <| Refresh(DateTime.UtcNow)), cts.Token)
 
         while c.Assignment.Count = 0 do
             Thread.Sleep 200
 
-        logger.LogInformation($"Reply of {aggType} Subscribed")
+        logger.LogInformation($"Subscription for {aggType} started")
 
     interface ISender with
         member val Agent = agent

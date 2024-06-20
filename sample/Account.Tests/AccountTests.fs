@@ -82,7 +82,7 @@ let test3 =
     [ testCase "提交设置限额命令"
       <| fun _ ->
           let com = LimitAccount(Limit = 15m)
-        //   Threading.Thread.Sleep 1000
+          Threading.Thread.Sleep 1000
           let result = handler id1 com
           Expect.equal result.StatusCode HttpStatusCode.Created "返回错误" ]
     |> testList "验证缓存刷新后处理"

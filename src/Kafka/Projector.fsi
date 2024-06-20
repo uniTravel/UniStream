@@ -4,10 +4,10 @@ open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 
 
-/// <summary>命令投影者类型
+/// <summary>聚合投影者类型
 /// </summary>
 [<Sealed>]
-type ComProjector<'agg when 'agg :> Aggregate> =
+type Projector<'agg when 'agg :> Aggregate> =
 
     /// <summary>主构造函数
     /// </summary>
@@ -15,9 +15,9 @@ type ComProjector<'agg when 'agg :> Aggregate> =
     /// <param name="producer">Kafka聚合生产者。</param>
     /// <param name="consumer">Kafka聚合消费者。</param>
     new:
-        logger: ILogger<ComProjector<'agg>> *
+        logger: ILogger<Projector<'agg>> *
         [<FromKeyedServices(Cons.Agg)>] producer: IProducer<string, byte array> *
         [<FromKeyedServices(Cons.Agg)>] consumer: IConsumer<string, byte array> ->
-            ComProjector<'agg>
+            Projector<'agg>
 
     interface IWorker

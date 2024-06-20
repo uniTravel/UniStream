@@ -1,6 +1,7 @@
 namespace UniStream.Domain
 
 open System
+open System.Text
 open System.Text.Json
 open Microsoft.Extensions.Logging
 open Confluent.Kafka
@@ -17,7 +18,6 @@ module Handler =
         =
         let aggType = typeof<'agg>.FullName
         let comType = typeof<'com>.FullName
-        let topic = aggType + "_Reply"
         let p = producer.Client
 
         let agent =
@@ -32,7 +32,9 @@ module Handler =
                             logger.LogInformation($"{comType} of {aggId} committed")
                         with ex ->
                             let v = JsonSerializer.SerializeToUtf8Bytes ex.Message
-                            p.Produce(topic, Message<string, byte array>(Key = comId, Value = v))
+                            let msg = Message<string, byte array>(Key = comId, Value = v, Headers = Headers())
+                            msg.Headers.Add("evtType", Encoding.ASCII.GetBytes "Fail")
+                            p.Produce(aggType, msg)
                             logger.LogError($"{comType} of {aggId} error: {ex}")
 
                         return! loop ()
