@@ -22,4 +22,5 @@
 IDE::
 * Visual Studio Code
 第三方依赖::
-* https://eventstore.org/[Event Store]: 目前提供的流存储实现。
+* https://eventstore.org/[Event Store]: 用于流存储的EventStore实现。
+* https://kafka.apache.org/[Kafka]: 用于流存储的Kafka实现。
