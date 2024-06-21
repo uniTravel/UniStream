@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <AssemblyName>UniStream.Domain</AssemblyName>
+    <AssemblyName>UniStream.Core</AssemblyName>
     <MinVerTagPrefix>d-</MinVerTagPrefix>
   </PropertyGroup>
   <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -13,6 +13,6 @@
     <Compile Include="Aggregator.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Config\Config.fsproj" />
+    <ProjectReference Include="..\Infrastructure\Infrastructure.fsproj" />
   </ItemGroup>
 </Project>

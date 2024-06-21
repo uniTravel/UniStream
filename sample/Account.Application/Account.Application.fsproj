@@ -7,7 +7,7 @@
     <Compile Include="AccountService.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Config\Config.fsproj" />
+    <ProjectReference Include="..\..\src\Infrastructure\Infrastructure.fsproj" />
     <ProjectReference Include="..\..\src\Domain\Domain.fsproj" PrivateAssets="all" />
     <ProjectReference Include="..\Account.Command\Account.Command.fsproj" />
   </ItemGroup>

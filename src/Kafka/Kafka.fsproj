@@ -25,7 +25,7 @@
     <Compile Include="ServiceCollectionExtensions.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Config\Config.fsproj" />
+    <ProjectReference Include="..\Infrastructure\Infrastructure.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Confluent.Kafka" Version="2.4.0" />
