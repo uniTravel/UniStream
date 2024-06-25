@@ -15,10 +15,9 @@ module Program =
         builder.Services.AddHostedService<AccountWorker>() |> ignore
         builder.Services.AddHostedService<TransactionWorker>() |> ignore
 
-        builder.Services.AddKeyedSingleton<IWorker, Projector<Account>>(typeof<Account>)
-        |> ignore
+        builder.Services.AddSingleton<IWorker<Account>, Projector<Account>>() |> ignore
 
-        builder.Services.AddKeyedSingleton<IWorker, Projector<Transaction>>(typeof<Transaction>)
+        builder.Services.AddSingleton<IWorker<Transaction>, Projector<Transaction>>()
         |> ignore
 
         builder.Build().Run()

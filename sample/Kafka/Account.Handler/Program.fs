@@ -9,6 +9,7 @@ open UniStream.Domain
 open Account.Domain
 open Account.Application
 
+
 module Program =
     let exitCode = 0
 
@@ -27,10 +28,9 @@ module Program =
         builder.Services.AddAggregate<Transaction>(builder.Configuration)
         builder.Services.AddSingleton<TransactionService>()
 
-        builder.Services.AddKeyedSingleton<IStream, Stream<Account>>(typeof<Account>)
-        |> ignore
+        builder.Services.AddSingleton<IStream<Account>, Stream<Account>>() |> ignore
 
-        builder.Services.AddKeyedSingleton<IStream, Stream<Transaction>>(typeof<Transaction>)
+        builder.Services.AddSingleton<IStream<Transaction>, Stream<Transaction>>()
         |> ignore
 
         let app = builder.Build()

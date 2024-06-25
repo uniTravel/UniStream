@@ -23,8 +23,8 @@ type Stream<'agg when 'agg :> Aggregate> =
         logger: ILogger<Stream<'agg>> *
         options: IOptionsMonitor<ConsumerConfig> *
         admin: IAdmin *
-        [<FromKeyedServices(Cons.Agg)>] producer: IProducer<string, byte array> *
-        [<FromKeyedServices(Cons.Agg)>] consumer: IConsumer<string, byte array> ->
+        [<FromKeyedServices(Cons.Agg)>] producer: IProducer *
+        [<FromKeyedServices(Cons.Agg)>] consumer: IConsumer ->
             Stream<'agg>
 
-    interface IStream
+    interface IStream<'agg>

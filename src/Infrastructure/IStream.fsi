@@ -7,7 +7,7 @@ open System.Collections.Generic
 /// <summary>领域流配置接口
 /// </summary>
 [<Interface>]
-type IStream =
+type IStream<'agg when 'agg :> Aggregate> =
 
     /// <summary>聚合事件写入流的函数
     /// </summary>

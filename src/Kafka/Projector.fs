@@ -8,8 +8,7 @@ open UniStream.Domain
 
 
 [<Sealed>]
-type Projector<'agg when 'agg :> Aggregate>
-    (logger: ILogger<Projector<'agg>>, producer: IProducer<string, byte array>, consumer: IConsumer<string, byte array>)
+type Projector<'agg when 'agg :> Aggregate>(logger: ILogger<Projector<'agg>>, producer: IProducer, consumer: IConsumer)
     =
     let p = producer.Client
     let c = consumer.Client
@@ -21,18 +20,18 @@ type Projector<'agg when 'agg :> Aggregate>
                 while true do
                     let cr = c.Consume ct
                     let aggId = Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes("aggId"))
-                    let evtType = Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes("evtType"))
+                    let evtType = cr.Message.Headers.GetLastBytes("evtType")
 
-                    match evtType with
+                    match Encoding.ASCII.GetString evtType with
                     | "Fail" -> ()
                     | _ ->
                         let topic = aggType + "-" + aggId
-                        p.Produce(topic, Message<string, byte array>(Key = evtType, Value = cr.Message.Value))
+                        p.Produce(topic, Message<byte array, byte array>(Key = evtType, Value = cr.Message.Value))
             with ex ->
                 logger.LogError($"Consume loop breaked: {ex}")
         }
 
-    interface IWorker with
+    interface IWorker<'agg> with
         member _.Launch(ct: CancellationToken) =
             task {
                 c.Subscribe(aggType)

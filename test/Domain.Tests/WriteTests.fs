@@ -7,7 +7,7 @@ open Domain
 
 
 let stream =
-    { new IStream with
+    { new IStream<Note> with
         member _.Writer = writer "Note"
         member _.Reader = reader "Note"
         member _.Restore = restore "Note" }

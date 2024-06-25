@@ -48,7 +48,7 @@ type Stream<'agg when 'agg :> Aggregate>(logger: ILogger<Stream<'agg>>, client: 
         logger.LogInformation($"{cached.Length} comId cached")
         cached
 
-    interface IStream with
+    interface IStream<'agg> with
         member _.Reader = read
         member _.Writer = write
         member _.Restore = restore

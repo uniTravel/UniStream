@@ -12,8 +12,8 @@ open Account.Application
 type TransactionWorker
     (
         logger: ILogger<TransactionWorker>,
-        [<FromKeyedServices(typeof<Transaction>)>] subscriber: ISubscriber,
-        [<FromKeyedServices(Cons.Com)>] producer: IProducer<string, byte array>,
+        subscriber: ISubscriber<Transaction>,
+        [<FromKeyedServices(Cons.Com)>] producer: IProducer,
         svc: TransactionService
     ) =
     inherit BackgroundService()

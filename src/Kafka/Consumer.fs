@@ -6,24 +6,24 @@ open Confluent.Kafka
 
 
 [<Interface>]
-type IConsumer<'k, 'v> =
+type IConsumer =
 
-    abstract member Client: Confluent.Kafka.IConsumer<'k, 'v>
+    abstract member Client: IConsumer<byte array, byte array>
 
 
 [<Sealed>]
 type AggregateConsumer(options: IOptionsMonitor<ConsumerConfig>) =
     let mutable dispose = false
 
-    interface IConsumer<string, byte array> with
+    interface IConsumer with
         member _.Client =
             let cfg = options.Get(Cons.Agg)
-            ConsumerBuilder<string, byte array>(cfg).Build()
+            ConsumerBuilder<byte array, byte array>(cfg).Build()
 
     interface IDisposable with
         member me.Dispose() =
             if not dispose then
-                (me :> IConsumer<string, byte array>).Client.Dispose()
+                (me :> IConsumer).Client.Dispose()
                 dispose <- true
 
 
@@ -31,13 +31,13 @@ type AggregateConsumer(options: IOptionsMonitor<ConsumerConfig>) =
 type CommandConsumer(options: IOptionsMonitor<ConsumerConfig>) =
     let mutable dispose = false
 
-    interface IConsumer<string, byte array> with
+    interface IConsumer with
         member _.Client =
             let cfg = options.Get(Cons.Com)
-            ConsumerBuilder<string, byte array>(cfg).Build()
+            ConsumerBuilder<byte array, byte array>(cfg).Build()
 
     interface IDisposable with
         member me.Dispose() =
             if not dispose then
-                (me :> IConsumer<string, byte array>).Client.Dispose()
+                (me :> IConsumer).Client.Dispose()
                 dispose <- true

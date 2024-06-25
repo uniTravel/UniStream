@@ -1,7 +1,6 @@
 namespace UniStream.Domain
 
 open System
-open System.Text
 open System.Text.Json
 open Microsoft.Extensions.Logging
 open EventStore.Client
@@ -11,7 +10,7 @@ open UniStream.Domain
 module Handler =
 
     let inline register<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>>
-        (subscriber: ISubscriber)
+        (subscriber: ISubscriber<'agg>)
         (logger: ILogger)
         (client: IClient)
         (commit: Guid -> Guid -> 'com -> Async<unit>)
@@ -22,18 +21,19 @@ module Handler =
         let fail = aggType + "-Fail"
 
         let agent =
-            new MailboxProcessor<Uuid * EventRecord>(fun inbox ->
+            new MailboxProcessor<Guid * Guid * ReadOnlyMemory<byte>>(fun inbox ->
                 let rec loop () =
                     async {
-                        let! comId, evt = inbox.Receive()
-                        let aggId = Encoding.ASCII.GetString(evt.Metadata.Span)[19..54]
-                        let com = JsonSerializer.Deserialize<'com> evt.Data.Span
+                        let! aggId, comId, evtData = inbox.Receive()
+                        let com = JsonSerializer.Deserialize<'com> evtData.Span
 
                         try
-                            do! commit (Guid aggId) (comId.ToGuid()) com
+                            do! commit (aggId) (comId) com
                             logger.LogInformation($"{comType} of {aggId} committed")
                         with ex ->
-                            let data = EventData(comId, "Fail", JsonSerializer.SerializeToUtf8Bytes ex.Message)
+                            let data =
+                                EventData(Uuid.FromGuid comId, "Fail", JsonSerializer.SerializeToUtf8Bytes ex.Message)
+
                             client.AppendToStreamAsync(fail, StreamState.Any, [ data ]).Wait()
                             logger.LogError($"{comType} of {aggId} error: {ex}")
 

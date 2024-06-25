@@ -20,9 +20,9 @@ module Handler =
     /// <param name="producer">Kafka命令生产者。</param>
     /// <param name="commit">提交命令的函数。</param>
     val inline register<'agg, 'com, 'evt> :
-        subscriber: ISubscriber ->
+        subscriber: ISubscriber<'agg> ->
         logger: ILogger ->
-        producer: IProducer<string, byte array> ->
+        producer: IProducer ->
         commit: (Guid -> Guid -> 'com -> Async<unit>) ->
             unit
             when Com<'agg, 'com, 'evt>

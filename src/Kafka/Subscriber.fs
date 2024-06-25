@@ -1,5 +1,6 @@
 namespace UniStream.Domain
 
+open System
 open System.Collections.Generic
 open System.Text
 open System.Threading
@@ -8,37 +9,31 @@ open Microsoft.FSharp.Core
 open UniStream.Domain
 
 
-type ISubscriber =
-    inherit IWorker
-    abstract member AddHandler: key: string -> handler: MailboxProcessor<string * string * byte array> -> unit
-
-
 [<Sealed>]
-type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, consumer: IConsumer<string, byte array>)
-    =
+type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, consumer: IConsumer) =
     let c = consumer.Client
     let aggType = typeof<'agg>.FullName
-    let dic = Dictionary<string, MailboxProcessor<string * string * byte array>>()
+    let dic = Dictionary<string, MailboxProcessor<Guid * Guid * ReadOnlyMemory<byte>>>()
 
     let work (ct: CancellationToken) =
         async {
             try
                 while true do
                     let cr = c.Consume ct
-                    let comId = Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes("comId"))
+                    let comId = Guid(cr.Message.Headers.GetLastBytes("comId"))
                     let comType = Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes("comType"))
 
                     try
-                        dic[comType].Post(cr.Message.Key, comId, cr.Message.Value)
+                        dic[comType].Post(Guid(cr.Message.Key), comId, ReadOnlyMemory cr.Message.Value)
                     with ex ->
                         logger.LogCritical($"{ex}")
             with ex ->
                 logger.LogError($"Consume loop breaked: {ex}")
         }
 
-    interface ISubscriber with
+    interface ISubscriber<'agg> with
 
-        member _.AddHandler (key: string) (handler: MailboxProcessor<string * string * byte array>) =
+        member _.AddHandler (key: string) (handler: MailboxProcessor<Guid * Guid * ReadOnlyMemory<byte>>) =
             dic.Add(key, handler)
 
         member _.Launch(ct: CancellationToken) =

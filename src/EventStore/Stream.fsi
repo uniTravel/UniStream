@@ -2,6 +2,7 @@ namespace UniStream.Domain
 
 open Microsoft.Extensions.Logging
 
+
 /// <summary>Stream类型
 /// </summary>
 [<Sealed>]
@@ -13,4 +14,4 @@ type Stream<'agg when 'agg :> Aggregate> =
     /// <param name="client">EventStore客户端。</param>
     new: logger: ILogger<Stream<'agg>> * client: IClient -> Stream<'agg>
 
-    interface IStream
+    interface IStream<'agg>

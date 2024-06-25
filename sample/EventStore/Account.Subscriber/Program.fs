@@ -17,10 +17,10 @@ module Program =
         builder.Services.AddAggregate<Transaction>(builder.Configuration)
         builder.Services.AddSingleton<TransactionService>() |> ignore
 
-        builder.Services.AddKeyedSingleton<ISubscriber, Subscriber<Transaction>>(typeof<Transaction>)
+        builder.Services.AddSingleton<ISubscriber<Transaction>, Subscriber<Transaction>>()
         |> ignore
 
-        builder.Services.AddKeyedSingleton<IStream, Stream<Transaction>>(typeof<Transaction>)
+        builder.Services.AddSingleton<IStream<Transaction>, Stream<Transaction>>()
         |> ignore
 
         let app = builder.Build()

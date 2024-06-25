@@ -6,7 +6,7 @@ open System.Threading
 /// <summary>后台任务接口
 /// </summary>
 [<Interface>]
-type IWorker =
+type IWorker<'agg when 'agg :> Aggregate> =
 
     /// <summary>启动后台任务
     /// </summary>

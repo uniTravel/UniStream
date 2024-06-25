@@ -1,21 +1,18 @@
 namespace UniStream.Domain
 
+open System
+open System.Text
 open System.Threading
 open System.Collections.Generic
 open Microsoft.Extensions.Logging
 open EventStore.Client
 
 
-type ISubscriber =
-    inherit IWorker
-    abstract member AddHandler: key: string -> handler: MailboxProcessor<Uuid * EventRecord> -> unit
-
-
 [<Sealed>]
 type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, sub: IPersistent) =
     let sub = sub.Subscriber
     let aggType = typeof<'agg>.FullName
-    let dic = Dictionary<string, MailboxProcessor<Uuid * EventRecord>>()
+    let dic = Dictionary<string, MailboxProcessor<Guid * Guid * ReadOnlyMemory<byte>>>()
     let group = "UniStream"
 
     let subscribe (ct: CancellationToken) =
@@ -26,18 +23,21 @@ type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, 
             while! e.MoveNextAsync() do
                 match e.Current with
                 | :? PersistentSubscriptionMessage.Event as ev ->
-                    let comType = ev.ResolvedEvent.Event.EventType
-                    dic[comType].Post(ev.ResolvedEvent.Event.EventId, ev.ResolvedEvent.Event)
-                    sub.Ack(ev.ResolvedEvent).Wait()
+                    let er = ev.ResolvedEvent
+                    let comType = er.Event.EventType
+                    let aggId = Guid(Encoding.ASCII.GetString(er.Event.Metadata.Span)[19..54])
+                    dic[comType].Post(aggId, er.Event.EventId.ToGuid(), er.Event.Data)
+                    sub.Ack(er).Wait()
                 | :? PersistentSubscriptionMessage.SubscriptionConfirmation as confirm ->
                     logger.LogInformation($"Subscription {confirm.SubscriptionId} for {aggType} started")
                 | :? PersistentSubscriptionMessage.NotFound -> logger.LogError("Stream was not found")
                 | _ -> logger.LogError("Unknown error")
         }
 
-    interface ISubscriber with
+    interface ISubscriber<'agg> with
 
-        member _.AddHandler (key: string) (handler: MailboxProcessor<Uuid * EventRecord>) = dic.Add(key, handler)
+        member _.AddHandler (key: string) (handler: MailboxProcessor<Guid * Guid * ReadOnlyMemory<byte>>) =
+            dic.Add(key, handler)
 
         member _.Launch(ct: CancellationToken) =
             task { Async.Start(subscribe ct |> Async.AwaitTask, ct) }

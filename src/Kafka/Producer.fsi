@@ -8,11 +8,11 @@ open Confluent.Kafka
 /// <summary>Kafka生产者接口
 /// </summary>
 [<Interface>]
-type IProducer<'k, 'v> =
+type IProducer =
 
     /// <summary>Kafka生产者
     /// </summary>
-    abstract member Client: Confluent.Kafka.IProducer<'k, 'v>
+    abstract member Client: IProducer<byte array, byte array>
 
 
 /// <summary>Kafka聚合生产者
@@ -25,7 +25,7 @@ type AggregateProducer =
     /// <param name="options">Kafka生产者配置选项。</param>
     new: options: IOptionsMonitor<ProducerConfig> -> AggregateProducer
 
-    interface IProducer<string, byte array>
+    interface IProducer
 
     interface IDisposable
 
@@ -40,6 +40,6 @@ type CommandProducer =
     /// <param name="options">Kafka生产者配置选项。</param>
     new: options: IOptionsMonitor<ProducerConfig> -> CommandProducer
 
-    interface IProducer<string, byte array>
+    interface IProducer
 
     interface IDisposable

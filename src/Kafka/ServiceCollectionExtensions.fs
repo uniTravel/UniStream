@@ -21,8 +21,7 @@ module internal Cfg =
             .Bind(config.GetSection("Kafka:Aggregate:Producer"))
         |> ignore
 
-        services.AddKeyedSingleton<IProducer<string, byte array>, AggregateProducer>(Cons.Agg)
-        |> ignore
+        services.AddKeyedSingleton<IProducer, AggregateProducer>(Cons.Agg) |> ignore
 
     let aggregateConsumer (services: IServiceCollection) (config: IConfiguration) =
         services
@@ -30,8 +29,7 @@ module internal Cfg =
             .Bind(config.GetSection("Kafka:Aggregate:Consumer"))
         |> ignore
 
-        services.AddKeyedSingleton<IConsumer<string, byte array>, AggregateConsumer>(Cons.Agg)
-        |> ignore
+        services.AddKeyedSingleton<IConsumer, AggregateConsumer>(Cons.Agg) |> ignore
 
     let commandProducer (services: IServiceCollection) (config: IConfiguration) =
         services
@@ -39,8 +37,7 @@ module internal Cfg =
             .Bind(config.GetSection("Kafka:Command:Producer"))
         |> ignore
 
-        services.AddKeyedSingleton<IProducer<string, byte array>, CommandProducer>(Cons.Com)
-        |> ignore
+        services.AddKeyedSingleton<IProducer, CommandProducer>(Cons.Com) |> ignore
 
     let commandConsumer (services: IServiceCollection) (config: IConfiguration) =
         services
@@ -48,8 +45,7 @@ module internal Cfg =
             .Bind(config.GetSection("Kafka:Command:Consumer"))
         |> ignore
 
-        services.AddKeyedSingleton<IConsumer<string, byte array>, CommandConsumer>(Cons.Com)
-        |> ignore
+        services.AddKeyedSingleton<IConsumer, CommandConsumer>(Cons.Com) |> ignore
 
 
 /// <summary>Kafka服务注入扩展

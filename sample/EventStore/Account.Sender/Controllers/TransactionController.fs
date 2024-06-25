@@ -3,7 +3,6 @@ namespace Account.Sender.Controller
 open System
 open Microsoft.AspNetCore.Mvc
 open Microsoft.AspNetCore.Http
-open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open UniStream.Domain
 open Account.Domain
@@ -11,8 +10,7 @@ open Account.Domain
 
 [<ApiController>]
 [<Route("[controller]/[action]/{comId}")>]
-type TransactionController
-    (logger: ILogger<TransactionController>, [<FromKeyedServices(typeof<Transaction>)>] sender: ISender) as me =
+type TransactionController(logger: ILogger<TransactionController>, sender: ISender<Transaction>) as me =
     inherit ControllerBase()
 
     [<HttpPost>]

@@ -16,8 +16,8 @@ type Stream<'agg when 'agg :> Aggregate>
         logger: ILogger<Stream<'agg>>,
         options: IOptionsMonitor<ConsumerConfig>,
         admin: IAdmin,
-        producer: IProducer<string, byte array>,
-        consumer: IConsumer<string, byte array>
+        producer: IProducer,
+        consumer: IConsumer
     ) =
     let p = producer.Client
     let c = consumer.Client
@@ -26,7 +26,7 @@ type Stream<'agg when 'agg :> Aggregate>
 
     let init (cfg: ConsumerConfig) =
         cfg.GroupId <- cfg.GroupId + "_" + aggType
-        let c = ConsumerBuilder<string, byte array>(cfg).Build()
+        let c = ConsumerBuilder<Byte array, byte array>(cfg).Build()
         c.Subscribe(aggType)
         c
 
@@ -47,9 +47,9 @@ type Stream<'agg when 'agg :> Aggregate>
     let write (aggId: Guid) (comId: Guid) (revision: uint64) (evtType: string) (evtData: byte array) =
         let aggId = aggId.ToString()
         Async.Start <| createTopic aggId revision
-        let comId = comId.ToString()
+        let comId = comId.ToByteArray()
         let h = Headers()
-        let msg = Message<string, byte array>(Key = comId, Value = evtData, Headers = h)
+        let msg = Message<byte array, byte array>(Key = comId, Value = evtData, Headers = h)
         msg.Headers.Add("aggId", Encoding.ASCII.GetBytes aggId)
         msg.Headers.Add("evtType", Encoding.ASCII.GetBytes evtType)
         p.Produce(aggType, msg)
@@ -67,7 +67,7 @@ type Stream<'agg when 'agg :> Aggregate>
               if cr.IsPartitionEOF then
                   d <- false
               else
-                  yield cr.Message.Key, ReadOnlyMemory cr.Message.Value ]
+                  yield Encoding.ASCII.GetString cr.Message.Key, ReadOnlyMemory cr.Message.Value ]
 
     let restore (ch: HashSet<Guid>) count =
         let count = int64 count
@@ -96,7 +96,7 @@ type Stream<'agg when 'agg :> Aggregate>
         logger.LogInformation($"{cached.Length} comId cached")
         cached
 
-    interface IStream with
+    interface IStream<'agg> with
         member _.Reader = read
         member _.Writer = write
         member _.Restore = restore

@@ -16,8 +16,8 @@ type Projector<'agg when 'agg :> Aggregate> =
     /// <param name="consumer">Kafka聚合消费者。</param>
     new:
         logger: ILogger<Projector<'agg>> *
-        [<FromKeyedServices(Cons.Agg)>] producer: IProducer<string, byte array> *
-        [<FromKeyedServices(Cons.Agg)>] consumer: IConsumer<string, byte array> ->
+        [<FromKeyedServices(Cons.Agg)>] producer: IProducer *
+        [<FromKeyedServices(Cons.Agg)>] consumer: IConsumer ->
             Projector<'agg>
 
-    interface IWorker
+    interface IWorker<'agg>

@@ -8,11 +8,11 @@ open Confluent.Kafka
 /// <summary>Kafka消费者接口
 /// </summary>
 [<Interface>]
-type IConsumer<'k, 'v> =
+type IConsumer =
 
     /// <summary>Kafka消费者
     /// </summary>
-    abstract member Client: Confluent.Kafka.IConsumer<'k, 'v>
+    abstract member Client: IConsumer<byte array, byte array>
 
 
 /// <summary>Kafka聚合消费者
@@ -25,7 +25,7 @@ type AggregateConsumer =
     /// <param name="options">Kafka消费者配置选项。</param>
     new: options: IOptionsMonitor<ConsumerConfig> -> AggregateConsumer
 
-    interface IConsumer<string, byte array>
+    interface IConsumer
 
     interface IDisposable
 
@@ -40,6 +40,6 @@ type CommandConsumer =
     /// <param name="options">Kafka消费者配置选项。</param>
     new: options: IOptionsMonitor<ConsumerConfig> -> CommandConsumer
 
-    interface IConsumer<string, byte array>
+    interface IConsumer
 
     interface IDisposable

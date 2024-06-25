@@ -20,7 +20,7 @@ module Handler =
     /// <param name="client">EventStore客户端。</param>
     /// <param name="commit">提交命令的函数。</param>
     val inline register<'agg, 'com, 'evt> :
-        subscriber: ISubscriber ->
+        subscriber: ISubscriber<'agg> ->
         logger: ILogger ->
         client: IClient ->
         commit: (Guid -> Guid -> 'com -> Async<unit>) ->

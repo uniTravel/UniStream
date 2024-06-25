@@ -52,7 +52,7 @@ module Aggregator =
     let inline register<'agg, 'rep when Rep<'agg, 'rep>> (agent: MailboxProcessor<Msg<'agg>>) (rep: 'rep) =
         agent.Post <| Register(rep.FullName, rep.Act)
 
-    let inline init<'agg, 'stream when 'agg :> Aggregate and 'stream :> IStream>
+    let inline init<'agg, 'stream when 'agg :> Aggregate and 'stream :> IStream<'agg>>
         ([<InlineIfLambda>] creator: Guid -> 'agg)
         (stream: 'stream)
         (options: AggregateOptions)

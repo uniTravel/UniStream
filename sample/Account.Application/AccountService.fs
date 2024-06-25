@@ -1,13 +1,11 @@
 namespace Account.Application
 
-open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Options
 open UniStream.Domain
 open Account.Domain
 
 
-type AccountService([<FromKeyedServices(typeof<Account>)>] stream: IStream, options: IOptionsMonitor<AggregateOptions>)
-    =
+type AccountService(stream: IStream<Account>, options: IOptionsMonitor<AggregateOptions>) =
     let options = options.Get(nameof Account)
     let agent = Aggregator.init Account stream options
 

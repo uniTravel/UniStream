@@ -11,17 +11,6 @@ open EventStore.Client
 open FSharp.Control
 
 
-type Msg =
-    | Send of Guid * Uuid * string * byte array * AsyncReplyChannel<Result<unit, exn>>
-    | Receive of EventRecord
-    | Refresh of DateTime
-
-
-type ISender =
-
-    abstract member Agent: MailboxProcessor<Msg>
-
-
 [<Sealed>]
 type Sender<'agg when 'agg :> Aggregate>
     (
@@ -40,30 +29,29 @@ type Sender<'agg when 'agg :> Aggregate>
     let group = cfg.Value.GroupName
     let cts = new CancellationTokenSource()
     let mutable dispose = false
+    let todo = Dictionary<Guid, AsyncReplyChannel<Result<unit, exn>>>()
+    let cache = Dictionary<Guid, DateTime * (Guid -> unit)>()
+
+    let reply (evtData: ReadOnlyMemory<byte>) evtType comId =
+        match evtType with
+        | "Fail" ->
+            let err = JsonSerializer.Deserialize<string> evtData.Span
+            logger.LogError($"{comId} of {aggType} failed: {err}")
+            todo[comId].Reply <| Error(failwith $"Apply command failed: {err}")
+        | _ ->
+            logger.LogInformation($"{comId} of {aggType} finished")
+            todo[comId].Reply <| Ok()
 
     let agent =
         new MailboxProcessor<Msg>(fun inbox ->
-            let todo = Dictionary<Uuid, AsyncReplyChannel<Result<unit, exn>>>()
-            let cache = Dictionary<Uuid, DateTime * EventRecord>()
-
-            let reply comId evtType (evtData: ReadOnlyMemory<byte>) =
-                match evtType with
-                | _ when evtType = "Fail" ->
-                    let err = JsonSerializer.Deserialize<string> evtData.Span
-                    logger.LogError($"{comId} of {aggType} failed: {err}")
-                    todo[comId].Reply <| Error(failwith $"Apply command failed: {err}")
-                | _ ->
-                    logger.LogInformation($"{comId} of {aggType} finished")
-                    todo[comId].Reply <| Ok()
-
             let rec loop () =
                 async {
                     match! inbox.Receive() with
                     | Send(aggId, comId, comType, comData, channel) ->
                         match comId with
                         | _ when cache.ContainsKey comId ->
-                            let _, er = cache[comId]
-                            reply comId er.EventType er.Data
+                            let _, reply = cache[comId]
+                            reply comId
                             cache.Remove comId |> ignore
                         | _ when todo.ContainsKey comId -> todo[comId] <- channel
                         | _ ->
@@ -74,18 +62,19 @@ type Sender<'agg when 'agg :> Aggregate>
                                     |> ReadOnlyMemory
                                     |> Nullable
 
-                                let data = EventData(comId, comType, comData, metadata)
+                                let data = EventData(Uuid.FromGuid comId, comType, comData, metadata)
                                 client.AppendToStreamAsync(aggType, StreamState.Any, [ data ]).Wait()
                                 todo.Add(comId, channel)
                             with ex ->
                                 channel.Reply <| Error ex
-                    | Receive(er) ->
-                        match er.EventId with
-                        | comId when todo.ContainsKey comId ->
-                            reply comId er.EventType er.Data
+                    | Receive(comId, reply) ->
+                        match comId with
+                        | _ when todo.ContainsKey comId ->
+                            reply comId
                             todo.Remove comId |> ignore
-                        | comId when not <| cache.ContainsKey comId ->
-                            cache.Add(comId, (DateTime.UtcNow.AddMilliseconds interval, er)) |> ignore
+                        | _ when not <| cache.ContainsKey comId ->
+                            let expire = DateTime.UtcNow.AddMilliseconds interval
+                            cache.Add(comId, (expire, reply)) |> ignore
                         | _ -> ()
                     | Refresh(now) ->
                         cache
@@ -112,7 +101,9 @@ type Sender<'agg when 'agg :> Aggregate>
             while! e.MoveNextAsync() do
                 match e.Current with
                 | :? PersistentSubscriptionMessage.Event as ev ->
-                    agent.Post <| Receive(ev.ResolvedEvent.Event)
+                    let comId = ev.ResolvedEvent.Event.EventId.ToGuid()
+                    let reply = reply ev.ResolvedEvent.Event.Data ev.ResolvedEvent.Event.EventType
+                    agent.Post <| Receive(comId, reply)
                     sub.Ack(ev.ResolvedEvent).Wait()
                 | :? PersistentSubscriptionMessage.SubscriptionConfirmation as confirm ->
                     logger.LogInformation($"Subscription {confirm.SubscriptionId} for {stream} started")
@@ -120,18 +111,12 @@ type Sender<'agg when 'agg :> Aggregate>
                 | _ -> logger.LogError("Unknown error")
         }
 
-    let createTimer (interval: float) work =
-        let timer = new Timers.Timer(interval)
-        timer.AutoReset <- true
-        timer.Elapsed.Add work
-        async { timer.Start() }
-
     do
         agent.Start()
         Async.Start(subscribe cts.Token |> Async.AwaitTask, cts.Token)
-        Async.Start(createTimer interval (fun _ -> agent.Post <| Refresh(DateTime.UtcNow)), cts.Token)
+        Async.Start(Sender.timer interval (fun _ -> agent.Post <| Refresh(DateTime.UtcNow)), cts.Token)
 
-    interface ISender with
+    interface ISender<'agg> with
         member val Agent = agent
 
     interface IDisposable with
@@ -140,27 +125,3 @@ type Sender<'agg when 'agg :> Aggregate>
                 cts.Cancel()
                 agent.Dispose()
                 dispose <- true
-
-
-module Sender =
-    let inline send<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>>
-        (sender: ISender)
-        (aggId: Guid)
-        (comId: Guid)
-        (com: 'com)
-        =
-        async {
-            match!
-                sender.Agent.PostAndAsyncReply
-                <| fun channel ->
-                    Send(
-                        aggId,
-                        Uuid.FromGuid comId,
-                        typeof<'com>.FullName,
-                        JsonSerializer.SerializeToUtf8Bytes com,
-                        channel
-                    )
-            with
-            | Ok() -> return ()
-            | Error ex -> return raise ex
-        }

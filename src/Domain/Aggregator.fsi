@@ -63,4 +63,4 @@ module Aggregator =
         stream: 'stream ->
         options: AggregateOptions ->
             MailboxProcessor<Msg<'agg>>
-            when 'agg :> Aggregate and 'stream :> IStream
+            when 'agg :> Aggregate and 'stream :> IStream<'agg>
