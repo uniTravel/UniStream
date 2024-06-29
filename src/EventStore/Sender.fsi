@@ -7,6 +7,7 @@ open Microsoft.Extensions.Options
 
 /// <summary>聚合命令发送者类型
 /// </summary>
+/// <typeparam name="'agg">聚合类型。</typeparam>
 [<Sealed>]
 type Sender<'agg when 'agg :> Aggregate> =
 

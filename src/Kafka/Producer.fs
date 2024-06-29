@@ -12,7 +12,23 @@ type IProducer =
 
 
 [<Sealed>]
-type AggregateProducer(options: IOptionsMonitor<ProducerConfig>) =
+type TypProducer(options: IOptionsMonitor<ProducerConfig>) =
+    let mutable dispose = false
+
+    interface IProducer with
+        member _.Client =
+            let cfg = options.Get(Cons.Typ)
+            ProducerBuilder<byte array, byte array>(cfg).Build()
+
+    interface IDisposable with
+        member me.Dispose() =
+            if not dispose then
+                (me :> IProducer).Client.Dispose()
+                dispose <- true
+
+
+[<Sealed>]
+type AggProducer(options: IOptionsMonitor<ProducerConfig>) =
     let mutable dispose = false
 
     interface IProducer with
@@ -28,7 +44,7 @@ type AggregateProducer(options: IOptionsMonitor<ProducerConfig>) =
 
 
 [<Sealed>]
-type CommandProducer(options: IOptionsMonitor<ProducerConfig>) =
+type ComProducer(options: IOptionsMonitor<ProducerConfig>) =
     let mutable dispose = false
 
     interface IProducer with

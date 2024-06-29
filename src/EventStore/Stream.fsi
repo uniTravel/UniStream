@@ -5,6 +5,7 @@ open Microsoft.Extensions.Logging
 
 /// <summary>Stream类型
 /// </summary>
+/// <typeparam name="'agg">聚合类型。</typeparam>
 [<Sealed>]
 type Stream<'agg when 'agg :> Aggregate> =
 

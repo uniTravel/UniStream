@@ -15,15 +15,30 @@ type IProducer =
     abstract member Client: IProducer<byte array, byte array>
 
 
-/// <summary>Kafka聚合生产者
+/// <summary>Kafka聚合类型生产者
 /// </summary>
 [<Sealed>]
-type AggregateProducer =
+type TypProducer =
 
     /// <summary>主构造函数
     /// </summary>
     /// <param name="options">Kafka生产者配置选项。</param>
-    new: options: IOptionsMonitor<ProducerConfig> -> AggregateProducer
+    new: options: IOptionsMonitor<ProducerConfig> -> TypProducer
+
+    interface IProducer
+
+    interface IDisposable
+
+
+/// <summary>Kafka聚合生产者
+/// </summary>
+[<Sealed>]
+type AggProducer =
+
+    /// <summary>主构造函数
+    /// </summary>
+    /// <param name="options">Kafka生产者配置选项。</param>
+    new: options: IOptionsMonitor<ProducerConfig> -> AggProducer
 
     interface IProducer
 
@@ -33,12 +48,12 @@ type AggregateProducer =
 /// <summary>Kafka命令生产者
 /// </summary>
 [<Sealed>]
-type CommandProducer =
+type ComProducer =
 
     /// <summary>主构造函数
     /// </summary>
     /// <param name="options">Kafka生产者配置选项。</param>
-    new: options: IOptionsMonitor<ProducerConfig> -> CommandProducer
+    new: options: IOptionsMonitor<ProducerConfig> -> ComProducer
 
     interface IProducer
 

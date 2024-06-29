@@ -22,9 +22,19 @@ type ServiceCollectionExtensions =
             .ValidateOnStart()
         |> ignore
 
-        services.AddSingleton<ISettings, Settings>() |> ignore
-        services.AddSingleton<IClient, Client>() |> ignore
-        services.AddSingleton<IPersistent, Persistent>() |> ignore
+        services
+            .AddSingleton<ISettings, Settings>()
+            .AddSingleton<IClient, Client>()
+            .AddSingleton<IPersistent, Persistent>()
+
+    /// <summary>注入聚合命令发送者相关配置
+    /// </summary>
+    /// <typeparam name="'agg">聚合类型。</typeparam>
+    /// <param name="config">配置。</param>
+    [<Extension>]
+    static member AddSender<'agg when 'agg :> Aggregate>(services: IServiceCollection, config: IConfiguration) =
+        services.AddCommand<'agg>(config).AddSingleton<ISender<'agg>, Sender<'agg>>()
+
 
     /// <summary>注入EventStore初始化相关配置
     /// </summary>
@@ -39,8 +49,7 @@ type ServiceCollectionExtensions =
             .ValidateOnStart()
         |> ignore
 
-        services.AddSingleton<ISettings, Settings>() |> ignore
-        services.AddSingleton<IManager, Manager>() |> ignore
+        services.AddSingleton<ISettings, Settings>().AddSingleton<IManager, Manager>()
 
     /// <summary>注入命令处理者相关配置
     /// </summary>
@@ -55,8 +64,16 @@ type ServiceCollectionExtensions =
             .ValidateOnStart()
         |> ignore
 
-        services.AddSingleton<ISettings, Settings>() |> ignore
-        services.AddSingleton<IClient, Client>() |> ignore
+        services.AddSingleton<ISettings, Settings>().AddSingleton<IClient, Client>()
+
+    /// <summary>注入聚合命令处理者相关配置
+    /// </summary>
+    /// <remarks>单节点执行命令。</remarks>
+    /// <typeparam name="'agg">聚合类型。</typeparam>
+    /// <param name="config">配置。</param>
+    [<Extension>]
+    static member AddHandler<'agg when 'agg :> Aggregate>(services: IServiceCollection, config: IConfiguration) =
+        services.AddAggregate<'agg>(config).AddSingleton<IStream<'agg>, Stream<'agg>>()
 
     /// <summary>注入命令订阅者相关配置
     /// </summary>
@@ -71,6 +88,19 @@ type ServiceCollectionExtensions =
             .ValidateOnStart()
         |> ignore
 
-        services.AddSingleton<ISettings, Settings>() |> ignore
-        services.AddSingleton<IClient, Client>() |> ignore
-        services.AddSingleton<IPersistent, Persistent>() |> ignore
+        services
+            .AddSingleton<ISettings, Settings>()
+            .AddSingleton<IClient, Client>()
+            .AddSingleton<IPersistent, Persistent>()
+
+    /// <summary>注入聚合命令订阅者相关配置
+    /// </summary>
+    /// <remarks>多节点执行命令。</remarks>
+    /// <typeparam name="'agg">聚合类型。</typeparam>
+    /// <param name="config">配置。</param>
+    [<Extension>]
+    static member AddSubscriber<'agg when 'agg :> Aggregate>(services: IServiceCollection, config: IConfiguration) =
+        services
+            .AddAggregate<'agg>(config)
+            .AddSingleton<ISubscriber<'agg>, Subscriber<'agg>>()
+            .AddSingleton<IStream<'agg>, Stream<'agg>>()

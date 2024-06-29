@@ -24,6 +24,8 @@ type ServiceCollectionExtensions =
             .ValidateOnStart()
         |> ignore
 
+        services
+
     /// <summary>命令注入配置
     /// </summary>
     /// <typeparam name="'agg">聚合类型。</typeparam>
@@ -37,3 +39,5 @@ type ServiceCollectionExtensions =
             .ValidateDataAnnotations()
             .ValidateOnStart()
         |> ignore
+
+        services

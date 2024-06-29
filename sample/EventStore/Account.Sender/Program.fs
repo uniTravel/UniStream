@@ -19,10 +19,8 @@ module Program =
 
         builder.Services.AddControllers()
         builder.Services.AddSender(builder.Configuration)
-        builder.Services.AddCommand<Transaction>(builder.Configuration)
 
-        builder.Services.AddSingleton<ISender<Transaction>, Sender<Transaction>>()
-        |> ignore
+        builder.Services.AddSender<Transaction>(builder.Configuration)
 
         let app = builder.Build()
 

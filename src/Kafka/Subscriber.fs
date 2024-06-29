@@ -10,8 +10,8 @@ open UniStream.Domain
 
 
 [<Sealed>]
-type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, consumer: IConsumer) =
-    let c = consumer.Client
+type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, cc: IConsumer) =
+    let cc = cc.Client
     let aggType = typeof<'agg>.FullName
     let dic = Dictionary<string, MailboxProcessor<Guid * Guid * ReadOnlyMemory<byte>>>()
 
@@ -19,7 +19,7 @@ type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, 
         async {
             try
                 while true do
-                    let cr = c.Consume ct
+                    let cr = cc.Consume ct
                     let comId = Guid(cr.Message.Headers.GetLastBytes("comId"))
                     let comType = Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes("comType"))
 
@@ -38,7 +38,7 @@ type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, 
 
         member _.Launch(ct: CancellationToken) =
             task {
-                c.Subscribe(aggType + "_Command")
+                cc.Subscribe(aggType + "_Command")
                 Async.Start(work ct, ct)
                 logger.LogInformation($"Subscription of command for {aggType} started")
             }

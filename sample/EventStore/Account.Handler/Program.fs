@@ -21,17 +21,15 @@ module Program =
         builder.Services.AddControllers()
         builder.Services.AddEndpointsApiExplorer()
         builder.Services.AddSwaggerGen()
-
         builder.Services.AddHandler(builder.Configuration)
-        builder.Services.AddAggregate<Account>(builder.Configuration)
-        builder.Services.AddSingleton<AccountService>()
-        builder.Services.AddAggregate<Transaction>(builder.Configuration)
-        builder.Services.AddSingleton<TransactionService>()
 
-        builder.Services.AddSingleton<IStream<Account>, Stream<Account>>() |> ignore
+        builder.Services
+            .AddHandler<Account>(builder.Configuration)
+            .AddSingleton<AccountService>()
 
-        builder.Services.AddSingleton<IStream<Transaction>, Stream<Transaction>>()
-        |> ignore
+        builder.Services
+            .AddHandler<Transaction>(builder.Configuration)
+            .AddSingleton<TransactionService>()
 
         let app = builder.Build()
 

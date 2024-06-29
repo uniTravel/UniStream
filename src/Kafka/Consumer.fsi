@@ -15,15 +15,15 @@ type IConsumer =
     abstract member Client: IConsumer<byte array, byte array>
 
 
-/// <summary>Kafka聚合消费者
+/// <summary>Kafka聚合类型消费者
 /// </summary>
 [<Sealed>]
-type AggregateConsumer =
+type TypConsumer =
 
     /// <summary>主构造函数
     /// </summary>
     /// <param name="options">Kafka消费者配置选项。</param>
-    new: options: IOptionsMonitor<ConsumerConfig> -> AggregateConsumer
+    new: options: IOptionsMonitor<ConsumerConfig> -> TypConsumer
 
     interface IConsumer
 
@@ -33,12 +33,12 @@ type AggregateConsumer =
 /// <summary>Kafka命令消费者
 /// </summary>
 [<Sealed>]
-type CommandConsumer =
+type ComConsumer =
 
     /// <summary>主构造函数
     /// </summary>
     /// <param name="options">Kafka消费者配置选项。</param>
-    new: options: IOptionsMonitor<ConsumerConfig> -> CommandConsumer
+    new: options: IOptionsMonitor<ConsumerConfig> -> ComConsumer
 
     interface IConsumer
 

@@ -10,17 +10,15 @@ open Account.Application
 module Program =
     [<EntryPoint>]
     let main args =
+
         let builder = Host.CreateApplicationBuilder(args)
-        builder.Services.AddHostedService<TransactionWorker>() |> ignore
 
-        builder.Services.AddSubscriber(builder.Configuration)
-        builder.Services.AddAggregate<Transaction>(builder.Configuration)
-        builder.Services.AddSingleton<TransactionService>() |> ignore
+        builder.Services.AddSubscriber(builder.Configuration) |> ignore
 
-        builder.Services.AddSingleton<ISubscriber<Transaction>, Subscriber<Transaction>>()
-        |> ignore
-
-        builder.Services.AddSingleton<IStream<Transaction>, Stream<Transaction>>()
+        builder.Services
+            .AddSubscriber<Transaction>(builder.Configuration)
+            .AddHostedService<TransactionWorker>()
+            .AddSingleton<TransactionService>()
         |> ignore
 
         let app = builder.Build()

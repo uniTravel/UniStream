@@ -5,6 +5,7 @@ open Microsoft.Extensions.Logging
 
 /// <summary>聚合命令订阅者类型
 /// </summary>
+/// <typeparam name="'agg">聚合类型。</typeparam>
 [<Sealed>]
 type Subscriber<'agg when 'agg :> Aggregate> =
 

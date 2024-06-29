@@ -16,84 +16,79 @@ type Stream<'agg when 'agg :> Aggregate>
         logger: ILogger<Stream<'agg>>,
         options: IOptionsMonitor<ConsumerConfig>,
         admin: IAdmin,
-        producer: IProducer,
-        consumer: IConsumer
+        tp: IProducer,
+        tc: IConsumer
     ) =
-    let p = producer.Client
-    let c = consumer.Client
+    let tp = tp.Client
+    let tc = tc.Client
     let admin = admin.Client
     let aggType = typeof<'agg>.FullName
+    let cfg = options.Get(Cons.Agg)
 
-    let init (cfg: ConsumerConfig) =
-        cfg.GroupId <- cfg.GroupId + "_" + aggType
-        let c = ConsumerBuilder<Byte array, byte array>(cfg).Build()
-        c.Subscribe(aggType)
-        c
+    let ac =
+        cfg.GroupId <- cfg.GroupId + aggType
+        ConsumerBuilder<Byte array, byte array>(cfg).Build()
 
-    let consumer = init <| options.Get(Cons.Agg)
-    let tp = TopicPartition(aggType, 0)
-
-    let createTopic aggId (revision: uint64) =
+    let createTopic (aggId: Guid) (revision: uint64) =
         async {
             if revision = UInt64.MaxValue then
-                let topic = aggType + "-" + aggId
+                let topic = aggType + "-" + aggId.ToString()
                 let cfg = Dictionary(dict [ ("retention.ms", "-1") ])
 
                 admin
-                    .CreateTopicsAsync([ TopicSpecification(Name = topic, Configs = cfg) ])
+                    .CreateTopicsAsync([ TopicSpecification(Name = topic, NumPartitions = 1, Configs = cfg) ])
                     .Wait()
         }
 
     let write (aggId: Guid) (comId: Guid) (revision: uint64) (evtType: string) (evtData: byte array) =
-        let aggId = aggId.ToString()
         Async.Start <| createTopic aggId revision
-        let comId = comId.ToByteArray()
+        let aggId = aggId.ToByteArray()
         let h = Headers()
-        let msg = Message<byte array, byte array>(Key = comId, Value = evtData, Headers = h)
-        msg.Headers.Add("aggId", Encoding.ASCII.GetBytes aggId)
+        let msg = Message<byte array, byte array>(Key = aggId, Value = evtData, Headers = h)
+        msg.Headers.Add("comId", comId.ToByteArray())
         msg.Headers.Add("evtType", Encoding.ASCII.GetBytes evtType)
-        p.Produce(aggType, msg)
+        tp.Produce(aggType, msg)
 
     let read (aggId: Guid) =
-        let topic = aggType + "-" + aggId.ToString()
-        let tp = TopicPartition(topic, 0)
+        let aggId = aggId.ToString()
+        let topic = aggType + "-" + aggId
         let mutable d = true
-        c.Subscribe(topic)
-        c.Assign(TopicPartitionOffset(tp, Offset.Beginning))
+        ac.Assign(TopicPartitionOffset(topic, 0, Offset.Beginning))
 
-        [ while d do
-              let cr = c.Consume(2000)
-
-              if cr.IsPartitionEOF then
-                  d <- false
-              else
-                  yield Encoding.ASCII.GetString cr.Message.Key, ReadOnlyMemory cr.Message.Value ]
-
-    let restore (ch: HashSet<Guid>) count =
-        let count = int64 count
-        let mutable d = true
-        let last = c.QueryWatermarkOffsets(tp, TimeSpan.FromSeconds(10)).High
-
-        let start =
-            if last.Value > count then
-                Offset(last.Value - count)
-            else
-                Offset.Beginning
-
-        consumer.Assign(TopicPartitionOffset(tp, start))
-
-        let cached =
+        let result =
             [ while d do
-                  let cr = consumer.Consume(2000)
+                  let cr = ac.Consume(2000)
 
-                  if cr.Offset = last then
+                  if cr.IsPartitionEOF then
                       d <- false
                   else
-                      let comId = Guid cr.Message.Key
+                      yield Encoding.ASCII.GetString cr.Message.Key, ReadOnlyMemory cr.Message.Value ]
+
+        result
+
+    let restore (ch: HashSet<Guid>) count =
+        let mutable d = true
+
+        admin
+            .GetMetadata(TimeSpan.FromSeconds 2)
+            .Topics.Find(fun t -> t.Topic = aggType)
+            .Partitions
+        |> Seq.map (fun x -> TopicPartition(aggType, x.PartitionId))
+        |> tc.Assign
+
+        let result =
+            [ while d do
+                  let cr = tc.Consume(2000)
+
+                  if cr = null then
+                      d <- false
+                  else
+                      let comId = Guid(cr.Message.Headers.GetLastBytes("comId"))
                       ch.Add(comId) |> ignore
                       yield comId ]
 
-        logger.LogInformation($"{cached.Length} comId cached")
+        let cached = result |> List.skip (result.Length - count)
+        logger.LogInformation($"{cached.Length} comId of {aggType} cached")
         cached
 
     interface IStream<'agg> with

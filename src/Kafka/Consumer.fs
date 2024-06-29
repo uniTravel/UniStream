@@ -12,12 +12,12 @@ type IConsumer =
 
 
 [<Sealed>]
-type AggregateConsumer(options: IOptionsMonitor<ConsumerConfig>) =
+type TypConsumer(options: IOptionsMonitor<ConsumerConfig>) =
     let mutable dispose = false
 
     interface IConsumer with
         member _.Client =
-            let cfg = options.Get(Cons.Agg)
+            let cfg = options.Get(Cons.Typ)
             ConsumerBuilder<byte array, byte array>(cfg).Build()
 
     interface IDisposable with
@@ -28,7 +28,7 @@ type AggregateConsumer(options: IOptionsMonitor<ConsumerConfig>) =
 
 
 [<Sealed>]
-type CommandConsumer(options: IOptionsMonitor<ConsumerConfig>) =
+type ComConsumer(options: IOptionsMonitor<ConsumerConfig>) =
     let mutable dispose = false
 
     interface IConsumer with

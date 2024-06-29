@@ -28,7 +28,7 @@ module Handler =
                         let com = JsonSerializer.Deserialize<'com> evtData.Span
 
                         try
-                            do! commit (aggId) (comId) com
+                            do! commit aggId comId com
                             logger.LogInformation($"{comType} of {aggId} committed")
                         with ex ->
                             let data =

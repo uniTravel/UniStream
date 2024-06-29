@@ -13,7 +13,7 @@ type TransactionWorker
     (
         logger: ILogger<TransactionWorker>,
         subscriber: ISubscriber<Transaction>,
-        [<FromKeyedServices(Cons.Com)>] producer: IProducer,
+        [<FromKeyedServices(Cons.Typ)>] producer: IProducer,
         svc: TransactionService
     ) =
     inherit BackgroundService()

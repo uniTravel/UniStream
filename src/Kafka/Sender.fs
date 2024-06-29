@@ -13,10 +13,16 @@ open UniStream.Domain
 
 [<Sealed>]
 type Sender<'agg when 'agg :> Aggregate>
-    (logger: ILogger<Sender<'agg>>, options: IOptionsMonitor<CommandOptions>, producer: IProducer, consumer: IConsumer)
-    =
-    let p = producer.Client
-    let c = consumer.Client
+    (
+        logger: ILogger<Sender<'agg>>,
+        options: IOptionsMonitor<CommandOptions>,
+        admin: IAdmin,
+        cp: IProducer,
+        tc: IConsumer
+    ) =
+    let cp = cp.Client
+    let tc = tc.Client
+    let admin = admin.Client
     let options = options.Get(typeof<'agg>.Name)
     let interval = options.Interval * 1000
     let aggType = typeof<'agg>.FullName
@@ -55,7 +61,7 @@ type Sender<'agg when 'agg :> Aggregate>
                                 let msg = Message<byte array, byte array>(Key = aggId, Value = comData, Headers = h)
                                 msg.Headers.Add("comId", comId.ToByteArray())
                                 msg.Headers.Add("comType", Encoding.ASCII.GetBytes comType)
-                                p.Produce(topic, msg)
+                                cp.Produce(topic, msg)
                                 todo.Add(comId, channel)
                             with ex ->
                                 channel.Reply <| Error ex
@@ -83,8 +89,8 @@ type Sender<'agg when 'agg :> Aggregate>
         async {
             try
                 while true do
-                    let cr = c.Consume ct
-                    let comId = Guid cr.Message.Key
+                    let cr = tc.Consume ct
+                    let comId = Guid(cr.Message.Headers.GetLastBytes("comId"))
                     let reply = reply cr
                     agent.Post <| Receive(comId, reply)
             with ex ->
@@ -93,11 +99,18 @@ type Sender<'agg when 'agg :> Aggregate>
 
     do
         agent.Start()
-        c.Subscribe(aggType)
+
+        admin
+            .GetMetadata(TimeSpan.FromSeconds 2)
+            .Topics.Find(fun t -> t.Topic = aggType)
+            .Partitions
+        |> Seq.map (fun x -> TopicPartition(aggType, x.PartitionId))
+        |> tc.Assign
+
         Async.Start(consumer cts.Token, cts.Token)
         Async.Start(Sender.timer interval (fun _ -> agent.Post <| Refresh(DateTime.UtcNow)), cts.Token)
 
-        while c.Assignment.Count = 0 do
+        while tc.Assignment.Count = 0 do
             Thread.Sleep 200
 
         logger.LogInformation($"Subscription for {aggType} started")
