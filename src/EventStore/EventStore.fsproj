@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <AssemblyName>UniStream.Infrastructure.EventStore</AssemblyName>
     <MinVerTagPrefix>e-</MinVerTagPrefix>
   </PropertyGroup>
@@ -29,10 +29,10 @@
     <ProjectReference Include="..\Infrastructure\Infrastructure.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="EventStore.Client.Grpc.PersistentSubscriptions" Version="23.2.1" />
-    <PackageReference Include="EventStore.Client.Grpc.ProjectionManagement" Version="23.2.1" />
-    <PackageReference Include="EventStore.Client.Grpc.Streams" Version="23.2.1" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="8.0.0" />
+    <PackageReference Include="EventStore.Client.Grpc.PersistentSubscriptions" Version="23.3.7" />
+    <PackageReference Include="EventStore.Client.Grpc.ProjectionManagement" Version="23.3.7" />
+    <PackageReference Include="EventStore.Client.Grpc.Streams" Version="23.3.7" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.0" />
   </ItemGroup>
 </Project>

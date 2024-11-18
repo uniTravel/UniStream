@@ -101,7 +101,7 @@ type Sender<'agg when 'agg :> Aggregate>
         agent.Start()
 
         admin
-            .GetMetadata(TimeSpan.FromSeconds 2)
+            .GetMetadata(TimeSpan.FromSeconds 2.0)
             .Topics.Find(fun t -> t.Topic = aggType)
             .Partitions
         |> Seq.map (fun x -> TopicPartition(aggType, x.PartitionId))
