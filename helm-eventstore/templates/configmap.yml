@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: esdb-config
+data:
+  EVENTSTORE_CLUSTER_SIZE: "3"
+  EVENTSTORE_RUN_PROJECTIONS: "All"
+  EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP: "true"
+  EVENTSTORE_CLUSTER_DNS: esdb-headless.default.svc.cluster.local
+  EVENTSTORE_GOSSIP_SEED: "esdb-0.esdb-headless.default.svc.cluster.local:2113,esdb-1.esdb-headless.default.svc.cluster.local:2113,esdb-2.esdb-headless.default.svc.cluster.local:2113"
+  EVENTSTORE_TRUSTED_ROOT_CERTIFICATES_PATH: "/etc/eventstore/ca"
+  EVENTSTORE_CERTIFICATE_FILE: "/etc/eventstore/certs/node.crt"
+  EVENTSTORE_CERTIFICATE_PRIVATE_KEY_FILE: "/etc/eventstore/certs/node.key"
