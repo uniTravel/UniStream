@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "eventstore.fullname" . }}
+  labels:
+    {{- include "eventstore.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "eventstore.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "eventstore.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: init-certs
+          image: busybox
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -ex
+              CERT_DIR=/etc/eventstore/certs
+              mkdir -p ${CERT_DIR}
+              mkdir -p /usr/local/bin
+              cp /etc/eventstore/cli/es-gencert-cli /usr/local/bin/
+              es-gencert-cli create-node \
+                --out ${CERT_DIR} \
+                --ca-certificate /etc/eventstore/ca/ca.crt \
+                --ca-key /etc/eventstore/ca/ca.key \
+                --ip-addresses $(hostname -i) \
+                --dns-names $(hostname),$(hostname).esdb-headless.default.svc.cluster.local
+              find ${CERT_DIR} -type f -print0 | xargs -0 chmod 666
+          volumeMounts:
+            - name: certs
+              mountPath: /etc/eventstore/certs
+            - name: ca
+              mountPath: /etc/eventstore/ca
+            - name: cli
+              mountPath: /etc/eventstore/cli
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: esdb-config
+          livenessProbe:
+            httpGet:
+              scheme: HTTPS
+              path: /health/live
+              port: 2113
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: certs
+              mountPath: /etc/eventstore/certs
+            - name: ca
+              mountPath: /etc/eventstore/ca
+      volumes:
+        - name: certs
+          emptyDir: {}
+        - name: ca
+          secret:
+            secretName: root-ca
+        - name: cli
+          persistentVolumeClaim:
+            claimName: setup
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
