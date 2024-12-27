@@ -443,4 +443,6 @@ type TransactionController(logger: ILogger<TransactionController>, sender: ISend
 
 # 其他注意事项
 
-* 需要预先配置投影和持久化订阅。
+* 命令发送者每个节点独立聚合类型持久化订阅。
+* 命令订阅者需要预先配置投影和持久化订阅。
+* 命令订阅者多节点共享持久化订阅。

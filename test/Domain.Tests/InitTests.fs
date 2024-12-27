@@ -39,11 +39,8 @@ let test =
           create agent i2 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "第二个聚合持续应用八条变更，以便触发缩容"
       <| fun _ ->
-          let c = [ for i in 1..8 -> { Content = $"c{i}" } ]
-
-          c
+          [ for i in 1..8 -> { Content = $"c{i}" } ]
           |> List.iter (fun c -> change agent i2 (Guid.NewGuid()) c |> Async.RunSynchronously)
-
       testCase "第一个聚合应用第一条变更"
       <| fun _ ->
           let com = { Content = "c1" }
@@ -64,11 +61,8 @@ let test =
           upgrade agent i2 (Guid.NewGuid()) com |> Async.RunSynchronously
       testCase "第一个聚合持续应用八条变更，以便触发缩容"
       <| fun _ ->
-          let c = [ for i in 1..8 -> { Content = $"c{i}" } ]
-
-          c
+          [ for i in 1..8 -> { Content = $"c{i}" } ]
           |> List.iter (fun c -> change agent i1 (Guid.NewGuid()) c |> Async.RunSynchronously)
-
       testCase "第二个聚合应用第十条变更"
       <| fun _ ->
           let com = { Content = "c2" }

@@ -4,6 +4,12 @@ open System
 open System.Text.Json
 
 
+type Msg =
+    | Send of Guid * Guid * string * byte array * AsyncReplyChannel<Result<unit, exn>>
+    | Receive of Guid * Result<unit, exn>
+    | Refresh of DateTime
+
+
 module Sender =
 
     let timer (interval: float) work =
@@ -19,11 +25,7 @@ module Sender =
         (com: 'com)
         =
         async {
-            match!
-                sender.Agent.PostAndAsyncReply
-                <| fun channel ->
-                    Send(aggId, comId, typeof<'com>.FullName, JsonSerializer.SerializeToUtf8Bytes com, channel)
-            with
+            match! sender.send aggId comId typeof<'com>.FullName (JsonSerializer.SerializeToUtf8Bytes com) with
             | Ok() -> return ()
             | Error ex -> return raise ex
         }

@@ -5,6 +5,10 @@
     <MinVerTagPrefix>d-</MinVerTagPrefix>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="UniStream.Infrastructure.EventStore" />
+    <InternalsVisibleTo Include="UniStream.Infrastructure.Kafka" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="Aggregate.fsi" />
     <Compile Include="Aggregate.fs" />
     <Compile Include="Constraint.fs" />

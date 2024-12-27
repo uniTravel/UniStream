@@ -124,7 +124,6 @@ module Aggregator =
                                 try
                                     let agg = repository[aggId]
                                     handle agg comId validate execute channel
-                                    repository[aggId] <- agg
                                     ch.Add comId |> ignore
                                     return! checkOp (aggId :: ao) (comId :: co) |> loop
                                 with ex ->

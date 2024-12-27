@@ -23,36 +23,24 @@ type Sender<'agg when 'agg :> Aggregate>
     let sub = sub.Subscriber
     let client = client.Client
     let options = options.Get(typeof<'agg>.Name)
-    let interval = options.Interval * 1000
+    let interval = options.Interval * 60000
     let aggType = typeof<'agg>.FullName
     let stream = "$ce-" + aggType
     let group = cfg.Value.GroupName
     let cts = new CancellationTokenSource()
     let mutable dispose = false
-    let todo = Dictionary<Guid, AsyncReplyChannel<Result<unit, exn>>>()
-    let cache = Dictionary<Guid, DateTime * (Guid -> unit)>()
-
-    let reply (evtData: ReadOnlyMemory<byte>) evtType comId =
-        match evtType with
-        | "Fail" ->
-            let err = JsonSerializer.Deserialize<string> evtData.Span
-            logger.LogError($"{comId} of {aggType} failed: {err}")
-            todo[comId].Reply <| Error(failwith $"Apply command failed: {err}")
-        | _ ->
-            logger.LogInformation($"{comId} of {aggType} finished")
-            todo[comId].Reply <| Ok()
 
     let agent =
         new MailboxProcessor<Msg>(fun inbox ->
-            let rec loop () =
+            let rec loop
+                (todo: Dictionary<Guid, AsyncReplyChannel<Result<unit, exn>>>)
+                (cache: Dictionary<Guid, DateTime * Result<unit, exn>>)
+                =
                 async {
                     match! inbox.Receive() with
                     | Send(aggId, comId, comType, comData, channel) ->
                         match comId with
-                        | _ when cache.ContainsKey comId ->
-                            let _, reply = cache[comId]
-                            reply comId
-                            cache.Remove comId |> ignore
+                        | _ when cache.ContainsKey comId -> channel.Reply <| snd cache[comId]
                         | _ when todo.ContainsKey comId -> todo[comId] <- channel
                         | _ ->
                             try
@@ -67,25 +55,25 @@ type Sender<'agg when 'agg :> Aggregate>
                                 todo.Add(comId, channel)
                             with ex ->
                                 channel.Reply <| Error ex
-                    | Receive(comId, reply) ->
-                        match comId with
-                        | _ when todo.ContainsKey comId ->
-                            reply comId
+                    | Receive(comId, result) ->
+                        if todo.ContainsKey comId then
+                            todo[comId].Reply result
                             todo.Remove comId |> ignore
-                        | _ when not <| cache.ContainsKey comId ->
-                            let expire = DateTime.UtcNow.AddMilliseconds interval
-                            cache.Add(comId, (expire, reply)) |> ignore
-                        | _ -> ()
+
+                        let expire = DateTime.UtcNow.AddMilliseconds interval
+                        cache.Add(comId, (expire, result)) |> ignore
                     | Refresh(now) ->
                         cache
                         |> Seq.iter (fun (KeyValue(comId, (expire, _))) ->
                             if expire < now then
                                 cache.Remove comId |> ignore)
 
-                    return! loop ()
+                    return! loop todo cache
                 }
 
-            loop ())
+            loop
+                (Dictionary<Guid, AsyncReplyChannel<Result<unit, exn>>>())
+                (Dictionary<Guid, DateTime * Result<unit, exn>>()))
 
     let subscribe (ct: CancellationToken) =
         task {
@@ -101,10 +89,18 @@ type Sender<'agg when 'agg :> Aggregate>
             while! e.MoveNextAsync() do
                 match e.Current with
                 | :? PersistentSubscriptionMessage.Event as ev ->
-                    let comId = ev.ResolvedEvent.Event.EventId.ToGuid()
-                    let reply = reply ev.ResolvedEvent.Event.Data ev.ResolvedEvent.Event.EventType
-                    agent.Post <| Receive(comId, reply)
-                    sub.Ack(ev.ResolvedEvent).Wait()
+                    match ev.ResolvedEvent.Event.EventType with
+                    | "Fail" ->
+                        let comId = ev.ResolvedEvent.Event.EventId.ToGuid()
+                        let err = JsonSerializer.Deserialize<string> ev.ResolvedEvent.Event.Data.Span
+                        logger.LogError($"{comId} of {aggType} failed: {err}")
+                        agent.Post <| Receive(comId, Error(failwith $"Apply command failed: {err}"))
+                        sub.Ack(ev.ResolvedEvent).Wait()
+                    | _ ->
+                        let comId = ev.ResolvedEvent.Event.EventId.ToGuid()
+                        logger.LogInformation($"{comId} of {aggType} finished")
+                        agent.Post <| Receive(comId, Ok())
+                        sub.Ack(ev.ResolvedEvent).Wait()
                 | :? PersistentSubscriptionMessage.SubscriptionConfirmation as confirm ->
                     logger.LogInformation($"Subscription {confirm.SubscriptionId} for {stream} started")
                 | :? PersistentSubscriptionMessage.NotFound -> logger.LogError("Stream was not found")
@@ -117,7 +113,9 @@ type Sender<'agg when 'agg :> Aggregate>
         Async.Start(Sender.timer interval (fun _ -> agent.Post <| Refresh(DateTime.UtcNow)), cts.Token)
 
     interface ISender<'agg> with
-        member val Agent = agent
+        member val send =
+            fun aggId comId comType comData ->
+                agent.PostAndAsyncReply(fun channel -> Send(aggId, comId, comType, comData, channel))
 
     interface IDisposable with
         member _.Dispose() =

@@ -24,35 +24,23 @@ type Sender<'agg when 'agg :> Aggregate>
     let tc = tc.Client
     let admin = admin.Client
     let options = options.Get(typeof<'agg>.Name)
-    let interval = options.Interval * 1000
+    let interval = options.Interval * 60000
     let aggType = typeof<'agg>.FullName
     let topic = aggType + "_Command"
     let cts = new CancellationTokenSource()
     let mutable dispose = false
-    let todo = Dictionary<Guid, AsyncReplyChannel<Result<unit, exn>>>()
-    let cache = Dictionary<Guid, DateTime * (Guid -> unit)>()
-
-    let reply (cr: ConsumeResult<byte array, byte array>) comId =
-        match Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes("evtType")) with
-        | "Fail" ->
-            let err = BitConverter.ToString cr.Message.Value
-            logger.LogError($"{comId} of {aggType} failed: {err}")
-            todo[comId].Reply <| Error(failwith $"Apply command failed: {err}")
-        | _ ->
-            logger.LogInformation($"{comId} of {aggType} finished")
-            todo[comId].Reply <| Ok()
 
     let agent =
         new MailboxProcessor<Msg>(fun inbox ->
-            let rec loop () =
+            let rec loop
+                (todo: Dictionary<Guid, AsyncReplyChannel<Result<unit, exn>>>)
+                (cache: Dictionary<Guid, DateTime * Result<unit, exn>>)
+                =
                 async {
                     match! inbox.Receive() with
                     | Send(aggId, comId, comType, comData, channel) ->
                         match comId with
-                        | _ when cache.ContainsKey comId ->
-                            let _, reply = cache[comId]
-                            reply comId
-                            cache.Remove comId |> ignore
+                        | _ when cache.ContainsKey comId -> channel.Reply <| snd cache[comId]
                         | _ when todo.ContainsKey comId -> todo[comId] <- channel
                         | _ ->
                             try
@@ -65,25 +53,25 @@ type Sender<'agg when 'agg :> Aggregate>
                                 todo.Add(comId, channel)
                             with ex ->
                                 channel.Reply <| Error ex
-                    | Receive(comId, reply) ->
-                        match comId with
-                        | _ when todo.ContainsKey comId ->
-                            reply comId
+                    | Receive(comId, result) ->
+                        if todo.ContainsKey comId then
+                            todo[comId].Reply result
                             todo.Remove comId |> ignore
-                        | _ when not <| cache.ContainsKey comId ->
-                            let expire = DateTime.UtcNow.AddMilliseconds interval
-                            cache.Add(comId, (expire, reply)) |> ignore
-                        | _ -> ()
+
+                        let expire = DateTime.UtcNow.AddMilliseconds interval
+                        cache.Add(comId, (expire, result)) |> ignore
                     | Refresh(now) ->
                         cache
                         |> Seq.iter (fun (KeyValue(comId, (expire, _))) ->
                             if expire < now then
                                 cache.Remove comId |> ignore)
 
-                    return! loop ()
+                    return! loop todo cache
                 }
 
-            loop ())
+            loop
+                (Dictionary<Guid, AsyncReplyChannel<Result<unit, exn>>>())
+                (Dictionary<Guid, DateTime * Result<unit, exn>>()))
 
     let consumer (ct: CancellationToken) =
         async {
@@ -91,8 +79,15 @@ type Sender<'agg when 'agg :> Aggregate>
                 while true do
                     let cr = tc.Consume ct
                     let comId = Guid(cr.Message.Headers.GetLastBytes("comId"))
-                    let reply = reply cr
-                    agent.Post <| Receive(comId, reply)
+
+                    match Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes("evtType")) with
+                    | "Fail" ->
+                        let err = BitConverter.ToString cr.Message.Value
+                        logger.LogError($"{comId} of {aggType} failed: {err}")
+                        agent.Post <| Receive(comId, Error(failwith $"Apply command failed: {err}"))
+                    | _ ->
+                        logger.LogInformation($"{comId} of {aggType} finished")
+                        agent.Post <| Receive(comId, Ok())
             with ex ->
                 logger.LogError($"Consume loop breaked: {ex}")
         }
@@ -116,7 +111,9 @@ type Sender<'agg when 'agg :> Aggregate>
         logger.LogInformation($"Subscription for {aggType} started")
 
     interface ISender<'agg> with
-        member val Agent = agent
+        member val send =
+            fun aggId comId comType comData ->
+                agent.PostAndAsyncReply(fun channel -> Send(aggId, comId, comType, comData, channel))
 
     interface IDisposable with
         member _.Dispose() =
