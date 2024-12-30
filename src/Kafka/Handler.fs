@@ -14,7 +14,7 @@ module Handler =
         (subscriber: ISubscriber<'agg>)
         (logger: ILogger)
         (tp: IProducer)
-        (commit: Guid -> Guid -> 'com -> Async<unit>)
+        (commit: Guid -> Guid -> 'com -> Async<ComResult>)
         =
         let aggType = typeof<'agg>.FullName
         let comType = typeof<'com>.FullName
@@ -27,10 +27,17 @@ module Handler =
                         let! aggId, comId, comData = inbox.Receive()
                         let com = JsonSerializer.Deserialize<'com> comData.Span
 
-                        try
-                            do! commit aggId comId com
-                            logger.LogInformation($"{comType} of {aggId} committed")
-                        with ex ->
+                        match! commit aggId comId com with
+                        | Success -> logger.LogInformation($"{comType} of {aggId} committed")
+                        | Duplicate ->
+                            let aggId = aggId.ToByteArray()
+                            let h = Headers()
+                            let msg = Message<byte array, byte array>(Key = aggId, Value = [||], Headers = h)
+                            msg.Headers.Add("comId", comId.ToByteArray())
+                            msg.Headers.Add("evtType", Encoding.ASCII.GetBytes "Duplicate")
+                            tp.Produce(aggType, msg)
+                            logger.LogWarning($"{comType} of {aggId} duplicated")
+                        | Fail(ex) ->
                             let evtData = JsonSerializer.SerializeToUtf8Bytes ex.Message
                             let aggId = aggId.ToByteArray()
                             let h = Headers()

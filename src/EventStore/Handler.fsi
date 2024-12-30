@@ -23,6 +23,6 @@ module Handler =
         subscriber: ISubscriber<'agg> ->
         logger: ILogger ->
         client: IClient ->
-        commit: (Guid -> Guid -> 'com -> Async<unit>) ->
+        commit: (Guid -> Guid -> 'com -> Async<ComResult>) ->
             unit
             when Com<'agg, 'com, 'evt>

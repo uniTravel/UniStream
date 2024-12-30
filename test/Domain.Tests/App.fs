@@ -26,6 +26,23 @@ let reader aggType (aggId: Guid) =
 
 let restore aggType ch count = []
 
-let create = Aggregator.create<Note, CreateNote, NoteCreated>
-let change = Aggregator.apply<Note, ChangeNote, NoteChanged>
-let upgrade = Aggregator.apply<Note, UpgradeNote, NoteUpgraded>
+let create agent aggId comId com =
+    async {
+        match! Aggregator.create<Note, CreateNote, NoteCreated> agent aggId comId com with
+        | Fail ex -> return raise ex
+        | _ -> return ()
+    }
+
+let change agent aggId comId com =
+    async {
+        match! Aggregator.apply<Note, ChangeNote, NoteChanged> agent aggId comId com with
+        | Fail ex -> return raise ex
+        | _ -> return ()
+    }
+
+let upgrade agent aggId comId com =
+    async {
+        match! Aggregator.apply<Note, UpgradeNote, NoteUpgraded> agent aggId comId com with
+        | Fail ex -> return raise ex
+        | _ -> return ()
+    }

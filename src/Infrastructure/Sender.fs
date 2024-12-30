@@ -4,12 +4,6 @@ open System
 open System.Text.Json
 
 
-type Msg =
-    | Send of Guid * Guid * string * byte array * AsyncReplyChannel<Result<unit, exn>>
-    | Receive of Guid * Result<unit, exn>
-    | Refresh of DateTime
-
-
 module Sender =
 
     let timer (interval: float) work =

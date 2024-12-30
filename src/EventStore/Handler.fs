@@ -13,12 +13,13 @@ module Handler =
         (subscriber: ISubscriber<'agg>)
         (logger: ILogger)
         (client: IClient)
-        (commit: Guid -> Guid -> 'com -> Async<unit>)
+        (commit: Guid -> Guid -> 'com -> Async<ComResult>)
         =
         let aggType = typeof<'agg>.FullName
         let comType = typeof<'com>.FullName
         let client = client.Client
         let fail = aggType + "-Fail"
+        let duplicate = aggType + "-Duplicate"
 
         let agent =
             new MailboxProcessor<Guid * Guid * ReadOnlyMemory<byte>>(fun inbox ->
@@ -27,10 +28,14 @@ module Handler =
                         let! aggId, comId, evtData = inbox.Receive()
                         let com = JsonSerializer.Deserialize<'com> evtData.Span
 
-                        try
-                            do! commit aggId comId com
-                            logger.LogInformation($"{comType} of {aggId} committed")
-                        with ex ->
+                        match! commit aggId comId com with
+                        | Success -> logger.LogInformation($"{comType} of {aggId} committed")
+                        | Duplicate ->
+                            let data = EventData(Uuid.FromGuid comId, "Duplicate", ReadOnlyMemory [||])
+
+                            client.AppendToStreamAsync(duplicate, StreamState.Any, [ data ]).Wait()
+                            logger.LogWarning($"{comType} of {aggId} duplicated")
+                        | Fail(ex) ->
                             let data =
                                 EventData(Uuid.FromGuid comId, "Fail", JsonSerializer.SerializeToUtf8Bytes ex.Message)
 
