@@ -11,6 +11,7 @@ module Aggregator =
         | Register of string * ('agg -> ReadOnlyMemory<byte> -> unit)
         | Create of Guid * Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<ComResult>
         | Apply of Guid * Guid * ('agg -> unit) * ('agg -> string * byte array) * AsyncReplyChannel<ComResult>
+        | Get of Guid * AsyncReplyChannel<Result<'agg, exn>>
 
     let inline validate<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>> (com: 'com) (agg: 'agg) = com.Validate agg
 
@@ -36,6 +37,13 @@ module Aggregator =
         =
         agent.PostAndAsyncReply
         <| fun channel -> Apply(aggId, comId, validate com, execute com, channel)
+
+    let inline get<'agg when 'agg :> Aggregate> (agent: MailboxProcessor<Msg<'agg>>) aggId =
+        async {
+            match! agent.PostAndAsyncReply <| fun channel -> Get(aggId, channel) with
+            | Ok agg -> return agg
+            | Error ex -> return raise ex
+        }
 
     let inline register<'agg, 'rep when Rep<'agg, 'rep>> (agent: MailboxProcessor<Msg<'agg>>) (rep: 'rep) =
         agent.Post <| Register(rep.FullName, rep.Act)
@@ -75,9 +83,12 @@ module Aggregator =
         let inline replay aggId agg =
             stream.Reader aggId
             |> List.iter (fun (evtType, evtData) ->
-                let act = replayer[evtType]
-                act agg evtData
-                agg.Next())
+                try
+                    let act = replayer[evtType]
+                    act agg evtData
+                    agg.Next()
+                with ex ->
+                    raise <| ReplayException($"Replay {evtType} error", ex))
 
         let inline handle (agg: 'agg) comId validate execute (channel: AsyncReplyChannel<ComResult>) =
             validate agg
@@ -126,6 +137,16 @@ module Aggregator =
                                     return! checkRepo (aggId :: ao) (comId :: co) |> loop
                                 with ex ->
                                     channel.Reply <| Fail ex
+                        | Get(aggId, channel) ->
+                            if repository.ContainsKey aggId then
+                                channel.Reply <| Ok repository[aggId]
+                            else
+                                try
+                                    let agg = creator aggId
+                                    replay aggId agg
+                                    channel.Reply <| Ok agg
+                                with ex ->
+                                    channel.Reply <| Error ex
 
                         return! loop (ao, co)
                     }

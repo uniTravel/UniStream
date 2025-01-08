@@ -1,5 +1,7 @@
 namespace Domain
 
+open UniStream.Domain
+
 
 type NoteUpgraded =
     { Up: int }
@@ -11,6 +13,6 @@ type UpgradeNote =
 
     member me.Validate(agg: Note) =
         if agg.Grade + me.Up > 3 then
-            raise <| ValidateError "等级不得大于3。"
+            raise <| ValidateException "等级不得大于3。"
 
     member me.Execute(agg: Note) : NoteUpgraded = { Up = agg.Grade + me.Up }

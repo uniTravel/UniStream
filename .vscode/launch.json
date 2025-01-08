@@ -9,15 +9,6 @@
             "type": "coreclr",
             "request": "launch",
             "program": "bin/Debug/net9.0/Domain.Tests.dll",
-            "cwd": "${workspaceFolder}/test/Domain.Tests/",
-            "stopAtEntry": false,
-            "console": "internalConsole"
-        },
-        {
-            "name": "Domain.Debug",
-            "type": "coreclr",
-            "request": "launch",
-            "program": "bin/Debug/net9.0/Domain.Tests.dll",
             "args": [
                 "--debug"
             ],
@@ -33,18 +24,6 @@
             "env": {
                 "DOTNET_ENVIRONMENT": "Development"
             },
-            "cwd": "${workspaceFolder}/sample/Account.Tests/",
-            "stopAtEntry": false,
-            "console": "internalConsole"
-        },
-        {
-            "name": "Account.Debug",
-            "type": "coreclr",
-            "request": "launch",
-            "program": "bin/Debug/net9.0/Account.Tests.dll",
-            "env": {
-                "DOTNET_ENVIRONMENT": "Development"
-            },
             "args": [
                 "--debug"
             ],
@@ -54,18 +33,6 @@
         },
         {
             "name": "Account.Sender.Tests",
-            "type": "coreclr",
-            "request": "launch",
-            "program": "bin/Debug/net9.0/Account.Sender.Tests.dll",
-            "env": {
-                "DOTNET_ENVIRONMENT": "Development"
-            },
-            "cwd": "${workspaceFolder}/sample/Account.Sender.Tests/",
-            "stopAtEntry": false,
-            "console": "internalConsole"
-        },
-        {
-            "name": "Account.Sender.Debug",
             "type": "coreclr",
             "request": "launch",
             "program": "bin/Debug/net9.0/Account.Sender.Tests.dll",

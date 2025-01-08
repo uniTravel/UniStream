@@ -24,6 +24,8 @@
     <Compile Include="ISubscriber.fs" />
     <Compile Include="Types.fsi" />
     <Compile Include="Types.fs" />
+    <Compile Include="Exceptions.fsi" />
+    <Compile Include="Exceptions.fs" />
     <Compile Include="AggregateOptions.fsi" />
     <Compile Include="AggregateOptions.fs" />
     <Compile Include="CommandOptions.fsi" />

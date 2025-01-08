@@ -12,20 +12,28 @@ type Stream<'agg when 'agg :> Aggregate>(logger: ILogger<Stream<'agg>>, client: 
     let client = client.Client
 
     let write (aggId: Guid) (comId: Guid) revision evtType (evtData: byte array) =
-        let stream = aggType + "-" + aggId.ToString()
-        let data = EventData(Uuid.FromGuid comId, evtType, evtData)
-        client.AppendToStreamAsync(stream, StreamRevision revision, [ data ]).Wait()
+        try
+            let stream = aggType + "-" + aggId.ToString()
+            let data = EventData(Uuid.FromGuid comId, evtType, evtData)
+            client.AppendToStreamAsync(stream, StreamRevision revision, [ data ]).Wait()
+        with ex ->
+            logger.LogError($"Write {evtType} of {aggId} error: {ex.Message}")
+            raise <| WriteException($"Write {evtType} of {aggId} error", ex)
 
     let read (aggId: Guid) =
-        let stream = aggType + "-" + aggId.ToString()
+        try
+            let stream = aggType + "-" + aggId.ToString()
 
-        let e =
-            client
-                .ReadStreamAsync(Direction.Forwards, stream, StreamPosition.Start)
-                .GetAsyncEnumerator()
+            let e =
+                client
+                    .ReadStreamAsync(Direction.Forwards, stream, StreamPosition.Start)
+                    .GetAsyncEnumerator()
 
-        [ while (let vt = e.MoveNextAsync() in if vt.IsCompleted then vt.Result else vt.AsTask().Result) do
-              yield e.Current.Event.EventType, e.Current.Event.Data ]
+            [ while (let vt = e.MoveNextAsync() in if vt.IsCompleted then vt.Result else vt.AsTask().Result) do
+                  yield e.Current.Event.EventType, e.Current.Event.Data ]
+        with ex ->
+            logger.LogError($"Read strem of {aggId} error: {ex.Message}")
+            raise <| ReadException($"Read strem of {aggId} error", ex)
 
     let restore (ch: HashSet<Guid>) count =
         let count = int64 count

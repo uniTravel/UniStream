@@ -1,91 +1,112 @@
 module Domain.Tests.Write
 
 open System
+open System.Collections.Generic
 open Expecto
 open UniStream.Domain
 open Domain
 
 
-let stream =
-    { new IStream<Note> with
-        member _.Writer = writer "Note"
-        member _.Reader = reader "Note"
-        member _.Restore = restore "Note" }
+let buildTest setup =
+    [ test "新聚合ID执行创建命令" {
+          setup
+          <| fun agent _ ->
+              async {
+                  let com =
+                      { Title = "t"
+                        Content = "c"
+                        Grade = 1 }
 
-let opt = AggregateOptions(Capacity = 3)
-let agent = Aggregator.init Note stream opt
-Aggregator.register agent <| Replay<Note, NoteCreated>()
-Aggregator.register agent <| Replay<Note, NoteChanged>()
-Aggregator.register agent <| Replay<Note, NoteUpgraded>()
-let id1 = Guid.NewGuid()
-let id2 = Guid.NewGuid()
-let id3 = Guid.NewGuid()
+                  let id = Guid.NewGuid()
+                  let! result = create agent id (Guid.NewGuid()) com
+                  Expect.isTrue result.IsSuccess "聚合事件写入流有误"
+                  let! agg = get agent id
+                  Expect.equal (agg.Title, agg.Content, agg.Grade) ("t", "c", 1) "聚合写入有误"
+              }
+      }
+      test "新聚合ID创建命令存在不合验证规则的情形" {
+          setup
+          <| fun agent _ ->
+              let com =
+                  { Title = "t"
+                    Content = "c"
+                    Grade = 4 }
 
+              Expect.throwsAsyncT<ValidateException>
+                  (fun _ ->
+                      async {
+                          match! create agent (Guid.NewGuid()) (Guid.NewGuid()) com with
+                          | Fail ex -> raise ex
+                          | _ -> ()
+                      })
+                  "异常类型有误"
+      }
+      test "新聚合ID执行更新命令" {
+          setup
+          <| fun agent _ ->
+              Expect.throwsAsyncT<ReadException>
+                  (fun _ ->
+                      async {
+                          match! change agent (Guid.NewGuid()) (Guid.NewGuid()) { Content = "c" } with
+                          | Fail ex -> raise ex
+                          | _ -> ()
+                      })
+                  "异常类型有误"
+      }
+      test "已有聚合执行更新命令" {
+          setup
+          <| fun agent id ->
+              async {
+                  let! result = change agent id (Guid.NewGuid()) { Content = "c1" }
+                  Expect.isTrue result.IsSuccess "聚合事件写入流有误"
+                  let! agg = get agent id
+                  Expect.equal (agg.Title, agg.Content, agg.Grade) ("t", "c1", 1) "聚合写入有误"
+              }
+      }
+      test "已有聚合执行更新命令存在不合验证规则的情形" {
+          setup
+          <| fun agent id ->
+              Expect.throwsAsyncT<ValidateException>
+                  (fun _ ->
+                      async {
+                          match! upgrade agent id (Guid.NewGuid()) { Up = 3 } with
+                          | Fail ex -> raise ex
+                          | _ -> ()
+                      })
+                  "异常类型有误"
+      } ]
 
 [<Tests>]
 let test =
-    [ testCase "创建两个除Id外其他值相等的聚合"
-      <| fun _ ->
-          let com =
-              { Title = "t"
-                Content = "c"
-                Grade = 1 }
+    buildTest
+    <| fun f ->
+        let repo = Dictionary<string, (uint64 * string * ReadOnlyMemory<byte>) list>(10000)
 
-          create agent id1 (Guid.NewGuid()) com |> Async.RunSynchronously
-          create agent id2 (Guid.NewGuid()) com |> Async.RunSynchronously
-      testCase "创建第三个聚合，存在不合验证逻辑的数据"
-      <| fun _ ->
-          let com =
-              { Title = "t"
-                Content = "c"
-                Grade = 4 }
+        let stream =
+            { new IStream<Note> with
+                member _.Writer = writer repo "Note"
+                member _.Reader = reader repo "Note"
+                member _.Restore = restore "Note" }
 
-          let f =
-              fun _ -> create agent id3 (Guid.NewGuid()) com |> Async.RunSynchronously |> ignore
+        let opt = AggregateOptions(Capacity = 10000)
+        let agent = Aggregator.init Note stream opt
+        Aggregator.register agent <| Replay<Note, NoteCreated>()
+        Aggregator.register agent <| Replay<Note, NoteChanged>()
+        Aggregator.register agent <| Replay<Note, NoteUpgraded>()
+        let id = Guid.NewGuid()
 
-          Expect.throwsT<ValidateError> f "验证错误类型有误"
-      testCase "第一个聚合应用第一条不会导致验证错误的变更"
-      <| fun _ ->
-          let com = { Up = 2 }
-          upgrade agent id1 (Guid.NewGuid()) com |> Async.RunSynchronously
-      testCase "第二个聚合应用第一条会导致验证错误的变更"
-      <| fun _ ->
-          let com = { Up = 3 }
+        let com =
+            { Title = "t"
+              Content = "c"
+              Grade = 1 }
 
-          let f =
-              fun _ -> upgrade agent id2 (Guid.NewGuid()) com |> Async.RunSynchronously |> ignore
+        let _ = create agent id (Guid.NewGuid()) com |> Async.RunSynchronously
 
-          Expect.throwsT<ValidateError> f "异常类型有误"
-      testCase "第一个聚合应用第二条变更"
-      <| fun _ ->
-          let com = { Content = "c1" }
-          change agent id1 (Guid.NewGuid()) com |> Async.RunSynchronously
-      testCase "第二个聚合应用第二条变更"
-      <| fun _ ->
-          let com = { Content = "c1" }
-          change agent id2 (Guid.NewGuid()) com |> Async.RunSynchronously
-      testCase "第一个聚合应用第三条变更"
-      <| fun _ ->
-          let com = { Content = "c2" }
-          change agent id1 (Guid.NewGuid()) com |> Async.RunSynchronously
-      testCase "第二个聚合应用第三条变更"
-      <| fun _ ->
-          let com = { Content = "c2" }
-          change agent id2 (Guid.NewGuid()) com |> Async.RunSynchronously
-      testCaseAsync "并行应用领域变更"
-      <| async {
-          let coms =
-              [ for i in 1..1000 ->
-                    { Title = $"t{i}"
-                      Content = $"c{i}"
-                      Grade = 1 } ]
-
-          do!
-              coms
-              |> List.map (fun c -> create agent (Guid.NewGuid()) (Guid.NewGuid()) c)
-              |> Async.Parallel
-              |> Async.Ignore
-      } ]
+        try
+            f agent id |> Async.RunSynchronously
+        finally
+            repo.Clear()
+            agent.Dispose()
     |> testList "Write"
     |> testSequenced
-    |> testLabel "Domain"
+    |> testLabel "已注册重播"

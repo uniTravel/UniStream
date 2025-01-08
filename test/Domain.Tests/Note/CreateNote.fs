@@ -1,5 +1,7 @@
 namespace Domain
 
+open UniStream.Domain
+
 
 type NoteCreated =
     { Title: string
@@ -19,7 +21,7 @@ type CreateNote =
 
     member me.Validate(agg: Note) =
         if me.Grade > 3 then
-            raise <| ValidateError "等级不得大于3。"
+            raise <| ValidateException "等级不得大于3。"
 
     member me.Execute(agg: Note) : NoteCreated =
         { Title = me.Title

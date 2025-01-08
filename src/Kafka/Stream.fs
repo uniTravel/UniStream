@@ -41,30 +41,38 @@ type Stream<'agg when 'agg :> Aggregate>
         }
 
     let write (aggId: Guid) (comId: Guid) (revision: uint64) (evtType: string) (evtData: byte array) =
-        Async.Start <| createTopic aggId revision
-        let aggId = aggId.ToByteArray()
-        let h = Headers()
-        let msg = Message<byte array, byte array>(Key = aggId, Value = evtData, Headers = h)
-        msg.Headers.Add("comId", comId.ToByteArray())
-        msg.Headers.Add("evtType", Encoding.ASCII.GetBytes evtType)
-        tp.Produce(aggType, msg)
+        try
+            Async.Start <| createTopic aggId revision
+            let aggId = aggId.ToByteArray()
+            let h = Headers()
+            let msg = Message<byte array, byte array>(Key = aggId, Value = evtData, Headers = h)
+            msg.Headers.Add("comId", comId.ToByteArray())
+            msg.Headers.Add("evtType", Encoding.ASCII.GetBytes evtType)
+            tp.Produce(aggType, msg)
+        with ex ->
+            logger.LogError($"Write {evtType} of {aggId} error: {ex.Message}")
+            raise <| WriteException($"Write {evtType} of {aggId} error", ex)
 
     let read (aggId: Guid) =
-        let aggId = aggId.ToString()
-        let topic = aggType + "-" + aggId
-        let mutable d = true
-        ac.Assign(TopicPartitionOffset(topic, 0, Offset.Beginning))
+        try
+            let aggId = aggId.ToString()
+            let topic = aggType + "-" + aggId
+            let mutable d = true
+            ac.Assign(TopicPartitionOffset(topic, 0, Offset.Beginning))
 
-        let result =
-            [ while d do
-                  let cr = ac.Consume(2000)
+            let result =
+                [ while d do
+                      let cr = ac.Consume(2000)
 
-                  if cr.IsPartitionEOF then
-                      d <- false
-                  else
-                      yield Encoding.ASCII.GetString cr.Message.Key, ReadOnlyMemory cr.Message.Value ]
+                      if cr.IsPartitionEOF then
+                          d <- false
+                      else
+                          yield Encoding.ASCII.GetString cr.Message.Key, ReadOnlyMemory cr.Message.Value ]
 
-        result
+            result
+        with ex ->
+            logger.LogError($"Read strem of {aggId} error: {ex.Message}")
+            raise <| ReadException($"Read strem of {aggId} error", ex)
 
     let restore (ch: HashSet<Guid>) count =
         let mutable d = true
