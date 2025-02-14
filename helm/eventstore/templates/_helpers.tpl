@@ -68,7 +68,7 @@ Generate the EVENTSTORE_GOSSIP_SEED string from a list of member names.
 {{- $seeds := list }}
 {{- $name := include "eventstore.fullname" . }}
 {{- range $i := until (int .Values.replicaCount) }}
-  {{- $seed := printf "%s-%d.%s.default.svc.cluster.local:2113" $name $i $name }}
+  {{- $seed := printf "%s-%d.%s-headless.default.svc.cluster.local:2113" $name $i $name }}
   {{- $seeds = append $seeds $seed }}
 {{- end }}
 {{- join "," $seeds }}

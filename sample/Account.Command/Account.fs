@@ -1,6 +1,7 @@
 namespace Account.Domain
 
 open System.ComponentModel.DataAnnotations
+open UniStream.Domain
 
 
 type CreateAccount() =
@@ -24,7 +25,7 @@ type VerifyAccount() =
     member me.Validate(agg: Account) =
         if agg.Verified then
             let conclusion = if agg.VerifyConclusion then "审核通过" else "审核未通过"
-            raise <| ValidateError $"已经审核，结论为：{conclusion}"
+            raise <| ValidateException $"已经审核，结论为：{conclusion}"
 
     member me.Execute(agg: Account) =
         { VerifiedBy = me.VerifiedBy
@@ -39,13 +40,13 @@ type LimitAccount() =
 
     member me.Validate(agg: Account) =
         if not agg.Approved then
-            raise <| ValidateError "账户未批准"
+            raise <| ValidateException "账户未批准"
 
         if me.Limit = agg.Limit then
-            raise <| ValidateError "限额与原先一致"
+            raise <| ValidateException "限额与原先一致"
 
         if me.Limit <= 0m then
-            raise <| ValidateError "限额必须大于零"
+            raise <| ValidateException "限额必须大于零"
 
     member me.Execute(agg: Account) =
         { AccountId = agg.Id; Limit = me.Limit }
@@ -64,10 +65,10 @@ type ApproveAccount() =
 
     member me.Validate(agg: Account) =
         if not agg.VerifyConclusion then
-            raise <| ValidateError "未审核通过"
+            raise <| ValidateException "未审核通过"
 
         if me.Approved && me.Limit <= 0m then
-            raise <| ValidateError "批准的账户，限额必须大于零"
+            raise <| ValidateException "批准的账户，限额必须大于零"
 
     member me.Execute(agg: Account) =
         { AccountId = agg.Id

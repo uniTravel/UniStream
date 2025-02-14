@@ -4,14 +4,16 @@
     <TargetFramework>net9.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="AccountTests.fs" />
-    <Compile Include="TransactionTests.fs" />
+    <Compile Include="TestFixture.fs" />
+    <Compile Include="AccountInitTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Account.Command\Account.Command.fsproj" />
+    <ProjectReference Include="..\..\src\EventStore\EventStore.fsproj" />
+    <ProjectReference Include="..\Account.Application\Account.Application.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Expecto" Version="10.2.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
   </ItemGroup>
 </Project>

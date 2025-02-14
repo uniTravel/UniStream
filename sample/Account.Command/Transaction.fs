@@ -2,6 +2,7 @@ namespace Account.Domain
 
 open System
 open System.ComponentModel.DataAnnotations
+open UniStream.Domain
 
 
 type InitPeriod() =
@@ -19,7 +20,7 @@ type InitPeriod() =
         let period = $"{DateTime.Today:yyyyMM}"
 
         if me.Period <> period then
-            raise <| ValidateError $"交易期间应为{period}，而实际传入为{me.Period}"
+            raise <| ValidateException $"交易期间应为{period}，而实际传入为{me.Period}"
 
     member me.Execute(agg: Transaction) =
         { AccountId = me.AccountId
@@ -40,7 +41,7 @@ type OpenPeriod() =
         let period = $"{next:yyyyMM}"
 
         if me.Period <> period then
-            raise <| ValidateError $"交易期间应为{period}，而实际传入为{me.Period}"
+            raise <| ValidateException $"交易期间应为{period}，而实际传入为{me.Period}"
 
     member me.Execute(agg: Transaction) =
         { AccountId = me.AccountId
@@ -60,7 +61,7 @@ type SetLimit() =
 
     member me.Validate(agg: Transaction) =
         if agg.Limit <> 0m then
-            raise <| ValidateError "不得重复设置限额"
+            raise <| ValidateException "不得重复设置限额"
 
     member me.Execute(agg: Transaction) =
         { Limit = me.Limit
@@ -91,7 +92,7 @@ type SetTransLimit() =
 
     member me.Validate(agg: Transaction) =
         if me.TransLimit > agg.Limit then
-            raise <| ValidateError "交易限额不得超过控制限额"
+            raise <| ValidateException "交易限额不得超过控制限额"
 
     member me.Execute(agg: Transaction) = { TransLimit = me.TransLimit }
 
@@ -103,13 +104,13 @@ type Deposit() =
 
     member me.Validate(agg: Transaction) =
         if agg.Limit = 0m then
-            raise <| ValidateError "交易期间尚未生效"
+            raise <| ValidateException "交易期间尚未生效"
 
         if me.Amount <= 0m then
-            raise <| ValidateError "存入金额应大于零"
+            raise <| ValidateException "存入金额应大于零"
 
         if me.Amount > agg.TransLimit then
-            raise <| ValidateError "金额超限"
+            raise <| ValidateException "金额超限"
 
     member me.Execute(agg: Transaction) : DepositFinished =
         { AccountId = agg.AccountId
@@ -124,16 +125,16 @@ type Withdraw() =
 
     member me.Validate(agg: Transaction) =
         if agg.Limit = 0m then
-            raise <| ValidateError "交易期间尚未生效"
+            raise <| ValidateException "交易期间尚未生效"
 
         if me.Amount <= 0m then
-            raise <| ValidateError "取出金额应大于零"
+            raise <| ValidateException "取出金额应大于零"
 
         if me.Amount > agg.Balance then
-            raise <| ValidateError "余额不足"
+            raise <| ValidateException "余额不足"
 
         if me.Amount > agg.TransLimit then
-            raise <| ValidateError "金额超限"
+            raise <| ValidateException "金额超限"
 
     member me.Execute(agg: Transaction) : WithdrawFinished =
         { AccountId = agg.AccountId
@@ -150,16 +151,16 @@ type TransferOut() =
 
     member me.Validate(agg: Transaction) =
         if agg.Limit = 0m then
-            raise <| ValidateError "交易期间尚未生效"
+            raise <| ValidateException "交易期间尚未生效"
 
         if me.Amount <= 0m then
-            raise <| ValidateError "转出金额应大于零"
+            raise <| ValidateException "转出金额应大于零"
 
         if me.Amount > agg.Balance then
-            raise <| ValidateError "余额不足"
+            raise <| ValidateException "余额不足"
 
         if me.Amount > agg.TransLimit then
-            raise <| ValidateError "金额超限"
+            raise <| ValidateException "金额超限"
 
     member me.Execute(agg: Transaction) : TransferOutFinished =
         { AccountId = agg.AccountId
@@ -177,13 +178,13 @@ type TransferIn() =
 
     member me.Validate(agg: Transaction) =
         if agg.Limit = 0m then
-            raise <| ValidateError "交易期间尚未生效"
+            raise <| ValidateException "交易期间尚未生效"
 
         if me.Amount <= 0m then
-            raise <| ValidateError "转入金额应大于零"
+            raise <| ValidateException "转入金额应大于零"
 
         if me.Amount > agg.TransLimit then
-            raise <| ValidateError "金额超限"
+            raise <| ValidateException "金额超限"
 
     member me.Execute(agg: Transaction) : TransferInFinished =
         { AccountId = agg.AccountId

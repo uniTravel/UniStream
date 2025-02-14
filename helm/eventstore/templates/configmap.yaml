@@ -1,13 +1,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: esdb-config
+  name: {{ include "eventstore.fullname" $ }}-config
 data:
   EVENTSTORE_CLUSTER_SIZE: "{{ .Values.replicaCount }}"
   EVENTSTORE_RUN_PROJECTIONS: "All"
   EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP: "true"
-  EVENTSTORE_CLUSTER_DNS: {{ template "eventstore.fullname" . }}.default.svc.cluster.local
-  EVENTSTORE_GOSSIP_SEED: {{ template "eventstore.gossipSeeds" . }}
+  EVENTSTORE_CLUSTER_DNS: {{ template "eventstore.fullname" . }}-headless
   EVENTSTORE_TRUSTED_ROOT_CERTIFICATES_PATH: "/etc/eventstore/ca"
   EVENTSTORE_CERTIFICATE_FILE: "/etc/eventstore/certs/node.crt"
   EVENTSTORE_CERTIFICATE_PRIVATE_KEY_FILE: "/etc/eventstore/certs/node.key"

@@ -3,7 +3,6 @@
     <TargetFramework>net9.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Exceptions.fs" />
     <Compile Include="Account.fsi" />
     <Compile Include="Account.fs" />
     <Compile Include="AccountEvent.fs" />

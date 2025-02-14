@@ -21,9 +21,6 @@
             "type": "coreclr",
             "request": "launch",
             "program": "bin/Debug/net9.0/Account.Tests.dll",
-            "env": {
-                "DOTNET_ENVIRONMENT": "Development"
-            },
             "args": [
                 "--debug"
             ],

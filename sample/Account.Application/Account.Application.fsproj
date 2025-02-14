@@ -2,6 +2,9 @@
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
   </PropertyGroup>
+  <ItemGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <InternalsVisibleTo Include="Account.Tests" />
+  </ItemGroup>
   <ItemGroup>
     <Compile Include="TransactionService.fs" />
     <Compile Include="AccountService.fs" />
