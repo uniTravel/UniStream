@@ -1,6 +1,7 @@
 namespace UniStream.Domain
 
 open System
+open System.ComponentModel.DataAnnotations
 
 
 /// <summary>聚合命令发送者消息类型
@@ -17,3 +18,12 @@ type ComResult =
     | Success
     | Duplicate
     | Fail of exn
+
+
+/// <summary>验证Guid
+/// </summary>
+[<Sealed>]
+[<AttributeUsage(AttributeTargets.Property)>]
+type ValidGuidAttribute =
+    inherit ValidationAttribute
+    new: unit -> ValidGuidAttribute

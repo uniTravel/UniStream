@@ -3,6 +3,7 @@
     <TargetFramework>net9.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ValidateError.fs" />
     <Compile Include="Account.fs" />
     <Compile Include="Transaction.fs" />
   </ItemGroup>

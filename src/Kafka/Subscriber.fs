@@ -20,15 +20,15 @@ type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, 
             try
                 while true do
                     let cr = cc.Consume ct
-                    let comId = Guid(cr.Message.Headers.GetLastBytes("comId"))
-                    let comType = Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes("comType"))
+                    let comId = Guid(cr.Message.Headers.GetLastBytes "comId")
+                    let comType = Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes "comType")
 
                     try
-                        dic[comType].Post(Guid(cr.Message.Key), comId, ReadOnlyMemory cr.Message.Value)
+                        dic[comType].Post(Guid cr.Message.Key, comId, ReadOnlyMemory cr.Message.Value)
                     with ex ->
-                        logger.LogCritical($"{ex}")
+                        logger.LogCritical $"{ex}"
             with ex ->
-                logger.LogError($"Consume loop breaked: {ex}")
+                logger.LogError $"Consume loop breaked: {ex}"
         }
 
     interface ISubscriber<'agg> with
@@ -40,5 +40,5 @@ type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, 
             task {
                 cc.Subscribe(aggType + "_Command")
                 Async.Start(work ct, ct)
-                logger.LogInformation($"Subscription of command for {aggType} started")
+                logger.LogInformation $"Subscription of command for {aggType} started"
             }

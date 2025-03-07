@@ -62,7 +62,7 @@ type Sender<'agg when 'agg :> Aggregate>
 
                         let expire = DateTime.UtcNow.AddMilliseconds interval
                         cache.Add(comId, (expire, result)) |> ignore
-                    | Refresh(now) ->
+                    | Refresh now ->
                         cache
                         |> Seq.iter (fun (KeyValue(comId, (expire, _))) ->
                             if expire < now then
@@ -80,7 +80,7 @@ type Sender<'agg when 'agg :> Aggregate>
             try
                 sub.GetInfoToStreamAsync(stream, group).Wait()
             with _ ->
-                let settings = PersistentSubscriptionSettings(true)
+                let settings = PersistentSubscriptionSettings true
                 sub.CreateToStreamAsync(stream, group, settings).Wait()
 
             use sub = sub.SubscribeToStream(stream, group, cancellationToken = ct)
@@ -93,24 +93,24 @@ type Sender<'agg when 'agg :> Aggregate>
                     | "Fail" ->
                         let comId = ev.ResolvedEvent.Event.EventId.ToGuid()
                         let err = JsonSerializer.Deserialize<string> ev.ResolvedEvent.Event.Data.Span
-                        logger.LogError($"{comId} of {aggType} failed: {err}")
+                        logger.LogError $"{comId} of {aggType} failed: {err}"
                         agent.Post <| Receive(comId, Error(failwith $"Apply command failed: {err}"))
                         sub.Ack(ev.ResolvedEvent).Wait()
                     | _ ->
                         let comId = ev.ResolvedEvent.Event.EventId.ToGuid()
-                        logger.LogInformation($"{comId} of {aggType} finished")
+                        logger.LogInformation $"{comId} of {aggType} finished"
                         agent.Post <| Receive(comId, Ok())
                         sub.Ack(ev.ResolvedEvent).Wait()
                 | :? PersistentSubscriptionMessage.SubscriptionConfirmation as confirm ->
-                    logger.LogInformation($"Subscription {confirm.SubscriptionId} for {stream} started")
-                | :? PersistentSubscriptionMessage.NotFound -> logger.LogError("Stream was not found")
-                | _ -> logger.LogError("Unknown error")
+                    logger.LogInformation $"Subscription {confirm.SubscriptionId} for {stream} started"
+                | :? PersistentSubscriptionMessage.NotFound -> logger.LogError "Stream was not found"
+                | _ -> logger.LogError "Unknown error"
         }
 
     do
         agent.Start()
         Async.Start(subscribe cts.Token |> Async.AwaitTask, cts.Token)
-        Async.Start(Sender.timer interval (fun _ -> agent.Post <| Refresh(DateTime.UtcNow)), cts.Token)
+        Async.Start(Sender.timer interval (fun _ -> agent.Post <| Refresh DateTime.UtcNow), cts.Token)
 
     interface ISender<'agg> with
         member val send =

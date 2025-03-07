@@ -35,9 +35,7 @@ type Stream<'agg when 'agg :> Aggregate>
                 let topic = aggType + "-" + aggId.ToString()
                 let cfg = Dictionary(dict [ ("retention.ms", "-1") ])
 
-                admin
-                    .CreateTopicsAsync([ TopicSpecification(Name = topic, NumPartitions = 1, Configs = cfg) ])
-                    .Wait()
+                admin.CreateTopicsAsync([ TopicSpecification(Name = topic, NumPartitions = 1, Configs = cfg) ]).Wait()
         }
 
     let write (aggId: Guid) (comId: Guid) (revision: uint64) (evtType: string) (evtData: byte array) =
@@ -50,7 +48,7 @@ type Stream<'agg when 'agg :> Aggregate>
             msg.Headers.Add("evtType", Encoding.ASCII.GetBytes evtType)
             tp.Produce(aggType, msg)
         with ex ->
-            logger.LogError($"Write {evtType} of {aggId} error: {ex.Message}")
+            logger.LogError $"Write {evtType} of {aggId} error: {ex.Message}"
             raise <| WriteException($"Write {evtType} of {aggId} error", ex)
 
     let read (aggId: Guid) =
@@ -62,7 +60,7 @@ type Stream<'agg when 'agg :> Aggregate>
 
             let result =
                 [ while d do
-                      let cr = ac.Consume(2000)
+                      let cr = ac.Consume 2000
 
                       if cr.IsPartitionEOF then
                           d <- false
@@ -71,16 +69,13 @@ type Stream<'agg when 'agg :> Aggregate>
 
             result
         with ex ->
-            logger.LogError($"Read strem of {aggId} error: {ex.Message}")
+            logger.LogError $"Read strem of {aggId} error: {ex.Message}"
             raise <| ReadException($"Read strem of {aggId} error", ex)
 
     let restore (ch: HashSet<Guid>) count =
         let mutable d = true
 
-        admin
-            .GetMetadata(TimeSpan.FromSeconds 2.0)
-            .Topics.Find(fun t -> t.Topic = aggType)
-            .Partitions
+        admin.GetMetadata(TimeSpan.FromSeconds 2.0).Topics.Find(fun t -> t.Topic = aggType).Partitions
         |> Seq.map (fun x -> TopicPartition(aggType, x.PartitionId))
         |> tc.Assign
 
@@ -91,12 +86,12 @@ type Stream<'agg when 'agg :> Aggregate>
                   if cr = null then
                       d <- false
                   else
-                      let comId = Guid(cr.Message.Headers.GetLastBytes("comId"))
-                      ch.Add(comId) |> ignore
+                      let comId = Guid(cr.Message.Headers.GetLastBytes "comId")
+                      ch.Add comId |> ignore
                       yield comId ]
 
         let cached = result |> List.skip (result.Length - count)
-        logger.LogInformation($"{cached.Length} comId of {aggType} cached")
+        logger.LogInformation $"{cached.Length} comId of {aggType} cached"
         cached
 
     interface IStream<'agg> with

@@ -29,9 +29,9 @@ type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, 
                     dic[comType].Post(aggId, er.Event.EventId.ToGuid(), er.Event.Data)
                     sub.Ack(er).Wait()
                 | :? PersistentSubscriptionMessage.SubscriptionConfirmation as confirm ->
-                    logger.LogInformation($"Subscription {confirm.SubscriptionId} for {aggType} started")
+                    logger.LogInformation $"Subscription {confirm.SubscriptionId} for {aggType} started"
                 | :? PersistentSubscriptionMessage.NotFound -> logger.LogError("Stream was not found")
-                | _ -> logger.LogError("Unknown error")
+                | _ -> logger.LogError "Unknown error"
         }
 
     interface ISubscriber<'agg> with

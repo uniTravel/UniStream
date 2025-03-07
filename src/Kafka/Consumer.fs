@@ -17,7 +17,7 @@ type TypConsumer(options: IOptionsMonitor<ConsumerConfig>) =
 
     interface IConsumer with
         member _.Client =
-            let cfg = options.Get(Cons.Typ)
+            let cfg = options.Get Cons.Typ
             ConsumerBuilder<byte array, byte array>(cfg).Build()
 
     interface IDisposable with
@@ -33,7 +33,7 @@ type ComConsumer(options: IOptionsMonitor<ConsumerConfig>) =
 
     interface IConsumer with
         member _.Client =
-            let cfg = options.Get(Cons.Com)
+            let cfg = options.Get Cons.Com
             ConsumerBuilder<byte array, byte array>(cfg).Build()
 
     interface IDisposable with

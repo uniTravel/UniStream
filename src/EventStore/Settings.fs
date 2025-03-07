@@ -15,4 +15,4 @@ type Settings(options: IOptions<EventStoreOptions>) =
     let conn = $"esdb://{cfg.User}:{cfg.Pass}@{cfg.Host}?tlsVerifyCert={cfg.VerifyCert}"
 
     interface ISettings with
-        member _.Settings = EventStoreClientSettings.Create(conn)
+        member _.Settings = EventStoreClientSettings.Create conn

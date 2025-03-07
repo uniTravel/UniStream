@@ -28,7 +28,7 @@ module Handler =
                         let com = JsonSerializer.Deserialize<'com> comData.Span
 
                         match! commit aggId comId com with
-                        | Success -> logger.LogInformation($"{comType} of {aggId} committed")
+                        | Success -> logger.LogInformation $"{comType} of {aggId} committed"
                         | Duplicate ->
                             let aggId = aggId.ToByteArray()
                             let h = Headers()
@@ -36,8 +36,8 @@ module Handler =
                             msg.Headers.Add("comId", comId.ToByteArray())
                             msg.Headers.Add("evtType", Encoding.ASCII.GetBytes "Duplicate")
                             tp.Produce(aggType, msg)
-                            logger.LogWarning($"{comType} of {aggId} duplicated")
-                        | Fail(ex) ->
+                            logger.LogWarning $"{comType} of {aggId} duplicated"
+                        | Fail ex ->
                             let evtData = JsonSerializer.SerializeToUtf8Bytes ex.Message
                             let aggId = aggId.ToByteArray()
                             let h = Headers()
@@ -45,7 +45,7 @@ module Handler =
                             msg.Headers.Add("comId", comId.ToByteArray())
                             msg.Headers.Add("evtType", Encoding.ASCII.GetBytes "Fail")
                             tp.Produce(aggType, msg)
-                            logger.LogError($"{comType} of {aggId} error: {ex}")
+                            logger.LogError $"{comType} of {aggId} error: {ex}"
 
                         return! loop ()
                     }

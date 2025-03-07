@@ -20,7 +20,7 @@ type Projector<'agg when 'agg :> Aggregate>(logger: ILogger<Projector<'agg>>, ap
                 while true do
                     let cr = tc.Consume ct
                     let aggId = Guid cr.Message.Key
-                    let evtType = cr.Message.Headers.GetLastBytes("evtType")
+                    let evtType = cr.Message.Headers.GetLastBytes "evtType"
 
                     match Encoding.ASCII.GetString evtType with
                     | "Fail" -> ()
@@ -28,13 +28,13 @@ type Projector<'agg when 'agg :> Aggregate>(logger: ILogger<Projector<'agg>>, ap
                         let topic = aggType + "-" + aggId.ToString()
                         ap.Produce(topic, Message<byte array, byte array>(Key = evtType, Value = cr.Message.Value))
             with ex ->
-                logger.LogError($"Consume loop breaked: {ex}")
+                logger.LogError $"Consume loop breaked: {ex}"
         }
 
     interface IWorker<'agg> with
         member _.Launch(ct: CancellationToken) =
             task {
-                tc.Subscribe(aggType)
+                tc.Subscribe aggType
                 Async.Start(work ct, ct)
-                logger.LogInformation($"Subscription for {aggType} started")
+                logger.LogInformation $"Subscription for {aggType} started"
             }

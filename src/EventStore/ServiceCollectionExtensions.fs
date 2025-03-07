@@ -17,7 +17,7 @@ type ServiceCollectionExtensions =
     static member AddSender(services: IServiceCollection, config: IConfiguration) =
         services
             .AddOptions<EventStoreOptions>()
-            .Bind(config.GetSection(EventStoreOptions.Name))
+            .Bind(config.GetSection EventStoreOptions.Name)
             .ValidateDataAnnotations()
             .ValidateOnStart()
         |> ignore
@@ -44,7 +44,7 @@ type ServiceCollectionExtensions =
     static member AddInitializer(services: IServiceCollection, config: IConfiguration) =
         services
             .AddOptions<EventStoreOptions>()
-            .Bind(config.GetSection(EventStoreOptions.Name))
+            .Bind(config.GetSection EventStoreOptions.Name)
             .ValidateDataAnnotations()
             .ValidateOnStart()
         |> ignore
@@ -59,7 +59,7 @@ type ServiceCollectionExtensions =
     static member AddHandler(services: IServiceCollection, config: IConfiguration) =
         services
             .AddOptions<EventStoreOptions>()
-            .Bind(config.GetSection(EventStoreOptions.Name))
+            .Bind(config.GetSection EventStoreOptions.Name)
             .ValidateDataAnnotations()
             .ValidateOnStart()
         |> ignore
@@ -83,7 +83,7 @@ type ServiceCollectionExtensions =
     static member AddSubscriber(services: IServiceCollection, config: IConfiguration) =
         services
             .AddOptions<EventStoreOptions>()
-            .Bind(config.GetSection(EventStoreOptions.Name))
+            .Bind(config.GetSection EventStoreOptions.Name)
             .ValidateDataAnnotations()
             .ValidateOnStart()
         |> ignore

@@ -18,46 +18,59 @@ let buildTest setup =
       }
       test "聚合缓存无，未注册" {
           setup
-          <| fun agent id1 _ -> Expect.throwsAsyncT<ReplayException> (fun _ -> get agent id1 |> Async.Ignore) "异常类型有误"
+          <| fun agent id1 _ ->
+              async { do! Expect.throwsAsyncT<ReplayException> (fun _ -> get agent id1 |> Async.Ignore) "异常类型有误" }
       }
       test "聚合缓存无，注册命令1" {
           setup
           <| fun agent id1 _ ->
-              Aggregator.register agent <| Replay<Note, NoteCreated>()
-              Expect.throwsAsyncT<ReplayException> (fun _ -> get agent id1 |> Async.Ignore) "异常类型有误"
+              async {
+                  Aggregator.register agent <| Replay<Note, NoteCreated>()
+                  do! Expect.throwsAsyncT<ReplayException> (fun _ -> get agent id1 |> Async.Ignore) "异常类型有误"
+              }
       }
       test "聚合缓存无，注册命令2" {
           setup
           <| fun agent id1 _ ->
-              Aggregator.register agent <| Replay<Note, NoteChanged>()
-              Expect.throwsAsyncT<ReplayException> (fun _ -> get agent id1 |> Async.Ignore) "异常类型有误"
+              async {
+                  Aggregator.register agent <| Replay<Note, NoteChanged>()
+                  do! Expect.throwsAsyncT<ReplayException> (fun _ -> get agent id1 |> Async.Ignore) "异常类型有误"
+              }
       }
       test "聚合缓存无，注册命令3" {
           setup
           <| fun agent id1 _ ->
-              Aggregator.register agent <| Replay<Note, NoteUpgraded>()
-              Expect.throwsAsyncT<ReplayException> (fun _ -> get agent id1 |> Async.Ignore) "异常类型有误"
+              async {
+                  Aggregator.register agent <| Replay<Note, NoteUpgraded>()
+                  do! Expect.throwsAsyncT<ReplayException> (fun _ -> get agent id1 |> Async.Ignore) "异常类型有误"
+              }
       }
       test "聚合缓存无，注册命令1、2" {
           setup
           <| fun agent id1 _ ->
-              Aggregator.register agent <| Replay<Note, NoteCreated>()
-              Aggregator.register agent <| Replay<Note, NoteChanged>()
-              Expect.throwsAsyncT<ReplayException> (fun _ -> get agent id1 |> Async.Ignore) "异常类型有误"
+              async {
+                  Aggregator.register agent <| Replay<Note, NoteCreated>()
+                  Aggregator.register agent <| Replay<Note, NoteChanged>()
+                  do! Expect.throwsAsyncT<ReplayException> (fun _ -> get agent id1 |> Async.Ignore) "异常类型有误"
+              }
       }
       test "聚合缓存无，注册命令2、3" {
           setup
           <| fun agent id1 _ ->
-              Aggregator.register agent <| Replay<Note, NoteChanged>()
-              Aggregator.register agent <| Replay<Note, NoteUpgraded>()
-              Expect.throwsAsyncT<ReplayException> (fun _ -> get agent id1 |> Async.Ignore) "异常类型有误"
+              async {
+                  Aggregator.register agent <| Replay<Note, NoteChanged>()
+                  Aggregator.register agent <| Replay<Note, NoteUpgraded>()
+                  do! Expect.throwsAsyncT<ReplayException> (fun _ -> get agent id1 |> Async.Ignore) "异常类型有误"
+              }
       }
       test "聚合缓存无，注册命令1、3" {
           setup
           <| fun agent id1 _ ->
-              Aggregator.register agent <| Replay<Note, NoteCreated>()
-              Aggregator.register agent <| Replay<Note, NoteUpgraded>()
-              Expect.throwsAsyncT<ReplayException> (fun _ -> get agent id1 |> Async.Ignore) "异常类型有误"
+              async {
+                  Aggregator.register agent <| Replay<Note, NoteCreated>()
+                  Aggregator.register agent <| Replay<Note, NoteUpgraded>()
+                  do! Expect.throwsAsyncT<ReplayException> (fun _ -> get agent id1 |> Async.Ignore) "异常类型有误"
+              }
       }
       test "聚合缓存无，完整注册命令" {
           setup
@@ -75,7 +88,7 @@ let buildTest setup =
 let test =
     buildTest
     <| fun f ->
-        let repo = Dictionary<string, (uint64 * string * ReadOnlyMemory<byte>) list>(10000)
+        let repo = Dictionary<string, (uint64 * string * ReadOnlyMemory<byte>) list> 10000
 
         let stream =
             { new IStream<Note> with
@@ -112,5 +125,5 @@ let test =
         finally
             repo.Clear()
             agent.Dispose()
-    |> testList "Replay"
-    |> testLabel "未注册重播"
+    |> testList "未注册重播"
+    |> testLabel "Replay"

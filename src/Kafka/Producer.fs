@@ -17,7 +17,7 @@ type TypProducer(options: IOptionsMonitor<ProducerConfig>) =
 
     interface IProducer with
         member _.Client =
-            let cfg = options.Get(Cons.Typ)
+            let cfg = options.Get Cons.Typ
             ProducerBuilder<byte array, byte array>(cfg).Build()
 
     interface IDisposable with
@@ -33,7 +33,7 @@ type AggProducer(options: IOptionsMonitor<ProducerConfig>) =
 
     interface IProducer with
         member _.Client =
-            let cfg = options.Get(Cons.Agg)
+            let cfg = options.Get Cons.Agg
             ProducerBuilder<byte array, byte array>(cfg).Build()
 
     interface IDisposable with
@@ -49,7 +49,7 @@ type ComProducer(options: IOptionsMonitor<ProducerConfig>) =
 
     interface IProducer with
         member _.Client =
-            let cfg = options.Get(Cons.Com)
+            let cfg = options.Get Cons.Com
             ProducerBuilder<byte array, byte array>(cfg).Build()
 
     interface IDisposable with

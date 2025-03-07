@@ -27,31 +27,36 @@ let buildTest setup =
       test "新聚合ID创建命令存在不合验证规则的情形" {
           setup
           <| fun agent _ ->
-              let com =
-                  { Title = "t"
-                    Content = "c"
-                    Grade = 4 }
+              async {
+                  let com =
+                      { Title = "t"
+                        Content = "c"
+                        Grade = 4 }
 
-              Expect.throwsAsyncT<ValidateException>
-                  (fun _ ->
-                      async {
-                          match! create agent (Guid.NewGuid()) (Guid.NewGuid()) com with
-                          | Fail ex -> raise ex
-                          | _ -> ()
-                      })
-                  "异常类型有误"
+                  let f = call <| create agent (Guid.NewGuid()) (Guid.NewGuid()) com
+                  do! Expect.throwsAsyncT<ValidateException> f "异常类型有误"
+              }
       }
       test "新聚合ID执行更新命令" {
           setup
           <| fun agent _ ->
-              Expect.throwsAsyncT<ReadException>
-                  (fun _ ->
-                      async {
-                          match! change agent (Guid.NewGuid()) (Guid.NewGuid()) { Content = "c" } with
-                          | Fail ex -> raise ex
-                          | _ -> ()
-                      })
-                  "异常类型有误"
+              async {
+                  let f = call <| change agent (Guid.NewGuid()) (Guid.NewGuid()) { Content = "c" }
+                  do! Expect.throwsAsyncT<ReadException> f "异常类型有误"
+              }
+      }
+      test "已有聚合执行创建命令" {
+          setup
+          <| fun agent id ->
+              async {
+                  let com =
+                      { Title = "t"
+                        Content = "c"
+                        Grade = 1 }
+
+                  let f = call <| create agent id (Guid.NewGuid()) com
+                  do! Expect.throwsAsyncT<WriteException> f "异常类型有误"
+              }
       }
       test "已有聚合执行更新命令" {
           setup
@@ -66,21 +71,15 @@ let buildTest setup =
       test "已有聚合执行更新命令存在不合验证规则的情形" {
           setup
           <| fun agent id ->
-              Expect.throwsAsyncT<ValidateException>
-                  (fun _ ->
-                      async {
-                          match! upgrade agent id (Guid.NewGuid()) { Up = 3 } with
-                          | Fail ex -> raise ex
-                          | _ -> ()
-                      })
-                  "异常类型有误"
+              let f = call <| upgrade agent id (Guid.NewGuid()) { Up = 3 }
+              Expect.throwsAsyncT<ValidateException> f "异常类型有误"
       } ]
 
 [<Tests>]
 let test =
     buildTest
     <| fun f ->
-        let repo = Dictionary<string, (uint64 * string * ReadOnlyMemory<byte>) list>(10000)
+        let repo = Dictionary<string, (uint64 * string * ReadOnlyMemory<byte>) list> 10000
 
         let stream =
             { new IStream<Note> with
@@ -107,6 +106,5 @@ let test =
         finally
             repo.Clear()
             agent.Dispose()
-    |> testList "Write"
-    |> testSequenced
-    |> testLabel "已注册重播"
+    |> testList "已注册重播"
+    |> testLabel "Write"

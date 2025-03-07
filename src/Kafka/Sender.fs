@@ -60,7 +60,7 @@ type Sender<'agg when 'agg :> Aggregate>
 
                         let expire = DateTime.UtcNow.AddMilliseconds interval
                         cache.Add(comId, (expire, result)) |> ignore
-                    | Refresh(now) ->
+                    | Refresh now ->
                         cache
                         |> Seq.iter (fun (KeyValue(comId, (expire, _))) ->
                             if expire < now then
@@ -78,37 +78,34 @@ type Sender<'agg when 'agg :> Aggregate>
             try
                 while true do
                     let cr = tc.Consume ct
-                    let comId = Guid(cr.Message.Headers.GetLastBytes("comId"))
+                    let comId = Guid(cr.Message.Headers.GetLastBytes "comId")
 
-                    match Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes("evtType")) with
+                    match Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes "evtType") with
                     | "Fail" ->
                         let err = BitConverter.ToString cr.Message.Value
-                        logger.LogError($"{comId} of {aggType} failed: {err}")
+                        logger.LogError $"{comId} of {aggType} failed: {err}"
                         agent.Post <| Receive(comId, Error(failwith $"Apply command failed: {err}"))
                     | _ ->
-                        logger.LogInformation($"{comId} of {aggType} finished")
+                        logger.LogInformation $"{comId} of {aggType} finished"
                         agent.Post <| Receive(comId, Ok())
             with ex ->
-                logger.LogError($"Consume loop breaked: {ex}")
+                logger.LogError $"Consume loop breaked: {ex}"
         }
 
     do
         agent.Start()
 
-        admin
-            .GetMetadata(TimeSpan.FromSeconds 2.0)
-            .Topics.Find(fun t -> t.Topic = aggType)
-            .Partitions
+        admin.GetMetadata(TimeSpan.FromSeconds 2.0).Topics.Find(fun t -> t.Topic = aggType).Partitions
         |> Seq.map (fun x -> TopicPartition(aggType, x.PartitionId))
         |> tc.Assign
 
         Async.Start(consumer cts.Token, cts.Token)
-        Async.Start(Sender.timer interval (fun _ -> agent.Post <| Refresh(DateTime.UtcNow)), cts.Token)
+        Async.Start(Sender.timer interval (fun _ -> agent.Post <| Refresh DateTime.UtcNow), cts.Token)
 
         while tc.Assignment.Count = 0 do
             Thread.Sleep 200
 
-        logger.LogInformation($"Subscription for {aggType} started")
+        logger.LogInformation $"Subscription for {aggType} started"
 
     interface ISender<'agg> with
         member val send =

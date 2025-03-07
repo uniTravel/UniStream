@@ -25,7 +25,7 @@ let buildTest setup =
                   Expect.equal result Duplicate "命令操作记录缓存有误"
               }
       }
-      test "重复提交命令操作缓存中没有有记录的命令" {
+      test "重复提交命令操作缓存中没有记录的命令" {
           setup
           <| fun agent id ->
               async {
@@ -46,7 +46,7 @@ let buildTest setup =
 let test =
     buildTest
     <| fun f ->
-        let repo = Dictionary<string, (uint64 * string * ReadOnlyMemory<byte>) list>(10000)
+        let repo = Dictionary<string, (uint64 * string * ReadOnlyMemory<byte>) list> 10000
 
         let stream =
             { new IStream<Note> with
@@ -63,5 +63,5 @@ let test =
         finally
             repo.Clear()
             agent.Dispose()
-    |> testList "Restore"
-    |> testLabel "未注册重播"
+    |> testList "未注册重播"
+    |> testLabel "Restore"

@@ -1,4 +1,4 @@
-module Account.Base.Entry
+module Account.Tests.Entry
 
 open Expecto
 

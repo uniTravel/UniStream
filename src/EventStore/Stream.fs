@@ -17,7 +17,7 @@ type Stream<'agg when 'agg :> Aggregate>(logger: ILogger<Stream<'agg>>, client: 
             let data = EventData(Uuid.FromGuid comId, evtType, evtData)
             client.AppendToStreamAsync(stream, StreamRevision revision, [ data ]).Wait()
         with ex ->
-            logger.LogError($"Write {evtType} of {aggId} error: {ex.Message}")
+            logger.LogError $"Write {evtType} of {aggId} error: {ex.Message}"
             raise <| WriteException($"Write {evtType} of {aggId} error", ex)
 
     let read (aggId: Guid) =
@@ -25,14 +25,12 @@ type Stream<'agg when 'agg :> Aggregate>(logger: ILogger<Stream<'agg>>, client: 
             let stream = aggType + "-" + aggId.ToString()
 
             let e =
-                client
-                    .ReadStreamAsync(Direction.Forwards, stream, StreamPosition.Start)
-                    .GetAsyncEnumerator()
+                client.ReadStreamAsync(Direction.Forwards, stream, StreamPosition.Start).GetAsyncEnumerator()
 
             [ while (let vt = e.MoveNextAsync() in if vt.IsCompleted then vt.Result else vt.AsTask().Result) do
                   yield e.Current.Event.EventType, e.Current.Event.Data ]
         with ex ->
-            logger.LogError($"Read strem of {aggId} error: {ex.Message}")
+            logger.LogError $"Read strem of {aggId} error: {ex.Message}"
             raise <| ReadException($"Read strem of {aggId} error", ex)
 
     let restore (ch: HashSet<Guid>) count =
@@ -49,11 +47,11 @@ type Stream<'agg when 'agg :> Aggregate>(logger: ILogger<Stream<'agg>>, client: 
 
                 [ while (let vt = e.MoveNextAsync() in if vt.IsCompleted then vt.Result else vt.AsTask().Result) do
                       let comId = e.Current.Event.EventId.ToGuid()
-                      ch.Add(comId) |> ignore
+                      ch.Add comId |> ignore
                       yield comId ]
             | _ -> []
 
-        logger.LogInformation($"{cached.Length} comId of {aggType} cached")
+        logger.LogInformation $"{cached.Length} comId of {aggType} cached"
         cached
 
     interface IStream<'agg> with

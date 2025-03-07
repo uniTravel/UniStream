@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="TestFixture.fs" />
+    <Compile Include="AccountCommand.fs" />
+    <Compile Include="TransactionCommand.fs" />
+    <Compile Include="AccountCommandTests.fs" />
+    <Compile Include="AccountAppliedTests.fs" />
+    <Compile Include="AccountUnverifiedTests.fs" />
+    <Compile Include="AccountVerifiedTests.fs" />
+    <Compile Include="AccountUnapprovedTests.fs" />
+    <Compile Include="AccountApprovedTests.fs" />
+    <Compile Include="TransactionCommandTests.fs" />
+    <Compile Include="TransactionZeroBalanceTests.fs" />
+    <Compile Include="TransactionPeriodInvalidTests.fs" />
+    <Compile Include="TransactionPeriodValidTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Account.Command\Account.Command.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Expecto" Version="10.2.2" />
+    <PackageReference Include="Expecto.FsCheck" Version="10.2.2" />
+  </ItemGroup>
+</Project>

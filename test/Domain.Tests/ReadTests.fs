@@ -27,14 +27,16 @@ let buildTest setup =
       test "仓储无" {
           setup
           <| fun agent _ _ ->
-              Expect.throwsAsyncT<ReadException> (fun _ -> get agent (Guid.NewGuid()) |> Async.Ignore) "异常类型有误"
+              async {
+                  do! Expect.throwsAsyncT<ReadException> (fun _ -> get agent (Guid.NewGuid()) |> Async.Ignore) "异常类型有误"
+              }
       } ]
 
 [<Tests>]
 let test =
     buildTest
     <| fun f ->
-        let repo = Dictionary<string, (uint64 * string * ReadOnlyMemory<byte>) list>(10000)
+        let repo = Dictionary<string, (uint64 * string * ReadOnlyMemory<byte>) list> 10000
 
         let stream =
             { new IStream<Note> with
@@ -74,5 +76,5 @@ let test =
         finally
             repo.Clear()
             agent.Dispose()
-    |> testList "Read"
-    |> testLabel "已注册重播"
+    |> testList "已注册重播"
+    |> testLabel "Read"

@@ -6,7 +6,7 @@ open UniStream.Domain
 
 type CreateAccount() =
 
-    [<Required>]
+    [<Required(ErrorMessage = ValidateError.owner)>]
     member val Owner = "" with get, set
 
     member me.Validate(agg: Account) = ()
@@ -16,10 +16,9 @@ type CreateAccount() =
 
 type VerifyAccount() =
 
-    [<Required>]
+    [<Required(ErrorMessage = ValidateError.verifiedBy)>]
     member val VerifiedBy = "" with get, set
 
-    [<Required>]
     member val Conclusion = false with get, set
 
     member me.Validate(agg: Account) =
@@ -35,7 +34,8 @@ type VerifyAccount() =
 
 type LimitAccount() =
 
-    [<Required>]
+    [<Range(typeof<decimal>, "100", "100000", ErrorMessage = ValidateError.limit)>]
+    [<RegularExpression(@"^\d+(\.\d{1,2})?$", ErrorMessage = ValidateError.money)>]
     member val Limit = 0.0m with get, set
 
     member me.Validate(agg: Account) =
@@ -45,33 +45,32 @@ type LimitAccount() =
         if me.Limit = agg.Limit then
             raise <| ValidateException "限额与原先一致"
 
-        if me.Limit <= 0m then
-            raise <| ValidateException "限额必须大于零"
-
     member me.Execute(agg: Account) =
         { AccountId = agg.Id; Limit = me.Limit }
 
 
 type ApproveAccount() =
 
-    [<Required>]
+    [<Required(ErrorMessage = ValidateError.approvedBy)>]
     member val ApprovedBy = "" with get, set
 
-    [<Required>]
     member val Approved = false with get, set
 
-    [<Required>]
+    [<Range(typeof<decimal>, "100", "100000", ErrorMessage = ValidateError.limit)>]
+    [<RegularExpression(@"^\d+(\.\d{1,2})?$", ErrorMessage = ValidateError.money)>]
     member val Limit = 0m with get, set
 
     member me.Validate(agg: Account) =
         if not agg.VerifyConclusion then
             raise <| ValidateException "未审核通过"
 
-        if me.Approved && me.Limit <= 0m then
-            raise <| ValidateException "批准的账户，限额必须大于零"
-
     member me.Execute(agg: Account) =
         { AccountId = agg.Id
           ApprovedBy = me.ApprovedBy
           Approved = me.Approved
           Limit = if me.Approved then me.Limit else 0m }
+
+    interface IValidatableObject with
+        member me.Validate(validationContext: ValidationContext) =
+            [ if me.Approved && me.Limit <= 0m then
+                  yield ValidationResult ValidateError.approvedLimit ]

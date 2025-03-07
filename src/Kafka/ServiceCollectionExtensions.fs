@@ -10,56 +10,44 @@ open UniStream.Domain
 [<RequireQualifiedAccess>]
 module internal Cfg =
     let admin (services: IServiceCollection) (config: IConfiguration) =
-        services.AddOptions<AdminClientConfig>().Bind(config.GetSection("Kafka:Admin"))
+        services.AddOptions<AdminClientConfig>().Bind(config.GetSection "Kafka:Admin")
         |> ignore
 
         services.AddSingleton<IAdmin, Admin>() |> ignore
 
     let typProducer (services: IServiceCollection) (config: IConfiguration) =
-        services
-            .AddOptions<ProducerConfig>(Cons.Typ)
-            .Bind(config.GetSection("Kafka:Typ:Producer"))
+        services.AddOptions<ProducerConfig>(Cons.Typ).Bind(config.GetSection "Kafka:Typ:Producer")
         |> ignore
 
-        services.AddKeyedSingleton<IProducer, TypProducer>(Cons.Typ) |> ignore
+        services.AddKeyedSingleton<IProducer, TypProducer> Cons.Typ |> ignore
 
     let typConsumer (services: IServiceCollection) (config: IConfiguration) =
-        services
-            .AddOptions<ConsumerConfig>(Cons.Typ)
-            .Bind(config.GetSection("Kafka:Typ:Consumer"))
+        services.AddOptions<ConsumerConfig>(Cons.Typ).Bind(config.GetSection "Kafka:Typ:Consumer")
         |> ignore
 
-        services.AddKeyedSingleton<IConsumer, TypConsumer>(Cons.Typ) |> ignore
+        services.AddKeyedSingleton<IConsumer, TypConsumer> Cons.Typ |> ignore
 
     let aggProducer (services: IServiceCollection) (config: IConfiguration) =
-        services
-            .AddOptions<ProducerConfig>(Cons.Agg)
-            .Bind(config.GetSection("Kafka:Agg:Producer"))
+        services.AddOptions<ProducerConfig>(Cons.Agg).Bind(config.GetSection "Kafka:Agg:Producer")
         |> ignore
 
-        services.AddKeyedSingleton<IProducer, AggProducer>(Cons.Agg) |> ignore
+        services.AddKeyedSingleton<IProducer, AggProducer> Cons.Agg |> ignore
 
     let aggConsumer (services: IServiceCollection) (config: IConfiguration) =
-        services
-            .AddOptions<ConsumerConfig>(Cons.Agg)
-            .Bind(config.GetSection("Kafka:Agg:Consumer"))
+        services.AddOptions<ConsumerConfig>(Cons.Agg).Bind(config.GetSection "Kafka:Agg:Consumer")
         |> ignore
 
     let comProducer (services: IServiceCollection) (config: IConfiguration) =
-        services
-            .AddOptions<ProducerConfig>(Cons.Com)
-            .Bind(config.GetSection("Kafka:Com:Producer"))
+        services.AddOptions<ProducerConfig>(Cons.Com).Bind(config.GetSection "Kafka:Com:Producer")
         |> ignore
 
-        services.AddKeyedSingleton<IProducer, ComProducer>(Cons.Com) |> ignore
+        services.AddKeyedSingleton<IProducer, ComProducer> Cons.Com |> ignore
 
     let comConsumer (services: IServiceCollection) (config: IConfiguration) =
-        services
-            .AddOptions<ConsumerConfig>(Cons.Com)
-            .Bind(config.GetSection("Kafka:Com:Consumer"))
+        services.AddOptions<ConsumerConfig>(Cons.Com).Bind(config.GetSection "Kafka:Com:Consumer")
         |> ignore
 
-        services.AddKeyedSingleton<IConsumer, ComConsumer>(Cons.Com) |> ignore
+        services.AddKeyedSingleton<IConsumer, ComConsumer> Cons.Com |> ignore
 
 
 /// <summary>Kafka服务注入扩展

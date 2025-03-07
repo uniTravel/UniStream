@@ -29,18 +29,18 @@ module Handler =
                         let com = JsonSerializer.Deserialize<'com> evtData.Span
 
                         match! commit aggId comId com with
-                        | Success -> logger.LogInformation($"{comType} of {aggId} committed")
+                        | Success -> logger.LogInformation $"{comType} of {aggId} committed"
                         | Duplicate ->
                             let data = EventData(Uuid.FromGuid comId, "Duplicate", ReadOnlyMemory [||])
 
                             client.AppendToStreamAsync(duplicate, StreamState.Any, [ data ]).Wait()
-                            logger.LogWarning($"{comType} of {aggId} duplicated")
-                        | Fail(ex) ->
+                            logger.LogWarning $"{comType} of {aggId} duplicated"
+                        | Fail ex ->
                             let data =
                                 EventData(Uuid.FromGuid comId, "Fail", JsonSerializer.SerializeToUtf8Bytes ex.Message)
 
                             client.AppendToStreamAsync(fail, StreamState.Any, [ data ]).Wait()
-                            logger.LogError($"{comType} of {aggId} error: {ex}")
+                            logger.LogError $"{comType} of {aggId} error: {ex}"
 
                         return! loop ()
                     }
