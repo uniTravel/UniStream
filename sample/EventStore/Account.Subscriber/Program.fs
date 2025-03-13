@@ -11,9 +11,15 @@ module Program =
     [<EntryPoint>]
     let main args =
 
-        let builder = Host.CreateApplicationBuilder(args)
+        let builder = Host.CreateApplicationBuilder args
 
-        builder.Services.AddSubscriber(builder.Configuration) |> ignore
+        builder.Services.AddSubscriber builder.Configuration |> ignore
+
+        builder.Services
+            .AddSubscriber<Account>(builder.Configuration)
+            .AddHostedService<AccountWorker>()
+            .AddSingleton<AccountService>()
+        |> ignore
 
         builder.Services
             .AddSubscriber<Transaction>(builder.Configuration)
@@ -25,6 +31,7 @@ module Program =
 
         using (app.Services.CreateScope()) (fun scope ->
             let services = scope.ServiceProvider
+            services.GetRequiredService<AccountService>() |> ignore
             services.GetRequiredService<TransactionService>() |> ignore)
 
         app.Run()

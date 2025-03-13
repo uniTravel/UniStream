@@ -16,31 +16,23 @@ module Program =
     [<EntryPoint>]
     let main args =
 
-        let builder = WebApplication.CreateBuilder(args)
+        let builder = WebApplication.CreateBuilder args
 
         builder.Services.AddControllers()
-        builder.Services.AddEndpointsApiExplorer()
-        builder.Services.AddSwaggerGen()
-        builder.Services.AddHandler(builder.Configuration)
+        builder.Services.AddOpenApi()
+        builder.Services.AddHandler builder.Configuration
 
-        builder.Services
-            .AddHandler<Account>(builder.Configuration)
-            .AddSingleton<AccountService>()
-
-        builder.Services
-            .AddHandler<Transaction>(builder.Configuration)
-            .AddSingleton<TransactionService>()
+        builder.Services.AddHandler<Account>(builder.Configuration).AddSingleton<AccountService>()
 
         let app = builder.Build()
 
         using (app.Services.CreateScope()) (fun scope ->
             let services = scope.ServiceProvider
-            services.GetRequiredService<AccountService>()
-            services.GetRequiredService<TransactionService>())
+            services.GetRequiredService<AccountService>())
 
         if app.Environment.IsDevelopment() then
-            app.UseSwagger()
-            app.UseSwaggerUI()
+            app.MapOpenApi()
+            app.UseSwaggerUI(fun options -> options.SwaggerEndpoint("/openapi/v1.json", "v1"))
             ()
 
         app.UseHttpsRedirection()

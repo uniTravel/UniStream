@@ -1,5 +1,5 @@
-@baseUrl = https://localhost:7180/Account
-@aggId = 8c2bd911-ba24-459b-a7dd-da07c84b0f5f
+@baseUrl = https://localhost:7280/Account
+@aggId =  a4f374f2-718d-41ef-8ee3-5ffa89704c8c
 
 # a4f374f2-718d-41ef-8ee3-5ffa89704c8c
 # 8c2bd911-ba24-459b-a7dd-da07c84b0f5f

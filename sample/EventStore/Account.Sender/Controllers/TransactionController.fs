@@ -19,7 +19,7 @@ type TransactionController(logger: ILogger<TransactionController>, sender: ISend
     member _.InitPeriod(aggId: Guid, comId: Guid, com: InitPeriod) =
         task {
             let! result = Sender.send sender aggId comId com
-            return me.CreatedAtAction(nameof (me.InitPeriod), result)
+            return me.CreatedAtAction(nameof me.InitPeriod, result)
         }
 
     [<HttpPost>]
@@ -28,7 +28,7 @@ type TransactionController(logger: ILogger<TransactionController>, sender: ISend
     member _.OpenPeriod(aggId: Guid, comId: Guid, com: OpenPeriod) =
         task {
             let! result = Sender.send sender aggId comId com
-            return me.CreatedAtAction(nameof (me.OpenPeriod), result)
+            return me.CreatedAtAction(nameof me.OpenPeriod, result)
         }
 
     [<HttpPost>]
@@ -37,7 +37,7 @@ type TransactionController(logger: ILogger<TransactionController>, sender: ISend
     member _.SetLimit(aggId: Guid, comId: Guid, com: SetLimit) =
         task {
             let! result = Sender.send sender aggId comId com
-            return me.CreatedAtAction(nameof (me.SetLimit), result)
+            return me.CreatedAtAction(nameof me.SetLimit, result)
         }
 
     [<HttpPost>]
@@ -46,7 +46,7 @@ type TransactionController(logger: ILogger<TransactionController>, sender: ISend
     member _.ChangeLimit(aggId: Guid, comId: Guid, com: ChangeLimit) =
         task {
             let! result = Sender.send sender aggId comId com
-            return me.CreatedAtAction(nameof (me.ChangeLimit), result)
+            return me.CreatedAtAction(nameof me.ChangeLimit, result)
         }
 
     [<HttpPost>]
@@ -55,7 +55,7 @@ type TransactionController(logger: ILogger<TransactionController>, sender: ISend
     member _.SetTransLimit(aggId: Guid, comId: Guid, com: SetTransLimit) =
         task {
             let! result = Sender.send sender aggId comId com
-            return me.CreatedAtAction(nameof (me.SetTransLimit), result)
+            return me.CreatedAtAction(nameof me.SetTransLimit, result)
         }
 
     [<HttpPost>]
@@ -64,7 +64,7 @@ type TransactionController(logger: ILogger<TransactionController>, sender: ISend
     member _.Deposit(aggId: Guid, comId: Guid, com: Deposit) =
         task {
             let! result = Sender.send sender aggId comId com
-            return me.CreatedAtAction(nameof (me.Deposit), result)
+            return me.CreatedAtAction(nameof me.Deposit, result)
         }
 
     [<HttpPost>]
@@ -73,7 +73,7 @@ type TransactionController(logger: ILogger<TransactionController>, sender: ISend
     member _.Withdraw(aggId: Guid, comId: Guid, com: Withdraw) =
         task {
             let! result = Sender.send sender aggId comId com
-            return me.CreatedAtAction(nameof (me.Withdraw), result)
+            return me.CreatedAtAction(nameof me.Withdraw, result)
         }
 
     [<HttpPost>]
@@ -82,7 +82,7 @@ type TransactionController(logger: ILogger<TransactionController>, sender: ISend
     member _.TransferOut(aggId: Guid, comId: Guid, com: TransferOut) =
         task {
             let! result = Sender.send sender aggId comId com
-            return me.CreatedAtAction(nameof (me.TransferOut), result)
+            return me.CreatedAtAction(nameof me.TransferOut, result)
         }
 
     [<HttpPost>]
@@ -91,5 +91,5 @@ type TransactionController(logger: ILogger<TransactionController>, sender: ISend
     member _.TransferIn(aggId: Guid, comId: Guid, com: TransferIn) =
         task {
             let! result = Sender.send sender aggId comId com
-            return me.CreatedAtAction(nameof (me.TransferIn), result)
+            return me.CreatedAtAction(nameof me.TransferIn, result)
         }

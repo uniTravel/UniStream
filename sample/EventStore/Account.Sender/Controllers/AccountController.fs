@@ -1,16 +1,16 @@
-namespace Account.Api.Controllers
+namespace Account.Sender.Controller
 
 open System
 open Microsoft.AspNetCore.Mvc
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
-open Account.Application
+open UniStream.Domain
 open Account.Domain
 
 
 [<ApiController>]
 [<Route("[controller]/[action]/{comId}")>]
-type AccountController(logger: ILogger<AccountController>, svc: AccountService) as me =
+type AccountController(logger: ILogger<AccountController>, sender: ISender<Account>) as me =
     inherit ControllerBase()
 
     [<HttpPost>]
@@ -18,7 +18,7 @@ type AccountController(logger: ILogger<AccountController>, svc: AccountService) 
     [<ProducesResponseType(StatusCodes.Status400BadRequest)>]
     member _.CreateAccount(aggId: Guid, comId: Guid, com: CreateAccount) =
         task {
-            let! result = svc.CreateAccount aggId comId com
+            let! result = Sender.send sender aggId comId com
             return me.CreatedAtAction(nameof me.CreateAccount, result)
         }
 
@@ -27,7 +27,7 @@ type AccountController(logger: ILogger<AccountController>, svc: AccountService) 
     [<ProducesResponseType(StatusCodes.Status400BadRequest)>]
     member _.VerifyAccount(aggId: Guid, comId: Guid, com: VerifyAccount) =
         task {
-            let! result = svc.VerifyAccount aggId comId com
+            let! result = Sender.send sender aggId comId com
             return me.CreatedAtAction(nameof me.VerifyAccount, result)
         }
 
@@ -36,7 +36,7 @@ type AccountController(logger: ILogger<AccountController>, svc: AccountService) 
     [<ProducesResponseType(StatusCodes.Status400BadRequest)>]
     member _.ApproveAccount(aggId: Guid, comId: Guid, com: ApproveAccount) =
         task {
-            let! result = svc.ApproveAccount aggId comId com
+            let! result = Sender.send sender aggId comId com
             return me.CreatedAtAction(nameof me.ApproveAccount, result)
         }
 
@@ -45,6 +45,6 @@ type AccountController(logger: ILogger<AccountController>, svc: AccountService) 
     [<ProducesResponseType(StatusCodes.Status400BadRequest)>]
     member _.LimitAccount(aggId: Guid, comId: Guid, com: LimitAccount) =
         task {
-            let! result = svc.LimitAccount aggId comId com
+            let! result = Sender.send sender aggId comId com
             return me.CreatedAtAction(nameof me.LimitAccount, result)
         }

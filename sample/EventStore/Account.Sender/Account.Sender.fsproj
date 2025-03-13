@@ -8,6 +8,7 @@
     <ProjectReference Include="..\..\Account.Command\Account.Command.fsproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controllers\AccountController.fs" />
     <Compile Include="Controllers\TransactionController.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

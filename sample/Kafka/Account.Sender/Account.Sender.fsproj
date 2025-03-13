@@ -3,6 +3,7 @@
     <TargetFramework>net9.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Controllers\AccountController.fs" />
     <Compile Include="Controllers\TransactionController.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>

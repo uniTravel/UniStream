@@ -14,6 +14,5 @@ Content-Type: application/json
 
 {
   "accountId": "8c2bd911-ba24-459b-a7dd-da07c84b0f5f",
-  "period": "202406",
   "limit": 1000
 }

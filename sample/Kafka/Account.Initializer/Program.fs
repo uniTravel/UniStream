@@ -26,8 +26,8 @@ module Program =
 
     [<EntryPoint>]
     let main args =
-        let builder = Host.CreateApplicationBuilder(args)
-        builder.Services.AddInitializer(builder.Configuration) |> ignore
+        let builder = Host.CreateApplicationBuilder args
+        builder.Services.AddInitializer builder.Configuration |> ignore
 
         use host = builder.Build()
         use serviceScope = host.Services.CreateScope()

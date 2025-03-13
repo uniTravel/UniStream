@@ -9,7 +9,7 @@ replicaCount: 3
 image:
   repository: bitnami/kafka
   # This sets the pull policy for images.
-  pullPolicy: Never
+  pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
@@ -21,16 +21,18 @@ fullnameOverride: "kafka"
 namespaceOverride: ""
 
 # This is for setting Kubernetes Annotations to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/ 
+# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
 podAnnotations: {}
 # This is for setting Kubernetes Labels to a Pod.
 # For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
 podLabels: {}
 
-podSecurityContext: {}
+podSecurityContext:
+  {}
   # fsGroup: 2000
 
-securityContext: {}
+securityContext:
+  {}
   # capabilities:
   #   drop:
   #   - ALL
@@ -38,7 +40,8 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
-resources: {}
+resources:
+  {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -65,21 +68,21 @@ service:
 
 listeners:
   client:
+    name: CLIENT
     containerPort: 9092
     protocol: PLAINTEXT
-    name: CLIENT
   controller:
     name: CONTROLLER
     containerPort: 9093
     protocol: PLAINTEXT
   interbroker:
+    name: INTERNAL
     containerPort: 9094
     protocol: PLAINTEXT
-    name: INTERNAL
   external:
+    name: EXTERNAL
     containerPort: 9095
     protocol: PLAINTEXT
-    name: EXTERNAL
 
 livenessProbe:
   enabled: true

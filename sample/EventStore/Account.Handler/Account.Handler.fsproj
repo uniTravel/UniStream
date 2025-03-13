@@ -5,7 +5,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Controllers/AccountController.fs" />
-    <Compile Include="Controllers\TransactionController.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
@@ -13,6 +12,7 @@
     <ProjectReference Include="..\..\..\src\EventStore\EventStore.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUi" Version="7.3.1" />
   </ItemGroup>
 </Project>

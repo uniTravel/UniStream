@@ -30,7 +30,7 @@ type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, 
                     sub.Ack(er).Wait()
                 | :? PersistentSubscriptionMessage.SubscriptionConfirmation as confirm ->
                     logger.LogInformation $"Subscription {confirm.SubscriptionId} for {aggType} started"
-                | :? PersistentSubscriptionMessage.NotFound -> logger.LogError("Stream was not found")
+                | :? PersistentSubscriptionMessage.NotFound -> logger.LogError "Stream was not found"
                 | _ -> logger.LogError "Unknown error"
         }
 
