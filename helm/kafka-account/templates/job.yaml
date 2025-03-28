@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "kafka-account.fullname" . }}
+  labels:
+    {{- include "kafka-account.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "kafka-account.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: kafka-init
+          image: kafka-init:latest
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+      restartPolicy: Never

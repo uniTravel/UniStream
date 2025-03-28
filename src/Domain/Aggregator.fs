@@ -59,7 +59,7 @@ module Aggregator =
         let upper = capacity * multiple + half
         let ch = HashSet<Guid>()
         let replayer = Dictionary<string, 'agg -> ReadOnlyMemory<byte> -> unit>()
-        let repository = Dictionary<Guid, 'agg>(capacity)
+        let repository = Dictionary<Guid, 'agg> capacity
 
         let reduce ao co =
             let ao = List.distinct ao

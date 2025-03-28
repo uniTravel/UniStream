@@ -1,6 +1,8 @@
 namespace UniStream.Domain
 
 
+/// <summary>Kafka实现涉及的常量
+/// </summary>
 [<RequireQualifiedAccess>]
 module Cons =
 

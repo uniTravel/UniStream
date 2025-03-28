@@ -22,7 +22,7 @@ module Handler =
     val inline register<'agg, 'com, 'evt> :
         subscriber: ISubscriber<'agg> ->
         logger: ILogger ->
-        tp: IProducer ->
+        tp: IProducer<'agg> ->
         commit: (Guid -> Guid -> 'com -> Async<ComResult>) ->
             unit
             when Com<'agg, 'com, 'evt>

@@ -4,7 +4,6 @@ open System
 open System.Collections.Generic
 open System.Text
 open Microsoft.Extensions.Logging
-open Microsoft.Extensions.Options
 open Confluent.Kafka
 open Confluent.Kafka.Admin
 open UniStream.Domain
@@ -12,35 +11,35 @@ open UniStream.Domain
 
 [<Sealed>]
 type Stream<'agg when 'agg :> Aggregate>
-    (
-        logger: ILogger<Stream<'agg>>,
-        options: IOptionsMonitor<ConsumerConfig>,
-        admin: IAdmin,
-        tp: IProducer,
-        tc: IConsumer
-    ) =
+    (logger: ILogger<Stream<'agg>>, admin: IAdmin<'agg>, tp: IProducer<'agg>, tc: IConsumer<'agg>, ac: IConsumer<'agg>)
+    =
+    let admin = admin.Client
     let tp = tp.Client
     let tc = tc.Client
-    let admin = admin.Client
+    let ac = ac.Client
     let aggType = typeof<'agg>.FullName
-    let cfg = options.Get(Cons.Agg)
 
-    let ac =
-        cfg.GroupId <- cfg.GroupId + aggType
-        ConsumerBuilder<Byte array, byte array>(cfg).Build()
-
-    let createTopic (aggId: Guid) (revision: uint64) =
+    let createTopic topic =
         async {
-            if revision = UInt64.MaxValue then
-                let topic = aggType + "-" + aggId.ToString()
-                let cfg = Dictionary(dict [ ("retention.ms", "-1") ])
+            let cfg = Dictionary(dict [ ("retention.ms", "-1") ])
+            let spec = TopicSpecification(Name = topic, NumPartitions = 1, Configs = cfg)
 
-                admin.CreateTopicsAsync([ TopicSpecification(Name = topic, NumPartitions = 1, Configs = cfg) ]).Wait()
+            try
+                admin.CreateTopicsAsync([ spec ]).Wait()
+            with ex ->
+                logger.LogWarning $"Create topic {topic} error：{ex.Message}"
         }
 
     let write (aggId: Guid) (comId: Guid) (revision: uint64) (evtType: string) (evtData: byte array) =
         try
-            Async.Start <| createTopic aggId revision
+            if revision = UInt64.MaxValue then
+                let topic = aggType + "-" + aggId.ToString()
+
+                if admin.GetMetadata(TimeSpan.FromSeconds 2.0).Topics.Exists(fun t -> t.Topic = topic) then
+                    failwith $"Topic {topic} already exist"
+                else
+                    Async.Start <| createTopic topic
+
             let aggId = aggId.ToByteArray()
             let h = Headers()
             let msg = Message<byte array, byte array>(Key = aggId, Value = evtData, Headers = h)
@@ -48,7 +47,7 @@ type Stream<'agg when 'agg :> Aggregate>
             msg.Headers.Add("evtType", Encoding.ASCII.GetBytes evtType)
             tp.Produce(aggType, msg)
         with ex ->
-            logger.LogError $"Write {evtType} of {aggId} error: {ex.Message}"
+            logger.LogError $"Write {evtType} of {aggType}[{aggId}] error: {ex.Message}"
             raise <| WriteException($"Write {evtType} of {aggId} error", ex)
 
     let read (aggId: Guid) =
@@ -69,7 +68,7 @@ type Stream<'agg when 'agg :> Aggregate>
 
             result
         with ex ->
-            logger.LogError $"Read strem of {aggId} error: {ex.Message}"
+            logger.LogError $"Read strem of {aggType}[{aggId}] error: {ex.Message}"
             raise <| ReadException($"Read strem of {aggId} error", ex)
 
     let restore (ch: HashSet<Guid>) count =
@@ -81,7 +80,7 @@ type Stream<'agg when 'agg :> Aggregate>
 
         let result =
             [ while d do
-                  let cr = tc.Consume(2000)
+                  let cr = tc.Consume 2000
 
                   if cr = null then
                       d <- false

@@ -11,9 +11,7 @@ module Program =
 
     [<EntryPoint>]
     let main args =
-
-        let builder = Host.CreateApplicationBuilder(args)
-
+        let builder = Host.CreateApplicationBuilder args
         builder.Services.AddSubscriber builder.Configuration |> ignore
 
         builder.Services
@@ -28,13 +26,6 @@ module Program =
             .AddSingleton<TransactionService>()
         |> ignore
 
-        let app = builder.Build()
-
-        using (app.Services.CreateScope()) (fun scope ->
-            let services = scope.ServiceProvider
-            services.GetRequiredService<AccountService>() |> ignore
-            services.GetRequiredService<TransactionService>() |> ignore)
-
-        app.Run()
+        builder.Build().Run()
 
         0 // exit code

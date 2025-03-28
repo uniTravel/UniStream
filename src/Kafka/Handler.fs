@@ -13,7 +13,7 @@ module Handler =
     let inline register<'agg, 'com, 'evt when Com<'agg, 'com, 'evt>>
         (subscriber: ISubscriber<'agg>)
         (logger: ILogger)
-        (tp: IProducer)
+        (tp: IProducer<'agg>)
         (commit: Guid -> Guid -> 'com -> Async<ComResult>)
         =
         let aggType = typeof<'agg>.FullName
@@ -28,7 +28,7 @@ module Handler =
                         let com = JsonSerializer.Deserialize<'com> comData.Span
 
                         match! commit aggId comId com with
-                        | Success -> logger.LogInformation $"{comType} of {aggId} committed"
+                        | Success -> logger.LogInformation $"{comType}[{comId}] of {aggType}[{aggId}] committed"
                         | Duplicate ->
                             let aggId = aggId.ToByteArray()
                             let h = Headers()
@@ -36,7 +36,7 @@ module Handler =
                             msg.Headers.Add("comId", comId.ToByteArray())
                             msg.Headers.Add("evtType", Encoding.ASCII.GetBytes "Duplicate")
                             tp.Produce(aggType, msg)
-                            logger.LogWarning $"{comType} of {aggId} duplicated"
+                            logger.LogWarning $"{comType}[{comId}] of {aggType}[{aggId}] duplicated"
                         | Fail ex ->
                             let evtData = JsonSerializer.SerializeToUtf8Bytes ex.Message
                             let aggId = aggId.ToByteArray()
@@ -45,7 +45,7 @@ module Handler =
                             msg.Headers.Add("comId", comId.ToByteArray())
                             msg.Headers.Add("evtType", Encoding.ASCII.GetBytes "Fail")
                             tp.Produce(aggType, msg)
-                            logger.LogError $"{comType} of {aggId} error: {ex}"
+                            logger.LogError $"{comType}[{comId}] of {aggType}[{aggId}] error: {ex}"
 
                         return! loop ()
                     }

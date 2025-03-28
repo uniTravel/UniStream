@@ -10,7 +10,7 @@ open UniStream.Domain
 
 
 [<Sealed>]
-type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, cc: IConsumer) =
+type Subscriber<'agg when 'agg :> Aggregate>(logger: ILogger<Subscriber<'agg>>, cc: IConsumer<'agg>) =
     let cc = cc.Client
     let aggType = typeof<'agg>.FullName
     let dic = Dictionary<string, MailboxProcessor<Guid * Guid * ReadOnlyMemory<byte>>>()

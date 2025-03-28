@@ -1,7 +1,6 @@
 namespace Account.Subscriber
 
 open System.Threading
-open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open UniStream.Domain
@@ -10,12 +9,8 @@ open Account.Application
 
 
 type AccountWorker
-    (
-        logger: ILogger<AccountWorker>,
-        subscriber: ISubscriber<Account>,
-        [<FromKeyedServices(Cons.Typ)>] producer: IProducer,
-        svc: AccountService
-    ) =
+    (logger: ILogger<AccountWorker>, subscriber: ISubscriber<Account>, producer: IProducer<Account>, svc: AccountService)
+    =
     inherit BackgroundService()
 
     override _.ExecuteAsync(ct: CancellationToken) =

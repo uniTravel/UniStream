@@ -1,7 +1,6 @@
 namespace Account.Subscriber
 
 open System.Threading
-open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open UniStream.Domain
@@ -13,7 +12,7 @@ type TransactionWorker
     (
         logger: ILogger<TransactionWorker>,
         subscriber: ISubscriber<Transaction>,
-        [<FromKeyedServices(Cons.Typ)>] producer: IProducer,
+        producer: IProducer<Transaction>,
         svc: TransactionService
     ) =
     inherit BackgroundService()

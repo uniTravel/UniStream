@@ -6,16 +6,16 @@ open Confluent.Kafka
 
 
 [<Interface>]
-type IProducer =
+type IProducer<'agg when 'agg :> Aggregate> =
 
     abstract member Client: IProducer<byte array, byte array>
 
 
 [<Sealed>]
-type TypProducer(options: IOptionsMonitor<ProducerConfig>) =
+type TypProducer<'agg when 'agg :> Aggregate>(options: IOptionsMonitor<ProducerConfig>) =
     let mutable dispose = false
 
-    interface IProducer with
+    interface IProducer<'agg> with
         member _.Client =
             let cfg = options.Get Cons.Typ
             ProducerBuilder<byte array, byte array>(cfg).Build()
@@ -23,15 +23,15 @@ type TypProducer(options: IOptionsMonitor<ProducerConfig>) =
     interface IDisposable with
         member me.Dispose() =
             if not dispose then
-                (me :> IProducer).Client.Dispose()
+                (me :> IProducer<'agg>).Client.Dispose()
                 dispose <- true
 
 
 [<Sealed>]
-type AggProducer(options: IOptionsMonitor<ProducerConfig>) =
+type AggProducer<'agg when 'agg :> Aggregate>(options: IOptionsMonitor<ProducerConfig>) =
     let mutable dispose = false
 
-    interface IProducer with
+    interface IProducer<'agg> with
         member _.Client =
             let cfg = options.Get Cons.Agg
             ProducerBuilder<byte array, byte array>(cfg).Build()
@@ -39,15 +39,15 @@ type AggProducer(options: IOptionsMonitor<ProducerConfig>) =
     interface IDisposable with
         member me.Dispose() =
             if not dispose then
-                (me :> IProducer).Client.Dispose()
+                (me :> IProducer<'agg>).Client.Dispose()
                 dispose <- true
 
 
 [<Sealed>]
-type ComProducer(options: IOptionsMonitor<ProducerConfig>) =
+type ComProducer<'agg when 'agg :> Aggregate>(options: IOptionsMonitor<ProducerConfig>) =
     let mutable dispose = false
 
-    interface IProducer with
+    interface IProducer<'agg> with
         member _.Client =
             let cfg = options.Get Cons.Com
             ProducerBuilder<byte array, byte array>(cfg).Build()
@@ -55,5 +55,5 @@ type ComProducer(options: IOptionsMonitor<ProducerConfig>) =
     interface IDisposable with
         member me.Dispose() =
             if not dispose then
-                (me :> IProducer).Client.Dispose()
+                (me :> IProducer<'agg>).Client.Dispose()
                 dispose <- true

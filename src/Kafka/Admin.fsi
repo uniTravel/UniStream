@@ -8,7 +8,7 @@ open Confluent.Kafka
 /// <summary>Kafka管理客户端接口
 /// </summary>
 [<Interface>]
-type IAdmin =
+type IAdmin<'agg when 'agg :> Aggregate> =
 
     /// <summary>Kafka管理客户端
     /// </summary>
@@ -18,13 +18,13 @@ type IAdmin =
 /// <summary>Kafka管理客户端
 /// </summary>
 [<Sealed>]
-type Admin =
+type Admin<'agg when 'agg :> Aggregate> =
 
     /// <summary>主构造函数
     /// </summary>
     /// <param name="options">Kafka管理客户端配置选项。</param>
-    new: options: IOptions<AdminClientConfig> -> Admin
+    new: options: IOptions<AdminClientConfig> -> Admin<'agg>
 
-    interface IAdmin
+    interface IAdmin<'agg>
 
     interface IDisposable

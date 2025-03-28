@@ -2,7 +2,6 @@ namespace UniStream.Domain
 
 open System
 open Microsoft.Extensions.Logging
-open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Options
 open UniStream.Domain
 
@@ -23,9 +22,9 @@ type Sender<'agg when 'agg :> Aggregate> =
     new:
         logger: ILogger<Sender<'agg>> *
         options: IOptionsMonitor<CommandOptions> *
-        admin: IAdmin *
-        [<FromKeyedServices(Cons.Com)>] cp: IProducer *
-        [<FromKeyedServices(Cons.Typ)>] tc: IConsumer ->
+        admin: IAdmin<'agg> *
+        cp: IProducer<'agg> *
+        tc: IConsumer<'agg> ->
             Sender<'agg>
 
     interface ISender<'agg>

@@ -9,7 +9,8 @@ open UniStream.Domain
 
 
 [<Sealed>]
-type Projector<'agg when 'agg :> Aggregate>(logger: ILogger<Projector<'agg>>, ap: IProducer, tc: IConsumer) =
+type Projector<'agg when 'agg :> Aggregate>(logger: ILogger<Projector<'agg>>, ap: IProducer<'agg>, tc: IConsumer<'agg>)
+    =
     let ap = ap.Client
     let tc = tc.Client
     let aggType = typeof<'agg>.FullName

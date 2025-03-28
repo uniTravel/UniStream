@@ -6,21 +6,21 @@ open Confluent.Kafka
 
 
 [<Interface>]
-type IAdmin =
+type IAdmin<'agg when 'agg :> Aggregate> =
 
     abstract member Client: IAdminClient
 
 
 [<Sealed>]
-type Admin(options: IOptions<AdminClientConfig>) =
+type Admin<'agg when 'agg :> Aggregate>(options: IOptions<AdminClientConfig>) =
     let cfg = options.Value
     let mutable dispose = false
 
-    interface IAdmin with
+    interface IAdmin<'agg> with
         member _.Client = AdminClientBuilder(cfg).Build()
 
     interface IDisposable with
         member me.Dispose() =
             if not dispose then
-                (me :> IAdmin).Client.Dispose()
+                (me :> IAdmin<'agg>).Client.Dispose()
                 dispose <- true

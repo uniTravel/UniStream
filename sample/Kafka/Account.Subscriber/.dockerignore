@@ -1,0 +1,36 @@
+# 忽略构建输出目录
+**/bin/
+**/obj/
+
+# 排除开发配置文件
+**/appsettings.Development.json
+**/appsettings.Local.json
+
+# 忽略 IDE 和编辑器配置
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.pubxml
+
+# 排除 NuGet 临时文件
+.nuget/
+packages/
+*.nupkg
+
+# 过滤调试和日志文件
+*.log
+*.csv
+**/*.pdb
+*.dll.config
+
+# 忽略测试相关
+**/*.Tests/
+**/TestResults/
+
+# 防止敏感文件泄露
+secrets/
+**/Dockerfile*  # 避免嵌套 Dockerfile 被意外复制
+**/.dockerignore
+**/.env

@@ -15,6 +15,6 @@ type Subscriber<'agg when 'agg :> Aggregate> =
     /// </summary>
     /// <param name="logger">日志记录器。</param>
     /// <param name="cc">Kafka命令消费者。</param>
-    new: logger: ILogger<Subscriber<'agg>> * [<FromKeyedServices(Cons.Com)>] cc: IConsumer -> Subscriber<'agg>
+    new: logger: ILogger<Subscriber<'agg>> * [<FromKeyedServices(Cons.Com)>] cc: IConsumer<'agg> -> Subscriber<'agg>
 
     interface ISubscriber<'agg>

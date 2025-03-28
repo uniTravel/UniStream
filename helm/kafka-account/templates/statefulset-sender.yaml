@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "kafka-account.fullname" . }}-sender
+  labels:
+    {{- include "kafka-account.labels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.component.sender }}
+    app.kubernetes.io/part-of: {{ include "kafka-account.fullname" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "kafka-account.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: {{ .Values.component.sender }}
+  serviceName: {{ include "kafka-account.fullname" . }}-headless
+  template:
+    metadata:
+      labels:
+        {{- include "kafka-account.labels" . | nindent 8 }}
+        app.kubernetes.io/component: {{ .Values.component.sender }}
+        app.kubernetes.io/part-of: {{ include "kafka-account.fullname" . }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: kafka-sender:latest
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["bash", "-c"]
+          args:
+            - |
+              export KAFKA__TYP__CONSUMER__GROUPID="${HOSTNAME}"
+              exec dotnet Account.Sender.dll "$@"
+          envFrom:
+            - configMapRef:
+                name: {{ include "kafka-account.fullname" . }}
+          ports:
+            - containerPort: 7280
+              name: https
+            - containerPort: 5190
+              name: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: certs
+              mountPath: "/app/certs"
+              readOnly: true
+      volumes:
+        - name: certs
+          secret:
+            secretName: tls-secret
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

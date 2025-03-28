@@ -3,6 +3,7 @@ namespace UniStream.Domain
 open System
 open System.Collections.Generic
 open System.Text
+open System.Text.Json
 open System.Threading
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.Options
@@ -16,9 +17,9 @@ type Sender<'agg when 'agg :> Aggregate>
     (
         logger: ILogger<Sender<'agg>>,
         options: IOptionsMonitor<CommandOptions>,
-        admin: IAdmin,
-        cp: IProducer,
-        tc: IConsumer
+        admin: IAdmin<'agg>,
+        cp: IProducer<'agg>,
+        tc: IConsumer<'agg>
     ) =
     let cp = cp.Client
     let tc = tc.Client
@@ -30,6 +31,11 @@ type Sender<'agg when 'agg :> Aggregate>
     let cts = new CancellationTokenSource()
     let mutable dispose = false
 
+    let log (comId: Guid) (result: Result<unit, exn>) =
+        match result with
+        | Ok _ -> logger.LogInformation $"Command[{comId}] of {aggType} finished"
+        | Error err -> logger.LogError $"Command[{comId}] of {aggType} failed: {err}"
+
     let agent =
         new MailboxProcessor<Msg>(fun inbox ->
             let rec loop
@@ -39,8 +45,13 @@ type Sender<'agg when 'agg :> Aggregate>
                 async {
                     match! inbox.Receive() with
                     | Send(aggId, comId, comType, comData, channel) ->
+                        logger.LogInformation $"Sending {comType}[{comId}] of {aggType}[{aggId}]"
+
                         match comId with
-                        | _ when cache.ContainsKey comId -> channel.Reply <| snd cache[comId]
+                        | _ when cache.ContainsKey comId ->
+                            let result = snd cache[comId]
+                            channel.Reply result
+                            log comId result
                         | _ when todo.ContainsKey comId -> todo[comId] <- channel
                         | _ ->
                             try
@@ -57,6 +68,7 @@ type Sender<'agg when 'agg :> Aggregate>
                         if todo.ContainsKey comId then
                             todo[comId].Reply result
                             todo.Remove comId |> ignore
+                            log comId result
 
                         let expire = DateTime.UtcNow.AddMilliseconds interval
                         cache.Add(comId, (expire, result)) |> ignore
@@ -82,12 +94,9 @@ type Sender<'agg when 'agg :> Aggregate>
 
                     match Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes "evtType") with
                     | "Fail" ->
-                        let err = BitConverter.ToString cr.Message.Value
-                        logger.LogError $"{comId} of {aggType} failed: {err}"
-                        agent.Post <| Receive(comId, Error(failwith $"Apply command failed: {err}"))
-                    | _ ->
-                        logger.LogInformation $"{comId} of {aggType} finished"
-                        agent.Post <| Receive(comId, Ok())
+                        let err = JsonSerializer.Deserialize cr.Message.Value
+                        agent.Post <| Receive(comId, Error(Exception $"Apply command failed: {err}"))
+                    | _ -> agent.Post <| Receive(comId, Ok())
             with ex ->
                 logger.LogError $"Consume loop breaked: {ex}"
         }

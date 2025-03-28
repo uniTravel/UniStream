@@ -10,17 +10,13 @@ module Program =
 
     [<EntryPoint>]
     let main args =
-
         let builder = Host.CreateApplicationBuilder args
-
         builder.Services.AddProjector builder.Configuration |> ignore
 
-        builder.Services.AddHostedService<AccountWorker>().AddSingleton<IWorker<Account>, Projector<Account>>()
+        builder.Services.AddProjector<Account>(builder.Configuration).AddHostedService<AccountWorker>()
         |> ignore
 
-        builder.Services
-            .AddHostedService<TransactionWorker>()
-            .AddSingleton<IWorker<Transaction>, Projector<Transaction>>()
+        builder.Services.AddProjector<Transaction>(builder.Configuration).AddHostedService<TransactionWorker>()
         |> ignore
 
         builder.Build().Run()

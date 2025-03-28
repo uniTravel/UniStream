@@ -11,4 +11,8 @@
     <ProjectReference Include="..\..\..\src\Kafka\Kafka.fsproj" />
     <ProjectReference Include="..\..\Account.Command\Account.Command.fsproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUi" Version="8.0.0" />
+  </ItemGroup>
 </Project>
