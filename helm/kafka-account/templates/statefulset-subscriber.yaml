@@ -35,9 +35,7 @@ spec:
           command: ["bash", "-c"]
           args:
             - |
-              export KAFKA__COM__CONSUMER__GROUPINSTANCEID="${HOSTNAME}"
-              export KAFKA__TYP__CONSUMER__GROUPID="${HOSTNAME}"
-              export KAFKA__AGG__CONSUMER__GROUPID="${HOSTNAME}"
+              export KAFKA__HOSTNAME="${HOSTNAME}"
               exec dotnet Account.Subscriber.dll "$@"
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

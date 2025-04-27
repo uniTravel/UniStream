@@ -23,7 +23,7 @@ type Stream<'agg when 'agg :> Aggregate> =
         admin: IAdmin<'agg> *
         tp: IProducer<'agg> *
         [<FromKeyedServices(Cons.Typ)>] tc: IConsumer<'agg> *
-        [<FromKeyedServices(Cons.Typ)>] ac: IConsumer<'agg> ->
+        [<FromKeyedServices(Cons.Agg)>] ac: IConsumer<'agg> ->
             Stream<'agg>
 
     interface IStream<'agg>

@@ -4,9 +4,12 @@ module Account.TestFixture.Common
 open System
 open System.Collections.Generic
 open System.ComponentModel.DataAnnotations
+open System.Threading
 open FsCheck
 open UniStream.Domain
 
+
+let cts = new CancellationTokenSource()
 
 let call (com: Async<ComResult>) () =
     async {

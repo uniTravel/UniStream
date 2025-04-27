@@ -35,7 +35,7 @@ spec:
           command: ["bash", "-c"]
           args:
             - |
-              export KAFKA__TYP__CONSUMER__GROUPID="${HOSTNAME}"
+              export KAFKA__HOSTNAME="${HOSTNAME}"
               exec dotnet Account.Sender.dll "$@"
           envFrom:
             - configMapRef:

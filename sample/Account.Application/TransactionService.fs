@@ -1,5 +1,7 @@
 namespace Account.Application
 
+open System
+open System.Threading
 open Microsoft.Extensions.Options
 open UniStream.Domain
 open Account.Domain
@@ -7,7 +9,9 @@ open Account.Domain
 
 type TransactionService(stream: IStream<Transaction>, options: IOptionsMonitor<AggregateOptions>) =
     let options = options.Get(nameof Transaction)
-    let agent = Aggregator.init Transaction stream options
+    let cts = new CancellationTokenSource()
+    let agent = Aggregator.init Transaction cts.Token stream options
+    let mutable dispose = false
 
     do
         Aggregator.register agent <| Replay<Transaction, PeriodInited>()
@@ -106,3 +110,10 @@ type TransactionService(stream: IStream<Transaction>, options: IOptionsMonitor<A
     /// <param name="aggId">聚合ID。</param>
     /// <returns>交易期间聚合</returns>
     member internal _.Get aggId = Aggregator.get<Transaction> agent aggId
+
+    interface IDisposable with
+        member _.Dispose() =
+            if not dispose then
+                cts.Cancel()
+                agent.Dispose()
+                dispose <- true

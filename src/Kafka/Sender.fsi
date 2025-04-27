@@ -16,13 +16,11 @@ type Sender<'agg when 'agg :> Aggregate> =
     /// </summary>
     /// <param name="logger">日志记录器。</param>
     /// <param name="options">命令配置选项。</param>
-    /// <param name="admin">Kafka管理者配置。</param>
     /// <param name="cp">Kafka命令生产者。</param>
     /// <param name="tc">Kafka聚合类型消费者。</param>
     new:
         logger: ILogger<Sender<'agg>> *
         options: IOptionsMonitor<CommandOptions> *
-        admin: IAdmin<'agg> *
         cp: IProducer<'agg> *
         tc: IConsumer<'agg> ->
             Sender<'agg>

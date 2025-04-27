@@ -19,78 +19,76 @@ type Stream<'agg when 'agg :> Aggregate>
     let ac = ac.Client
     let aggType = typeof<'agg>.FullName
 
-    let createTopic topic =
-        async {
-            let cfg = Dictionary(dict [ ("retention.ms", "-1") ])
-            let spec = TopicSpecification(Name = topic, NumPartitions = 1, Configs = cfg)
-
-            try
-                admin.CreateTopicsAsync([ spec ]).Wait()
-            with ex ->
-                logger.LogWarning $"Create topic {topic} error：{ex.Message}"
-        }
+    let delivery (report: DeliveryReport<byte array, byte array>) =
+        match report.Error.Code with
+        | ErrorCode.NoError -> ()
+        | err -> failwith <| err.GetReason()
 
     let write (aggId: Guid) (comId: Guid) (revision: uint64) (evtType: string) (evtData: byte array) =
+        if revision = UInt64.MaxValue then
+            let topic = aggType + "-" + aggId.ToString()
+            let cfg = Dictionary(dict [ ("retention.ms", "-1") ])
+            let spec = TopicSpecification(Name = topic, NumPartitions = 1, Configs = cfg)
+            admin.CreateTopicsAsync [ spec ] |> ignore
+
         try
-            if revision = UInt64.MaxValue then
-                let topic = aggType + "-" + aggId.ToString()
-
-                if admin.GetMetadata(TimeSpan.FromSeconds 2.0).Topics.Exists(fun t -> t.Topic = topic) then
-                    failwith $"Topic {topic} already exist"
-                else
-                    Async.Start <| createTopic topic
-
-            let aggId = aggId.ToByteArray()
+            let aId = aggId.ToByteArray()
             let h = Headers()
-            let msg = Message<byte array, byte array>(Key = aggId, Value = evtData, Headers = h)
+            let msg = Message<byte array, byte array>(Key = aId, Value = evtData, Headers = h)
             msg.Headers.Add("comId", comId.ToByteArray())
             msg.Headers.Add("evtType", Encoding.ASCII.GetBytes evtType)
-            tp.Produce(aggType, msg)
+            tp.Produce(aggType, msg, delivery)
         with ex ->
-            logger.LogError $"Write {evtType} of {aggType}[{aggId}] error: {ex.Message}"
-            raise <| WriteException($"Write {evtType} of {aggId} error", ex)
+            raise <| WriteException($"Write {evtType} failed", ex)
 
     let read (aggId: Guid) =
+        let rec get events =
+            match ac.Consume 10000 with
+            | cr when cr.IsPartitionEOF -> events
+            | cr ->
+                let m = Encoding.ASCII.GetString cr.Message.Key, ReadOnlyMemory cr.Message.Value
+                get <| m :: events
+
         try
-            let aggId = aggId.ToString()
-            let topic = aggType + "-" + aggId
-            let mutable d = true
-            ac.Assign(TopicPartitionOffset(topic, 0, Offset.Beginning))
-
-            let result =
-                [ while d do
-                      let cr = ac.Consume 2000
-
-                      if cr.IsPartitionEOF then
-                          d <- false
-                      else
-                          yield Encoding.ASCII.GetString cr.Message.Key, ReadOnlyMemory cr.Message.Value ]
-
-            result
+            ac.Assign(TopicPartition($"{aggType}-{aggId}", 0))
+            get []
         with ex ->
-            logger.LogError $"Read strem of {aggType}[{aggId}] error: {ex.Message}"
-            raise <| ReadException($"Read strem of {aggId} error", ex)
+            raise <| ReadException($"Read strem of {aggType}[{aggId}] failed", ex)
 
-    let restore (ch: HashSet<Guid>) count =
-        let mutable d = true
+    let restore (ch: HashSet<Guid>) (latest: int) =
+        let targetTime = DateTime.UtcNow.AddMinutes -latest
+        let timestamp = Timestamp(targetTime, TimestampType.CreateTime)
+        let eofStatus = Dictionary<TopicPartition, bool>()
 
-        admin.GetMetadata(TimeSpan.FromSeconds 2.0).Topics.Find(fun t -> t.Topic = aggType).Partitions
-        |> Seq.map (fun x -> TopicPartition(aggType, x.PartitionId))
-        |> tc.Assign
+        let tpts =
+            admin.GetMetadata(TimeSpan.FromSeconds 10.0).Topics.Find(fun t -> t.Topic = aggType).Partitions
+            |> Seq.map (fun pm -> TopicPartitionTimestamp(TopicPartition(aggType, pm.PartitionId), timestamp))
 
-        let result =
-            [ while d do
-                  let cr = tc.Consume 2000
+        let tpos =
+            tc.OffsetsForTimes(tpts, TimeSpan.FromSeconds 10.0)
+            |> Seq.filter (fun tpo -> tpo.Offset <> Offset.End)
 
-                  if cr = null then
-                      d <- false
-                  else
-                      let comId = Guid(cr.Message.Headers.GetLastBytes "comId")
-                      ch.Add comId |> ignore
-                      yield comId ]
+        tpos |> Seq.iter (fun tpo -> eofStatus[tpo.TopicPartition] <- false)
 
-        let cached = result |> List.skip (result.Length - count)
+        let watermarks =
+            eofStatus.Keys
+            |> Seq.map (fun x -> x, tc.QueryWatermarkOffsets(x, TimeSpan.FromSeconds 10.0).High)
+            |> dict
+
+        tc.Assign tpos
+
+        while eofStatus.Values |> Seq.contains false do
+            let cr = tc.Consume 10000
+            let comId = Guid(cr.Message.Headers.GetLastBytes "comId")
+            ch.Add comId |> ignore
+
+            if cr.Offset.Value = watermarks[cr.TopicPartition].Value - 1L then
+                eofStatus[cr.TopicPartition] <- true
+
+        let cached = List.ofSeq ch
         logger.LogInformation $"{cached.Length} comId of {aggType} cached"
+        tc.Unassign()
+        tc.Close()
         cached
 
     interface IStream<'agg> with

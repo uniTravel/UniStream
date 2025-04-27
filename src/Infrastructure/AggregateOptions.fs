@@ -8,4 +8,4 @@ type AggregateOptions() =
 
     member val Multiple = 3 with get, set
 
-    member val Count = 10000 with get, set
+    member val Latest = 30 with get, set

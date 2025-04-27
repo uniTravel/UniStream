@@ -3,6 +3,7 @@ namespace UniStream.Domain
 open System
 open System.Collections.Generic
 open System.Text.Json
+open System.Threading
 
 
 module Aggregator =
@@ -50,6 +51,7 @@ module Aggregator =
 
     let inline init<'agg, 'stream when 'agg :> Aggregate and 'stream :> IStream<'agg>>
         ([<InlineIfLambda>] creator: Guid -> 'agg)
+        (token: CancellationToken)
         (stream: 'stream)
         (options: AggregateOptions)
         =
@@ -97,60 +99,58 @@ module Aggregator =
             agg.Next()
             channel.Reply Success
 
-        let agent =
-            MailboxProcessor<Msg<'agg>>.Start
-            <| fun inbox ->
-                let rec loop (ao, co) =
-                    async {
-                        match! inbox.Receive() with
-                        | Register(evtType, act) -> replayer[evtType] <- act
-                        | Create(aggId, comId, validate, execute, channel) ->
-                            if ch.Contains comId then
-                                channel.Reply Duplicate
-                            else
-                                try
-                                    let agg = creator aggId
-                                    handle agg comId validate execute channel
-                                    repository.Add(agg.Id, agg)
-                                    ch.Add comId |> ignore
-                                    return! checkRepo (aggId :: ao) (comId :: co) |> loop
-                                with ex ->
-                                    channel.Reply <| Fail ex
-                        | Apply(aggId, comId, validate, execute, channel) ->
-                            if ch.Contains comId then
-                                channel.Reply Duplicate
-                            elif repository.ContainsKey aggId then
-                                try
-                                    let agg = repository[aggId]
-                                    handle agg comId validate execute channel
-                                    ch.Add comId |> ignore
-                                    return! checkOp (aggId :: ao) (comId :: co) |> loop
-                                with ex ->
-                                    channel.Reply <| Fail ex
-                            else
-                                try
-                                    let agg = creator aggId
-                                    replay aggId agg
-                                    handle agg comId validate execute channel
-                                    repository.Add(agg.Id, agg)
-                                    ch.Add comId |> ignore
-                                    return! checkRepo (aggId :: ao) (comId :: co) |> loop
-                                with ex ->
-                                    channel.Reply <| Fail ex
-                        | Get(aggId, channel) ->
-                            if repository.ContainsKey aggId then
-                                channel.Reply <| Ok repository[aggId]
-                            else
-                                try
-                                    let agg = creator aggId
-                                    replay aggId agg
-                                    channel.Reply <| Ok agg
-                                with ex ->
-                                    channel.Reply <| Error ex
+        (fun (inbox: MailboxProcessor<Msg<'agg>>) ->
+            let rec loop (ao, co) =
+                async {
+                    match! inbox.Receive() with
+                    | Register(evtType, act) -> replayer[evtType] <- act
+                    | Create(aggId, comId, validate, execute, channel) ->
+                        if ch.Contains comId then
+                            channel.Reply Duplicate
+                        else
+                            try
+                                let agg = creator aggId
+                                handle agg comId validate execute channel
+                                repository.Add(agg.Id, agg)
+                                ch.Add comId |> ignore
+                                return! checkRepo (aggId :: ao) (comId :: co) |> loop
+                            with ex ->
+                                channel.Reply <| Fail ex
+                    | Apply(aggId, comId, validate, execute, channel) ->
+                        if ch.Contains comId then
+                            channel.Reply Duplicate
+                        elif repository.ContainsKey aggId then
+                            try
+                                let agg = repository[aggId]
+                                handle agg comId validate execute channel
+                                ch.Add comId |> ignore
+                                return! checkOp (aggId :: ao) (comId :: co) |> loop
+                            with ex ->
+                                channel.Reply <| Fail ex
+                        else
+                            try
+                                let agg = creator aggId
+                                replay aggId agg
+                                handle agg comId validate execute channel
+                                repository.Add(agg.Id, agg)
+                                ch.Add comId |> ignore
+                                return! checkRepo (aggId :: ao) (comId :: co) |> loop
+                            with ex ->
+                                channel.Reply <| Fail ex
+                    | Get(aggId, channel) ->
+                        if repository.ContainsKey aggId then
+                            channel.Reply <| Ok repository[aggId]
+                        else
+                            try
+                                let agg = creator aggId
+                                replay aggId agg
+                                channel.Reply <| Ok agg
+                            with ex ->
+                                channel.Reply <| Error ex
 
-                        return! loop (ao, co)
-                    }
+                    return! loop (ao, co)
+                }
 
-                loop ([], stream.Restore ch options.Count)
-
-        agent
+            loop ([], stream.Restore ch options.Latest)
+         , token)
+        |> MailboxProcessor<Msg<'agg>>.Start

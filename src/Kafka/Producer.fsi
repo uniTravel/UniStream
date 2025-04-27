@@ -1,6 +1,7 @@
 namespace UniStream.Domain
 
 open System
+open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Options
 open Confluent.Kafka
 
@@ -15,21 +16,6 @@ type IProducer<'agg when 'agg :> Aggregate> =
     abstract member Client: IProducer<byte array, byte array>
 
 
-/// <summary>Kafka聚合类型生产者
-/// </summary>
-[<Sealed>]
-type TypProducer<'agg when 'agg :> Aggregate> =
-
-    /// <summary>主构造函数
-    /// </summary>
-    /// <param name="options">Kafka生产者配置选项。</param>
-    new: options: IOptionsMonitor<ProducerConfig> -> TypProducer<'agg>
-
-    interface IProducer<'agg>
-
-    interface IDisposable
-
-
 /// <summary>Kafka聚合生产者
 /// </summary>
 [<Sealed>]
@@ -38,7 +24,8 @@ type AggProducer<'agg when 'agg :> Aggregate> =
     /// <summary>主构造函数
     /// </summary>
     /// <param name="options">Kafka生产者配置选项。</param>
-    new: options: IOptionsMonitor<ProducerConfig> -> AggProducer<'agg>
+    /// <param name="config">应用配置。</param>
+    new: options: IOptionsMonitor<ProducerConfig> * config: IConfiguration -> AggProducer<'agg>
 
     interface IProducer<'agg>
 
@@ -54,6 +41,21 @@ type ComProducer<'agg when 'agg :> Aggregate> =
     /// </summary>
     /// <param name="options">Kafka生产者配置选项。</param>
     new: options: IOptionsMonitor<ProducerConfig> -> ComProducer<'agg>
+
+    interface IProducer<'agg>
+
+    interface IDisposable
+
+
+/// <summary>Kafka聚合类型生产者
+/// </summary>
+[<Sealed>]
+type TypProducer<'agg when 'agg :> Aggregate> =
+
+    /// <summary>主构造函数
+    /// </summary>
+    /// <param name="options">Kafka生产者配置选项。</param>
+    new: options: IOptionsMonitor<ProducerConfig> -> TypProducer<'agg>
 
     interface IProducer<'agg>
 

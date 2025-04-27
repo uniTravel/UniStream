@@ -14,7 +14,6 @@ module Program =
 
     [<EntryPoint>]
     let main args =
-
         let builder = WebApplication.CreateBuilder args
 
         builder.Services.AddControllers()
@@ -25,6 +24,11 @@ module Program =
         builder.Services.AddSender<Transaction> builder.Configuration
 
         let app = builder.Build()
+
+        using (app.Services.CreateScope()) (fun scope ->
+            let services = scope.ServiceProvider
+            services.GetRequiredService<ISender<Account>>()
+            services.GetRequiredService<ISender<Transaction>>())
 
         app.MapOpenApi()
         app.UseSwaggerUI(fun options -> options.SwaggerEndpoint("/openapi/v1.json", "v1"))

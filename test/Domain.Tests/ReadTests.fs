@@ -45,7 +45,7 @@ let test =
                 member _.Restore = restore "Note" }
 
         let opt = AggregateOptions(Capacity = 3)
-        let agent = Aggregator.init Note stream opt
+        let agent = Aggregator.init Note cts.Token stream opt
         Aggregator.register agent <| Replay<Note, NoteCreated>()
         Aggregator.register agent <| Replay<Note, NoteChanged>()
         Aggregator.register agent <| Replay<Note, NoteUpgraded>()

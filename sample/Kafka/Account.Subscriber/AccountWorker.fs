@@ -14,8 +14,8 @@ type AccountWorker
     inherit BackgroundService()
 
     override _.ExecuteAsync(ct: CancellationToken) =
-        Handler.register subscriber logger producer svc.CreateAccount
-        Handler.register subscriber logger producer svc.VerifyAccount
-        Handler.register subscriber logger producer svc.ApproveAccount
-        Handler.register subscriber logger producer svc.LimitAccount
+        Handler.register subscriber logger producer ct svc.CreateAccount
+        Handler.register subscriber logger producer ct svc.VerifyAccount
+        Handler.register subscriber logger producer ct svc.ApproveAccount
+        Handler.register subscriber logger producer ct svc.LimitAccount
         subscriber.Launch ct

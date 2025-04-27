@@ -1,5 +1,6 @@
 namespace UniStream.Domain
 
+open System
 open System.Runtime.CompilerServices
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
@@ -13,28 +14,40 @@ module internal Cfg =
         services.AddOptions<AdminClientConfig>().Bind(config.GetSection "Kafka:Admin")
         |> ignore
 
-    let typProducer (services: IServiceCollection) (config: IConfiguration) =
-        services.AddOptions<ProducerConfig>(Cons.Typ).Bind(config.GetSection "Kafka:Typ:Producer")
+    let inline typProducer<'agg when 'agg :> Aggregate> (services: IServiceCollection) (config: IConfiguration) =
+        let aggType = typeof<'agg>.Name
+
+        services.AddOptions<ProducerConfig>(Cons.Typ + aggType).Bind(config.GetSection $"Kafka:TypProducer:{aggType}")
         |> ignore
 
-    let typConsumer (services: IServiceCollection) (config: IConfiguration) =
-        services.AddOptions<ConsumerConfig>(Cons.Typ).Bind(config.GetSection "Kafka:Typ:Consumer")
+    let inline aggProducer<'agg when 'agg :> Aggregate> (services: IServiceCollection) (config: IConfiguration) =
+        let aggType = typeof<'agg>.Name
+
+        services.AddOptions<ProducerConfig>(Cons.Agg + aggType).Bind(config.GetSection $"Kafka:AggProducer:{aggType}")
         |> ignore
 
-    let aggProducer (services: IServiceCollection) (config: IConfiguration) =
-        services.AddOptions<ProducerConfig>(Cons.Agg).Bind(config.GetSection "Kafka:Agg:Producer")
+    let inline comProducer<'agg when 'agg :> Aggregate> (services: IServiceCollection) (config: IConfiguration) =
+        let aggType = typeof<'agg>.Name
+
+        services.AddOptions<ProducerConfig>(Cons.Com + aggType).Bind(config.GetSection $"Kafka:ComProducer:{aggType}")
         |> ignore
 
-    let aggConsumer (services: IServiceCollection) (config: IConfiguration) =
-        services.AddOptions<ConsumerConfig>(Cons.Agg).Bind(config.GetSection "Kafka:Agg:Consumer")
+    let inline typConsumer<'agg when 'agg :> Aggregate> (services: IServiceCollection) (config: IConfiguration) =
+        let aggType = typeof<'agg>.Name
+
+        services.AddOptions<ConsumerConfig>(Cons.Typ + aggType).Bind(config.GetSection $"Kafka:TypConsumer:{aggType}")
         |> ignore
 
-    let comProducer (services: IServiceCollection) (config: IConfiguration) =
-        services.AddOptions<ProducerConfig>(Cons.Com).Bind(config.GetSection "Kafka:Com:Producer")
+    let inline aggConsumer<'agg when 'agg :> Aggregate> (services: IServiceCollection) (config: IConfiguration) =
+        let aggType = typeof<'agg>.Name
+
+        services.AddOptions<ConsumerConfig>(Cons.Agg + aggType).Bind(config.GetSection $"Kafka:AggConsumer:{aggType}")
         |> ignore
 
-    let comConsumer (services: IServiceCollection) (config: IConfiguration) =
-        services.AddOptions<ConsumerConfig>(Cons.Com).Bind(config.GetSection "Kafka:Com:Consumer")
+    let inline comConsumer<'agg when 'agg :> Aggregate> (services: IServiceCollection) (config: IConfiguration) =
+        let aggType = typeof<'agg>.Name
+
+        services.AddOptions<ConsumerConfig>(Cons.Com + aggType).Bind(config.GetSection $"Kafka:ComConsumer:{aggType}")
         |> ignore
 
 
@@ -43,29 +56,6 @@ module internal Cfg =
 [<Sealed>]
 type ServiceCollectionExtensions =
 
-    /// <summary>注入命令发送者相关配置
-    /// </summary>
-    /// <param name="config">配置。</param>
-    [<Extension>]
-    static member AddSender(services: IServiceCollection, config: IConfiguration) =
-        Cfg.admin services config
-        Cfg.comProducer services config
-        Cfg.typConsumer services config
-        services
-
-    /// <summary>注入聚合命令发送者
-    /// </summary>
-    /// <typeparam name="'agg">聚合类型。</typeparam>
-    /// <param name="config">配置。</param>
-    [<Extension>]
-    static member AddSender<'agg when 'agg :> Aggregate>(services: IServiceCollection, config: IConfiguration) =
-        services
-            .AddCommand<'agg>(config)
-            .AddSingleton<IAdmin<'agg>, Admin<'agg>>()
-            .AddSingleton<IProducer<'agg>, ComProducer<'agg>>()
-            .AddSingleton<IConsumer<'agg>, TypConsumer<'agg>>()
-            .AddSingleton<ISender<'agg>, Sender<'agg>>()
-
     /// <summary>注入Kafka初始化相关配置
     /// </summary>
     /// <remarks>启用投影、创建持久化订阅。</remarks>
@@ -73,7 +63,40 @@ type ServiceCollectionExtensions =
     [<Extension>]
     static member AddInitializer(services: IServiceCollection, config: IConfiguration) =
         Cfg.admin services config
+
+        services.PostConfigureAll<AdminClientConfig>(fun options ->
+            options.BootstrapServers <- config["Kafka:Bootstrap"])
+
+    /// <summary>注入命令发送者相关配置
+    /// </summary>
+    /// <param name="config">配置。</param>
+    [<Extension>]
+    static member AddSender(services: IServiceCollection, config: IConfiguration) =
+        if String.IsNullOrWhiteSpace config["Kafka:Hostname"] then
+            failwith "Configuration item [Kafka:Hostname] required"
+
+        Cfg.admin services config
+
         services
+            .PostConfigureAll<AdminClientConfig>(fun options -> options.BootstrapServers <- config["Kafka:Bootstrap"])
+            .PostConfigureAll<ProducerConfig>(fun options -> options.BootstrapServers <- config["Kafka:Bootstrap"])
+            .PostConfigureAll<ConsumerConfig>(fun options -> options.BootstrapServers <- config["Kafka:Bootstrap"])
+
+    /// <summary>注入聚合命令发送者
+    /// </summary>
+    /// <typeparam name="'agg">聚合类型。</typeparam>
+    /// <param name="config">配置。</param>
+    [<Extension>]
+    static member inline AddSender<'agg when 'agg :> Aggregate>(services: IServiceCollection, config: IConfiguration) =
+        Cfg.comProducer<'agg> services config
+        Cfg.typConsumer<'agg> services config
+
+        services
+            .AddCommand<'agg>(config)
+            .AddSingleton<IAdmin<'agg>, Admin<'agg>>()
+            .AddSingleton<IProducer<'agg>, ComProducer<'agg>>()
+            .AddSingleton<IConsumer<'agg>, ReceiveConsumer<'agg>>()
+            .AddSingleton<ISender<'agg>, Sender<'agg>>()
 
     /// <summary>注入投影者相关配置
     /// </summary>
@@ -81,20 +104,28 @@ type ServiceCollectionExtensions =
     /// <param name="config">配置。</param>
     [<Extension>]
     static member AddProjector(services: IServiceCollection, config: IConfiguration) =
-        Cfg.typConsumer services config
-        Cfg.aggProducer services config
+        if String.IsNullOrWhiteSpace config["Kafka:Hostname"] then
+            failwith "Configuration item [Kafka:Hostname] required"
+
         services
+            .PostConfigureAll<ProducerConfig>(fun options -> options.BootstrapServers <- config["Kafka:Bootstrap"])
+            .PostConfigureAll<ConsumerConfig>(fun options -> options.BootstrapServers <- config["Kafka:Bootstrap"])
 
     /// <summary>注入聚合投影者
     /// </summary>
     /// <remarks>监听并投影到聚合流。</remarks>
     /// <param name="config">配置。</param>
     [<Extension>]
-    static member AddProjector<'agg when 'agg :> Aggregate>(services: IServiceCollection, config: IConfiguration) =
+    static member inline AddProjector<'agg when 'agg :> Aggregate>
+        (services: IServiceCollection, config: IConfiguration)
+        =
+        Cfg.aggProducer<'agg> services config
+        Cfg.typConsumer<'agg> services config
+
         services
-            .AddSingleton<IConsumer<'agg>, TypConsumer<'agg>>()
             .AddSingleton<IProducer<'agg>, AggProducer<'agg>>()
-            .AddSingleton<IWorker<'agg>, Projector<'agg>>()
+            .AddSingleton<IConsumer<'agg>, ProjectConsumer<'agg>>()
+            .AddHostedService<Projector<'agg>>()
 
     /// <summary>注入命令订阅者相关配置
     /// </summary>
@@ -102,12 +133,15 @@ type ServiceCollectionExtensions =
     /// <param name="config">配置。</param>
     [<Extension>]
     static member AddSubscriber(services: IServiceCollection, config: IConfiguration) =
+        if String.IsNullOrWhiteSpace config["Kafka:Hostname"] then
+            failwith "Configuration item [Kafka:Hostname] required"
+
         Cfg.admin services config
-        Cfg.typConsumer services config
-        Cfg.comConsumer services config
-        Cfg.typProducer services config
-        Cfg.aggConsumer services config
+
         services
+            .PostConfigureAll<AdminClientConfig>(fun options -> options.BootstrapServers <- config["Kafka:Bootstrap"])
+            .PostConfigureAll<ProducerConfig>(fun options -> options.BootstrapServers <- config["Kafka:Bootstrap"])
+            .PostConfigureAll<ConsumerConfig>(fun options -> options.BootstrapServers <- config["Kafka:Bootstrap"])
 
     /// <summary>注入聚合命令订阅者
     /// </summary>
@@ -115,13 +149,20 @@ type ServiceCollectionExtensions =
     /// <typeparam name="'agg">聚合类型。</typeparam>
     /// <param name="config">配置。</param>
     [<Extension>]
-    static member AddSubscriber<'agg when 'agg :> Aggregate>(services: IServiceCollection, config: IConfiguration) =
+    static member inline AddSubscriber<'agg when 'agg :> Aggregate>
+        (services: IServiceCollection, config: IConfiguration)
+        =
+        Cfg.typProducer<'agg> services config
+        Cfg.typConsumer<'agg> services config
+        Cfg.comConsumer<'agg> services config
+        Cfg.aggConsumer<'agg> services config
+
         services
             .AddAggregate<'agg>(config)
             .AddSingleton<IAdmin<'agg>, Admin<'agg>>()
-            .AddKeyedSingleton<IConsumer<'agg>, TypConsumer<'agg>>(Cons.Typ)
-            .AddKeyedSingleton<IConsumer<'agg>, ComConsumer<'agg>>(Cons.Com)
             .AddSingleton<IProducer<'agg>, TypProducer<'agg>>()
+            .AddKeyedSingleton<IConsumer<'agg>, RestoreConsumer<'agg>>(Cons.Typ)
+            .AddKeyedSingleton<IConsumer<'agg>, ComConsumer<'agg>>(Cons.Com)
             .AddKeyedSingleton<IConsumer<'agg>, AggConsumer<'agg>>(Cons.Agg)
             .AddSingleton<ISubscriber<'agg>, Subscriber<'agg>>()
             .AddSingleton<IStream<'agg>, Stream<'agg>>()

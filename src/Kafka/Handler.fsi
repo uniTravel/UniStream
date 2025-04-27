@@ -1,6 +1,7 @@
 namespace UniStream.Domain
 
 open System
+open System.Threading
 open Microsoft.Extensions.Logging
 open UniStream.Domain
 
@@ -18,11 +19,13 @@ module Handler =
     /// <param name="subscriber">聚合命令订阅者。</param>
     /// <param name="logger">日志记录器。</param>
     /// <param name="tp">Kafka聚合类型生产者。</param>
+    /// <param name="ct">取消凭据。</param>
     /// <param name="commit">提交命令的函数。</param>
     val inline register<'agg, 'com, 'evt> :
         subscriber: ISubscriber<'agg> ->
         logger: ILogger ->
         tp: IProducer<'agg> ->
+        ct: CancellationToken ->
         commit: (Guid -> Guid -> 'com -> Async<ComResult>) ->
             unit
             when Com<'agg, 'com, 'evt>

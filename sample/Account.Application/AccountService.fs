@@ -1,5 +1,7 @@
 namespace Account.Application
 
+open System
+open System.Threading
 open Microsoft.Extensions.Options
 open UniStream.Domain
 open Account.Domain
@@ -7,7 +9,9 @@ open Account.Domain
 
 type AccountService(stream: IStream<Account>, options: IOptionsMonitor<AggregateOptions>) =
     let options = options.Get(nameof Account)
-    let agent = Aggregator.init Account stream options
+    let cts = new CancellationTokenSource()
+    let agent = Aggregator.init Account cts.Token stream options
+    let mutable dispose = false
 
     do
         Aggregator.register agent <| Replay<Account, AccountCreated>()
@@ -56,3 +60,10 @@ type AccountService(stream: IStream<Account>, options: IOptionsMonitor<Aggregate
     /// <param name="aggId">聚合ID。</param>
     /// <returns>账户聚合</returns>
     member internal _.Get aggId = Aggregator.get<Account> agent aggId
+
+    interface IDisposable with
+        member _.Dispose() =
+            if not dispose then
+                cts.Cancel()
+                agent.Dispose()
+                dispose <- true

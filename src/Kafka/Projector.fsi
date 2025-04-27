@@ -1,5 +1,6 @@
 namespace UniStream.Domain
 
+open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 
 
@@ -16,4 +17,4 @@ type Projector<'agg when 'agg :> Aggregate> =
     /// <param name="tc">Kafka聚合类型消费者。</param>
     new: logger: ILogger<Projector<'agg>> * ap: IProducer<'agg> * tc: IConsumer<'agg> -> Projector<'agg>
 
-    interface IWorker<'agg>
+    inherit BackgroundService

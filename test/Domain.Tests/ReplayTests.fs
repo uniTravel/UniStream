@@ -97,7 +97,7 @@ let test =
                 member _.Restore = restore "Note" }
 
         let opt = AggregateOptions(Capacity = 3)
-        let agent = Aggregator.init Note stream opt
+        let agent = Aggregator.init Note cts.Token stream opt
         let id1 = Guid.NewGuid()
         let id2 = Guid.NewGuid()
 

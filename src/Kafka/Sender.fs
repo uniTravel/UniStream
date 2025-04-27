@@ -8,22 +8,19 @@ open System.Threading
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.Options
 open Confluent.Kafka
-open Microsoft.FSharp.Core
 open UniStream.Domain
 
 
+type Backlog =
+    | Add of Guid * AsyncReplyChannel<Result<unit, exn>>
+    | Remove of Guid * Result<unit, exn>
+
 [<Sealed>]
 type Sender<'agg when 'agg :> Aggregate>
-    (
-        logger: ILogger<Sender<'agg>>,
-        options: IOptionsMonitor<CommandOptions>,
-        admin: IAdmin<'agg>,
-        cp: IProducer<'agg>,
-        tc: IConsumer<'agg>
-    ) =
+    (logger: ILogger<Sender<'agg>>, options: IOptionsMonitor<CommandOptions>, cp: IProducer<'agg>, tc: IConsumer<'agg>)
+    =
     let cp = cp.Client
     let tc = tc.Client
-    let admin = admin.Client
     let options = options.Get(typeof<'agg>.Name)
     let interval = options.Interval * 60000
     let aggType = typeof<'agg>.FullName
@@ -31,45 +28,58 @@ type Sender<'agg when 'agg :> Aggregate>
     let cts = new CancellationTokenSource()
     let mutable dispose = false
 
-    let log (comId: Guid) (result: Result<unit, exn>) =
-        match result with
-        | Ok _ -> logger.LogInformation $"Command[{comId}] of {aggType} finished"
-        | Error err -> logger.LogError $"Command[{comId}] of {aggType} failed: {err}"
+    let todo =
+        (fun (inbox: MailboxProcessor<Backlog>) ->
+            let rec loop (todo: Dictionary<Guid, AsyncReplyChannel<Result<unit, exn>>>) =
+                async {
+                    match! inbox.Receive() with
+                    | Add(comId, channel) ->
+                        if todo.ContainsKey comId then
+                            todo[comId] <- channel
+                        else
+                            todo.Add(comId, channel)
+                    | Remove(comId, result) ->
+                        if todo.ContainsKey comId then
+                            todo[comId].Reply result
+                            logger.LogInformation $"Apply [{comId}] of {aggType} completed"
+                            todo.Remove comId |> ignore
+
+                    return! loop todo
+                }
+
+            loop (Dictionary<Guid, AsyncReplyChannel<Result<unit, exn>>>())
+         , cts.Token)
+        |> MailboxProcessor<Backlog>.Start
+
+    let delivery (aggId: Guid) (comType: string) (comId: Guid) (report: DeliveryReport<byte array, byte array>) =
+        match report.Error.Code with
+        | ErrorCode.NoError -> logger.LogInformation $"Send {comType}[{comId}] of {aggType}[{aggId}] success"
+        | err -> failwith <| err.GetReason()
 
     let agent =
-        new MailboxProcessor<Msg>(fun inbox ->
-            let rec loop
-                (todo: Dictionary<Guid, AsyncReplyChannel<Result<unit, exn>>>)
-                (cache: Dictionary<Guid, DateTime * Result<unit, exn>>)
-                =
+        (fun (inbox: MailboxProcessor<Msg>) ->
+            let rec loop (cache: Dictionary<Guid, DateTime * Result<unit, exn>>) =
                 async {
                     match! inbox.Receive() with
                     | Send(aggId, comId, comType, comData, channel) ->
-                        logger.LogInformation $"Sending {comType}[{comId}] of {aggType}[{aggId}]"
+                        todo.Post <| Add(comId, channel)
 
-                        match comId with
-                        | _ when cache.ContainsKey comId ->
-                            let result = snd cache[comId]
-                            channel.Reply result
-                            log comId result
-                        | _ when todo.ContainsKey comId -> todo[comId] <- channel
-                        | _ ->
+                        if cache.ContainsKey comId then
+                            todo.Post <| Remove(comId, snd cache[comId])
+                        else
                             try
-                                let aggId = aggId.ToByteArray()
+                                let aId = aggId.ToByteArray()
                                 let h = Headers()
-                                let msg = Message<byte array, byte array>(Key = aggId, Value = comData, Headers = h)
+                                let msg = Message<byte array, byte array>(Key = aId, Value = comData, Headers = h)
                                 msg.Headers.Add("comId", comId.ToByteArray())
                                 msg.Headers.Add("comType", Encoding.ASCII.GetBytes comType)
-                                cp.Produce(topic, msg)
-                                todo.Add(comId, channel)
+                                cp.Produce(topic, msg, delivery aggId comType comId)
                             with ex ->
-                                channel.Reply <| Error ex
+                                let ex = WriteException("Send command failed", ex)
+                                logger.LogError(ex, $"Send {comType}[{comId}] of {aggType}[{aggId}] failed")
+                                todo.Post <| Remove(comId, Core.Error ex)
                     | Receive(comId, result) ->
-                        if todo.ContainsKey comId then
-                            todo[comId].Reply result
-                            todo.Remove comId |> ignore
-                            log comId result
-
+                        todo.Post <| Remove(comId, result)
                         let expire = DateTime.UtcNow.AddMilliseconds interval
                         cache.Add(comId, (expire, result)) |> ignore
                     | Refresh now ->
@@ -78,42 +88,42 @@ type Sender<'agg when 'agg :> Aggregate>
                             if expire < now then
                                 cache.Remove comId |> ignore)
 
-                    return! loop todo cache
+                    return! loop cache
                 }
 
-            loop
-                (Dictionary<Guid, AsyncReplyChannel<Result<unit, exn>>>())
-                (Dictionary<Guid, DateTime * Result<unit, exn>>()))
+            loop (Dictionary<Guid, DateTime * Result<unit, exn>>())
+         , cts.Token)
+        |> MailboxProcessor<Msg>.Start
 
-    let consumer (ct: CancellationToken) =
+    let consumer =
         async {
-            try
-                while true do
-                    let cr = tc.Consume ct
-                    let comId = Guid(cr.Message.Headers.GetLastBytes "comId")
+            while true do
+                try
+                    match tc.Consume 10000 with
+                    | null -> ()
+                    | cr ->
+                        let comId = Guid(cr.Message.Headers.GetLastBytes "comId")
 
-                    match Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes "evtType") with
-                    | "Fail" ->
-                        let err = JsonSerializer.Deserialize cr.Message.Value
-                        agent.Post <| Receive(comId, Error(Exception $"Apply command failed: {err}"))
-                    | _ -> agent.Post <| Receive(comId, Ok())
-            with ex ->
-                logger.LogError $"Consume loop breaked: {ex}"
+                        match Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes "evtType") with
+                        | "Fail" ->
+                            let err = JsonSerializer.Deserialize cr.Message.Value
+                            let ex = Exception $"Handle command failed: {err}"
+                            agent.Post <| Receive(comId, Core.Error ex)
+                        | _ -> agent.Post <| Receive(comId, Ok())
+                with ex ->
+                    logger.LogError(ex, $"Apply command error")
+        }
+
+    let refresh =
+        async {
+            do! Async.Sleep interval
+            agent.Post <| Refresh DateTime.UtcNow
         }
 
     do
-        agent.Start()
-
-        admin.GetMetadata(TimeSpan.FromSeconds 2.0).Topics.Find(fun t -> t.Topic = aggType).Partitions
-        |> Seq.map (fun x -> TopicPartition(aggType, x.PartitionId))
-        |> tc.Assign
-
-        Async.Start(consumer cts.Token, cts.Token)
-        Async.Start(Sender.timer interval (fun _ -> agent.Post <| Refresh DateTime.UtcNow), cts.Token)
-
-        while tc.Assignment.Count = 0 do
-            Thread.Sleep 200
-
+        tc.Subscribe aggType
+        Async.Start(refresh, cts.Token)
+        Async.Start(consumer, cts.Token)
         logger.LogInformation $"Subscription for {aggType} started"
 
     interface ISender<'agg> with
@@ -126,4 +136,5 @@ type Sender<'agg when 'agg :> Aggregate>
             if not dispose then
                 cts.Cancel()
                 agent.Dispose()
+                todo.Dispose()
                 dispose <- true

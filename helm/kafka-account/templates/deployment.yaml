@@ -33,6 +33,11 @@ spec:
           {{- end }}
           image: kafka-projector:latest
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["bash", "-c"]
+          args:
+            - |
+              export KAFKA__HOSTNAME="${HOSTNAME}"
+              exec dotnet Account.Projector.dll "$@"
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

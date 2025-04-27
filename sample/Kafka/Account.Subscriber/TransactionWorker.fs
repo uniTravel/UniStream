@@ -18,13 +18,13 @@ type TransactionWorker
     inherit BackgroundService()
 
     override _.ExecuteAsync(ct: CancellationToken) =
-        Handler.register subscriber logger producer svc.InitPeriod
-        Handler.register subscriber logger producer svc.OpenPeriod
-        Handler.register subscriber logger producer svc.SetLimit
-        Handler.register subscriber logger producer svc.ChangeLimit
-        Handler.register subscriber logger producer svc.SetTransLimit
-        Handler.register subscriber logger producer svc.Deposit
-        Handler.register subscriber logger producer svc.Withdraw
-        Handler.register subscriber logger producer svc.TransferOut
-        Handler.register subscriber logger producer svc.TransferIn
+        Handler.register subscriber logger producer ct svc.InitPeriod
+        Handler.register subscriber logger producer ct svc.OpenPeriod
+        Handler.register subscriber logger producer ct svc.SetLimit
+        Handler.register subscriber logger producer ct svc.ChangeLimit
+        Handler.register subscriber logger producer ct svc.SetTransLimit
+        Handler.register subscriber logger producer ct svc.Deposit
+        Handler.register subscriber logger producer ct svc.Withdraw
+        Handler.register subscriber logger producer ct svc.TransferOut
+        Handler.register subscriber logger producer ct svc.TransferIn
         subscriber.Launch ct

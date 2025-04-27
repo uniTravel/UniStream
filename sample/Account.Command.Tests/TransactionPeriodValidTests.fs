@@ -91,7 +91,7 @@ let test1 =
                 member _.Restore = fun _ _ -> [] }
 
         let opt = AggregateOptions(Capacity = 10000)
-        let agent = Aggregator.init Transaction stream opt
+        let agent = Aggregator.init Transaction cts.Token stream opt
         Aggregator.register agent <| Replay<Transaction, PeriodInited>()
         Aggregator.register agent <| Replay<Transaction, PeriodOpened>()
         Aggregator.register agent <| Replay<Transaction, LimitSetted>()

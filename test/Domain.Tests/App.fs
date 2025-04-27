@@ -3,8 +3,11 @@ module Domain.App
 
 open System
 open System.Collections.Generic
+open System.Threading
 open UniStream.Domain
 
+
+let cts = new CancellationTokenSource()
 
 let restored =
     [ Guid "a4f374f2-718d-41ef-8ee3-5ffa89704c8c"

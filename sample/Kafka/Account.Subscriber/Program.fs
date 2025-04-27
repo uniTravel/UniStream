@@ -12,6 +12,7 @@ module Program =
     [<EntryPoint>]
     let main args =
         let builder = Host.CreateApplicationBuilder args
+
         builder.Services.AddSubscriber builder.Configuration |> ignore
 
         builder.Services
