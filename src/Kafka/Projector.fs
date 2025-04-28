@@ -31,6 +31,7 @@ type Projector<'agg when 'agg :> Aggregate>(logger: ILogger<Projector<'agg>>, ap
         | ErrorCode.NotEnoughReplicasAfterAppend
         | ErrorCode.TransactionalIdAuthorizationFailed
         | ErrorCode.ClusterAuthorizationFailed
+        | ErrorCode.Local_QueueFull
         | ErrorCode.Local_TimedOut -> true
         | _ -> false
 
@@ -56,7 +57,6 @@ type Projector<'agg when 'agg :> Aggregate>(logger: ILogger<Projector<'agg>>, ap
                 | null -> ()
                 | cr ->
                     try
-                        let aggId = Guid cr.Message.Key
                         let evtType = cr.Message.Headers.GetLastBytes "evtType"
 
                         match Encoding.ASCII.GetString evtType with
@@ -64,6 +64,7 @@ type Projector<'agg when 'agg :> Aggregate>(logger: ILogger<Projector<'agg>>, ap
                         | "Duplicate" -> ()
                         | _ ->
                             ap.BeginTransaction()
+                            let aggId = Guid cr.Message.Key
                             let topic = aggType + "-" + aggId.ToString()
                             let msg = Message<byte array, byte array>(Key = evtType, Value = cr.Message.Value)
                             ap.Produce(topic, msg, delivery aggId (Encoding.ASCII.GetString evtType))
