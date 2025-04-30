@@ -10,6 +10,11 @@ type Msg =
     | Refresh of DateTime
 
 
+type Backlog =
+    | Add of Guid * AsyncReplyChannel<Result<unit, exn>>
+    | Remove of Guid * Result<unit, exn>
+
+
 type ComResult =
     | Success
     | Duplicate

@@ -22,13 +22,14 @@ type AggConsumer<'agg when 'agg :> Aggregate>(options: IOptionsMonitor<ConsumerC
             cfg.GroupId <- typeof<'agg>.FullName
             cfg.AutoOffsetReset <- AutoOffsetReset.Earliest
             cfg.EnableAutoCommit <- false
+            cfg.IsolationLevel <- IsolationLevel.ReadCommitted
             cfg.EnablePartitionEof <- true
             ConsumerBuilder<byte array, byte array>(cfg).Build()
 
     interface IDisposable with
         member me.Dispose() =
             if not dispose then
-                (me :> IConsumer<'agg>).Client.Dispose()
+                (me :> IConsumer<'agg>).Client.Close()
                 dispose <- true
 
 
@@ -49,7 +50,7 @@ type ComConsumer<'agg when 'agg :> Aggregate>(options: IOptionsMonitor<ConsumerC
     interface IDisposable with
         member me.Dispose() =
             if not dispose then
-                (me :> IConsumer<'agg>).Client.Dispose()
+                (me :> IConsumer<'agg>).Client.Close()
                 dispose <- true
 
 
@@ -67,7 +68,7 @@ type ReceiveConsumer<'agg when 'agg :> Aggregate>(options: IOptionsMonitor<Consu
     interface IDisposable with
         member me.Dispose() =
             if not dispose then
-                (me :> IConsumer<'agg>).Client.Dispose()
+                (me :> IConsumer<'agg>).Client.Close()
                 dispose <- true
 
 
@@ -86,7 +87,7 @@ type RestoreConsumer<'agg when 'agg :> Aggregate>(options: IOptionsMonitor<Consu
     interface IDisposable with
         member me.Dispose() =
             if not dispose then
-                (me :> IConsumer<'agg>).Client.Dispose()
+                (me :> IConsumer<'agg>).Client.Close()
                 dispose <- true
 
 
@@ -106,5 +107,5 @@ type ProjectConsumer<'agg when 'agg :> Aggregate>(options: IOptionsMonitor<Consu
     interface IDisposable with
         member me.Dispose() =
             if not dispose then
-                (me :> IConsumer<'agg>).Client.Dispose()
+                (me :> IConsumer<'agg>).Client.Close()
                 dispose <- true

@@ -1,19 +1,12 @@
 namespace UniStream.Domain
 
 open System
-open System.Timers
 
 
 /// <summary>聚合命令发送者模块
 /// </summary>
 [<RequireQualifiedAccess>]
 module Sender =
-
-    /// <summary>创建定时任务
-    /// </summary>
-    /// <param name="interval">触发任务间隔，单位毫秒。</param>
-    /// <param name="work">待执行的任务。</param>
-    val timer: interval: float -> work: (ElapsedEventArgs -> unit) -> Async<unit>
 
     /// <summary>发送命令
     /// </summary>

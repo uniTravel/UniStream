@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <UserSecretsId>de33a9d3-1147-4763-a2f9-9ae1c5bb8090</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Controllers\AccountContraller.fs" />
+    <Compile Include="Controllers\TransactionController.fs" />
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Kurrent\Kurrent.fsproj" />
+    <ProjectReference Include="..\..\Account.Command\Account.Command.fsproj" />
+  </ItemGroup>
+</Project>

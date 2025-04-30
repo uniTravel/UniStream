@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <AssemblyName>UniStream.Infrastructure.Kurrent</AssemblyName>
+    <MinVerTagPrefix>e-</MinVerTagPrefix>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="KurrentOptions.fsi" />
+    <Compile Include="KurrentOptions.fs" />
+    <Compile Include="Settings.fsi" />
+    <Compile Include="Settings.fs" />
+    <Compile Include="Client.fsi" />
+    <Compile Include="Client.fs" />
+    <Compile Include="Persistent.fsi" />
+    <Compile Include="Persistent.fs" />
+    <Compile Include="Manager.fsi" />
+    <Compile Include="Manager.fs" />
+    <Compile Include="Sender.fsi" />
+    <Compile Include="Sender.fs" />
+    <Compile Include="Subscriber.fsi" />
+    <Compile Include="Subscriber.fs" />
+    <Compile Include="Handler.fsi" />
+    <Compile Include="Handler.fs" />
+    <Compile Include="Stream.fsi" />
+    <Compile Include="Stream.fs" />
+    <Compile Include="ServiceCollectionExtensions.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Infrastructure\Infrastructure.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="EventStore.Client.Grpc.PersistentSubscriptions" Version="23.3.8" />
+    <PackageReference Include="EventStore.Client.Grpc.ProjectionManagement" Version="23.3.8" />
+    <PackageReference Include="EventStore.Client.Grpc.Streams" Version="23.3.8" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.4" />
+  </ItemGroup>
+</Project>

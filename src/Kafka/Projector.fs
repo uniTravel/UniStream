@@ -53,10 +53,10 @@ type Projector<'agg when 'agg :> Aggregate>(logger: ILogger<Projector<'agg>>, ap
             do! Tasks.Task.Delay 10
 
             while shouldRun && not stoppingToken.IsCancellationRequested do
-                match tc.Consume stoppingToken with
-                | null -> ()
-                | cr ->
-                    try
+                try
+                    match tc.Consume stoppingToken with
+                    | null -> ()
+                    | cr ->
                         let evtType = cr.Message.Headers.GetLastBytes "evtType"
 
                         match Encoding.ASCII.GetString evtType with
@@ -71,13 +71,13 @@ type Projector<'agg when 'agg :> Aggregate>(logger: ILogger<Projector<'agg>>, ap
                             let offsets = [ TopicPartitionOffset(cr.TopicPartition, cr.Offset + 1) ]
                             ap.SendOffsetsToTransaction(offsets, tc.ConsumerGroupMetadata, TimeSpan.FromSeconds 10.0)
                             ap.CommitTransaction()
-                    with
-                    | :? KafkaException as ex when isRecoverableError ex.Error ->
-                        ap.AbortTransaction()
-                        logger.LogError(ex, "Recoverable errors")
-                        Thread.Sleep(calculateRetryDelay 1)
-                    | ex ->
-                        ap.AbortTransaction()
-                        logger.LogError(ex, "Consume loop breaked")
-                        shouldRun <- false
+                with
+                | :? KafkaException as ex when isRecoverableError ex.Error ->
+                    ap.AbortTransaction()
+                    logger.LogError(ex, "Recoverable errors")
+                    Thread.Sleep(calculateRetryDelay 1)
+                | ex ->
+                    ap.AbortTransaction()
+                    logger.LogError(ex, "Consume loop breaked")
+                    shouldRun <- false
         }

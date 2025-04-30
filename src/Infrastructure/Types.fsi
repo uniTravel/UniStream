@@ -12,6 +12,13 @@ type internal Msg =
     | Refresh of DateTime
 
 
+/// <summary>聚合命令积压项消息类型
+/// </summary>
+type internal Backlog =
+    | Add of Guid * AsyncReplyChannel<Result<unit, exn>>
+    | Remove of Guid * Result<unit, exn>
+
+
 /// <summary>聚合命令执行结果
 /// </summary>
 type ComResult =

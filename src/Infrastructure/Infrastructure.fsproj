@@ -5,8 +5,8 @@
     <MinVerTagPrefix>d-</MinVerTagPrefix>
   </PropertyGroup>
   <ItemGroup>
-    <InternalsVisibleTo Include="UniStream.Infrastructure.EventStore" />
     <InternalsVisibleTo Include="UniStream.Infrastructure.Kafka" />
+    <InternalsVisibleTo Include="UniStream.Infrastructure.Kurrent" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Aggregate.fsi" />

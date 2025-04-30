@@ -5,21 +5,29 @@ open System.Collections.Generic
 open System.Text
 open System.Text.Json
 open System.Threading
+open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.Options
-open Confluent.Kafka
+open EventStore.Client
 
 
 [<Sealed>]
 type Sender<'agg when 'agg :> Aggregate>
-    (logger: ILogger<Sender<'agg>>, options: IOptionsMonitor<CommandOptions>, cp: IProducer<'agg>, tc: IConsumer<'agg>)
-    =
-    let cp = cp.Client
-    let tc = tc.Client
+    (
+        logger: ILogger<Sender<'agg>>,
+        config: IConfiguration,
+        options: IOptionsMonitor<CommandOptions>,
+        sub: IPersistent,
+        client: IClient
+    ) =
+    let sub = sub.Subscriber
+    let client = client.Client
     let options = options.Get(typeof<'agg>.Name)
     let interval = options.Interval * 60000
     let aggType = typeof<'agg>.FullName
-    let topic = aggType + "_Command"
+    let stream = "$ce-" + aggType
+    let hostname = config["Kurrent:Hostname"]
+    let group = aggType + "-" + hostname
     let cts = new CancellationTokenSource()
     let mutable dispose = false
 
@@ -46,11 +54,6 @@ type Sender<'agg when 'agg :> Aggregate>
          , cts.Token)
         |> MailboxProcessor<Backlog>.Start
 
-    let delivery (aggId: Guid) (comType: string) (comId: Guid) (report: DeliveryReport<byte array, byte array>) =
-        match report.Error.Code with
-        | ErrorCode.NoError -> logger.LogInformation $"Send {comType}[{comId}] of {aggType}[{aggId}] success"
-        | err -> failwith <| err.GetReason()
-
     let agent =
         (fun (inbox: MailboxProcessor<Msg>) ->
             let rec loop (cache: Dictionary<Guid, DateTime * Result<unit, exn>>) =
@@ -63,16 +66,22 @@ type Sender<'agg when 'agg :> Aggregate>
                             todo.Post <| Remove(comId, snd cache[comId])
                         else
                             try
-                                let aId = aggId.ToByteArray()
-                                let h = Headers()
-                                let msg = Message<byte array, byte array>(Key = aId, Value = comData, Headers = h)
-                                msg.Headers.Add("comId", comId.ToByteArray())
-                                msg.Headers.Add("comType", Encoding.ASCII.GetBytes comType)
-                                cp.Produce(topic, msg, delivery aggId comType comId)
+                                let metadata =
+                                    $"{{\"$correlationId\":\"{aggId}\"}}"
+                                    |> Encoding.ASCII.GetBytes
+                                    |> ReadOnlyMemory
+                                    |> Nullable
+
+                                let data = EventData(Uuid.FromGuid comId, comType, comData, metadata)
+
+                                client.AppendToStreamAsync(aggType, StreamState.Any, [ data ])
+                                |> Async.AwaitTask
+                                |> Async.RunSynchronously
+                                |> ignore
                             with ex ->
                                 let ex = WriteException("Send command failed", ex)
                                 logger.LogError(ex, $"Send {comType}[{comId}] of {aggType}[{aggId}] failed")
-                                todo.Post <| Remove(comId, Core.Error ex)
+                                todo.Post <| Remove(comId, Error ex)
                     | Receive(comId, result) ->
                         todo.Post <| Remove(comId, result)
                         let expire = DateTime.UtcNow.AddMilliseconds interval
@@ -90,23 +99,37 @@ type Sender<'agg when 'agg :> Aggregate>
          , cts.Token)
         |> MailboxProcessor<Msg>.Start
 
-    let consumer =
-        async {
-            while true do
-                try
-                    match tc.Consume cts.Token with
-                    | null -> ()
-                    | cr ->
-                        let comId = Guid(cr.Message.Headers.GetLastBytes "comId")
+    let subscribe =
+        task {
+            try
+                let! _ = sub.GetInfoToStreamAsync(stream, group)
+                ()
+            with _ ->
+                let settings = PersistentSubscriptionSettings true
+                do! sub.CreateToStreamAsync(stream, group, settings)
 
-                        match Encoding.ASCII.GetString(cr.Message.Headers.GetLastBytes "evtType") with
-                        | "Fail" ->
-                            let err = JsonSerializer.Deserialize cr.Message.Value
-                            let ex = Exception $"Handle command failed: {err}"
-                            agent.Post <| Receive(comId, Core.Error ex)
-                        | _ -> agent.Post <| Receive(comId, Ok())
-                with ex ->
-                    logger.LogError(ex, $"Apply command error")
+            use sub = sub.SubscribeToStream(stream, group, cancellationToken = cts.Token)
+            use e = sub.Messages.GetAsyncEnumerator()
+
+            while! e.MoveNextAsync() do
+                match e.Current with
+                | :? PersistentSubscriptionMessage.Event as ev ->
+                    match ev.ResolvedEvent.Event.EventType with
+                    | "Fail" ->
+                        let comId = ev.ResolvedEvent.Event.EventId.ToGuid()
+                        let err = JsonSerializer.Deserialize<string> ev.ResolvedEvent.Event.Data.Span
+                        logger.LogError $"{comId} of {aggType} failed: {err}"
+                        agent.Post <| Receive(comId, Error(failwith $"Apply command failed: {err}"))
+                        do! sub.Ack ev.ResolvedEvent
+                    | _ ->
+                        let comId = ev.ResolvedEvent.Event.EventId.ToGuid()
+                        logger.LogInformation $"{comId} of {aggType} finished"
+                        agent.Post <| Receive(comId, Ok())
+                        do! sub.Ack ev.ResolvedEvent
+                | :? PersistentSubscriptionMessage.SubscriptionConfirmation as confirm ->
+                    logger.LogInformation $"Subscription {confirm.SubscriptionId} for {stream} started"
+                | :? PersistentSubscriptionMessage.NotFound -> logger.LogError "Stream was not found"
+                | _ -> logger.LogError "Unknown error"
         }
 
     let refresh =
@@ -116,10 +139,9 @@ type Sender<'agg when 'agg :> Aggregate>
         }
 
     do
-        tc.Subscribe aggType
+        agent.Start()
         Async.Start(refresh, cts.Token)
-        Async.Start(consumer, cts.Token)
-        logger.LogInformation $"Subscription for {aggType} started"
+        subscribe.Start()
 
     interface ISender<'agg> with
         member val send =

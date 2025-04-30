@@ -10,7 +10,7 @@
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\EventStore\EventStore.fsproj" />
+    <ProjectReference Include="..\..\src\Kurrent\Kurrent.fsproj" />
     <ProjectReference Include="..\Account.Application\Account.Application.fsproj" />
   </ItemGroup>
   <ItemGroup>

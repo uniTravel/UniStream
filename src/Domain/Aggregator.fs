@@ -71,7 +71,7 @@ module Aggregator =
             aor
             |> List.iter (fun id ->
                 if repository.ContainsKey id then
-                    repository.Remove(id) |> ignore)
+                    repository.Remove id |> ignore)
 
             cor |> List.iter (fun id -> ch.Remove id |> ignore)
             aol, col
