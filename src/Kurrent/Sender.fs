@@ -138,10 +138,7 @@ type Sender<'agg when 'agg :> Aggregate>
             agent.Post <| Refresh DateTime.UtcNow
         }
 
-    do
-        agent.Start()
-        Async.Start(refresh, cts.Token)
-        subscribe.Start()
+    do Async.Start(refresh, cts.Token)
 
     interface ISender<'agg> with
         member val send =

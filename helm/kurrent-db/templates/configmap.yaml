@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "kurrent.fullname" $ }}-config
+data:
+  KURRENTDB_CLUSTER_SIZE: "{{ .Values.replicaCount }}"
+  KURRENTDB_RUN_PROJECTIONS: "All"
+  KURRENTDB_ENABLE_ATOM_PUB_OVER_HTTP: "true"
+  KURRENTDB_CLUSTER_DNS: {{ template "kurrent.fullname" . }}-headless
+  KURRENTDB_TRUSTED_ROOT_CERTIFICATES_PATH: "/etc/kurrent/ca"
+  KURRENTDB_CERTIFICATE_FILE: "/etc/kurrent/certs/node.crt"
+  KURRENTDB_CERTIFICATE_PRIVATE_KEY_FILE: "/etc/kurrent/certs/node.key"

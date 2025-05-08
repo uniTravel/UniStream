@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "kurrent-account.fullname" . }}-subscriber
+  labels:
+    {{- include "kurrent-account.labels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.component.subscriber }}
+    app.kubernetes.io/part-of: {{ include "kurrent-account.fullname" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "kurrent-account.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: {{ .Values.component.subscriber }}
+  serviceName: {{ include "kurrent-account.fullname" . }}-headless
+  template:
+    metadata:
+      labels:
+        {{- include "kurrent-account.labels" . | nindent 8 }}
+        app.kubernetes.io/component: {{ .Values.component.subscriber }}
+        app.kubernetes.io/part-of: {{ include "kurrent-account.fullname" . }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: kurrent-subscriber:latest
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["bash", "-c"]
+          args:
+            - |
+              export KURRENT__HOSTNAME="${HOSTNAME}"
+              exec dotnet Account.Subscriber.dll "$@"
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

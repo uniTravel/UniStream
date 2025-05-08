@@ -51,7 +51,6 @@ tolerations: []
 affinity: {}
 
 component:
-  initializer: "initializer"
   sender: "sender"
   subscriber: "subscriber"
   projector: "projector"

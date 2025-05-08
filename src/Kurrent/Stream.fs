@@ -41,23 +41,27 @@ type Stream<'agg when 'agg :> Aggregate>(logger: ILogger<Stream<'agg>>, client: 
 
     let restore (ch: HashSet<Guid>) (latest: int) =
         task {
-            let targetTime = DateTime.UtcNow.AddMinutes -latest
-            let stream = "$ce-" + aggType
-            let r = client.ReadStreamAsync(Direction.Backwards, stream, StreamPosition.End)
-            use e = r.GetAsyncEnumerator()
-            let mutable hasNext = true
-            let mutable shoudRun = true
-            let! moved = e.MoveNextAsync()
-            hasNext <- moved
-
-            while hasNext && shoudRun do
-                e.Current.Event.EventId.ToGuid() |> ch.Add |> ignore
-                shoudRun <- e.Current.Event.Created > targetTime
+            try
+                let targetTime = DateTime.UtcNow.AddMinutes -latest
+                let stream = "$ce-" + aggType
+                let r = client.ReadStreamAsync(Direction.Backwards, stream, StreamPosition.End)
+                use e = r.GetAsyncEnumerator()
+                let mutable hasNext = true
+                let mutable shoudRun = true
                 let! moved = e.MoveNextAsync()
                 hasNext <- moved
 
-            logger.LogInformation $"{ch.Count} comId of {aggType} cached"
-            return List.ofSeq ch
+                while hasNext && shoudRun do
+                    e.Current.Event.EventId.ToGuid() |> ch.Add |> ignore
+                    shoudRun <- e.Current.Event.Created > targetTime
+                    let! moved = e.MoveNextAsync()
+                    hasNext <- moved
+
+                logger.LogInformation $"{ch.Count} comId of {aggType} cached"
+                return List.ofSeq ch
+            with :? StreamNotFoundException as ex ->
+                logger.LogWarning $"{ex.Message}"
+                return []
         }
         |> Async.AwaitTask
         |> Async.RunSynchronously

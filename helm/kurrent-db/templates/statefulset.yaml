@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "kurrent.fullname" . }}
+  labels:
+    {{- include "kurrent.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "kurrent.selectorLabels" . | nindent 6 }}
+  serviceName: {{ include "kurrent.fullname" . }}-headless
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "kurrent.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        - name: init-certs
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          image: ghcr.io/eventstore/es-gencert-cli
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["bash", "-c"]
+          args:
+            - |
+              set -ex
+              CERT_DIR=/etc/kurrent/certs
+              mkdir -p ${CERT_DIR}
+              es-gencert-cli create-node \
+                --out ${CERT_DIR} \
+                --ca-certificate /etc/kurrent/ca/ca.crt \
+                --ca-key /etc/kurrent/ca/ca.key \
+                --ip-addresses 127.0.0.1,$(hostname -i) \
+                --dns-names localhost,$(hostname).kurrent-headless.default.svc.cluster.local
+              find ${CERT_DIR} -type f -print0 | xargs -0 chmod 644
+          volumeMounts:
+            - name: ca
+              mountPath: /etc/kurrent/ca
+            - name: certs
+              mountPath: /etc/kurrent/certs
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "kurrent.fullname" . }}-config
+          ports:
+            - containerPort: 2113
+              name: http
+            - containerPort: 1112
+              name: tcp
+          livenessProbe:
+            httpGet:
+              scheme: HTTPS
+              path: /health/live
+              port: 2113
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 5
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: ca
+              mountPath: /etc/kurrent/ca
+            - name: certs
+              mountPath: /etc/kurrent/certs
+      volumes:
+        - name: ca
+          secret:
+            secretName: root-ca
+        - name: certs
+          emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
