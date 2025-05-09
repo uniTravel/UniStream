@@ -17,6 +17,7 @@ module Program =
         let builder = WebApplication.CreateBuilder args
 
         builder.Services.AddControllers()
+        builder.Services.AddOpenApi()
         builder.Services.AddSender builder.Configuration
 
         builder.Services.AddSender<Account> builder.Configuration
@@ -28,6 +29,9 @@ module Program =
             let services = scope.ServiceProvider
             services.GetRequiredService<ISender<Account>>()
             services.GetRequiredService<ISender<Transaction>>())
+
+        app.MapOpenApi()
+        app.UseSwaggerUI(fun options -> options.SwaggerEndpoint("/openapi/v1.json", "v1"))
 
         app.UseHttpsRedirection()
 
