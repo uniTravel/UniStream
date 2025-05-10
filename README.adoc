@@ -16,11 +16,11 @@
 
 == 环境
 目标框架::
-* .NET 8
+* .NET 9
 开发语言::
 * F#
 IDE::
 * Visual Studio Code
 第三方依赖::
-* https://eventstore.org/[Event Store]: 用于流存储的EventStore实现。
+* https://www.kurrent.io/[Kurrent]: 用于流存储的Kurrent实现。
 * https://kafka.apache.org/[Kafka]: 用于流存储的Kafka实现。

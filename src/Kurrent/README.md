@@ -1,13 +1,13 @@
 # 简介
 
-流式技术的 Kafka 实现。
+流式技术的 KurrentDB 实现。
 
-> Apache Kafka 是一个开源的流处理平台，由 LinkedIn 开发并贡献给 Apache 软件基金会，现在已经成为一个顶级项目。Kafka 主要设计用于构建实时数据管道和流应用，它能够以高吞吐量、低延迟的方式处理大量数据流。
+> KurrentDB 是一款专为事件溯源 (Event Sourcing) 设计的数据库系统。它主要专注于存储和管理事件流，这使其非常适合那些需要保留完整历史记录和能够重播事件以重建系统状态的应用场景。KurrentDB 被设计用于高吞吐量、低延迟的环境，并且能够保证数据的持久性和一致性。
 
 
 # 主要功能
 
-* 管理 Kafka 相关配置。
+* 管理 Kurrent 相关配置。
 * 分布式聚合器的命令发送者、命令订阅者实现。
 
 
@@ -30,7 +30,6 @@ open UniStream.Domain
 open Account.Domain
 open Account.Application
 
-
 module Program =
 
     [<EntryPoint>]
@@ -51,8 +50,14 @@ module Program =
             .AddSingleton<TransactionService>()
         |> ignore
 
-        builder.Build().Run()
+        let app = builder.Build()
 
+        using (app.Services.CreateScope()) (fun scope ->
+            let services = scope.ServiceProvider
+            services.GetRequiredService<AccountService>() |> ignore
+            services.GetRequiredService<TransactionService>() |> ignore)
+
+        app.Run()
         0 // exit code
 ```
 
@@ -70,24 +75,20 @@ open Account.Application
 
 
 type TransactionWorker
-    (
-        logger: ILogger<TransactionWorker>,
-        subscriber: ISubscriber<Transaction>,
-        producer: IProducer<Transaction>,
-        svc: TransactionService
-    ) =
+    (logger: ILogger<TransactionWorker>, client: IClient, subscriber: ISubscriber<Transaction>, svc: TransactionService)
+    =
     inherit BackgroundService()
 
     override _.ExecuteAsync(ct: CancellationToken) =
-        Handler.register subscriber logger producer ct svc.InitPeriod
-        Handler.register subscriber logger producer ct svc.OpenPeriod
-        Handler.register subscriber logger producer ct svc.SetLimit
-        Handler.register subscriber logger producer ct svc.ChangeLimit
-        Handler.register subscriber logger producer ct svc.SetTransLimit
-        Handler.register subscriber logger producer ct svc.Deposit
-        Handler.register subscriber logger producer ct svc.Withdraw
-        Handler.register subscriber logger producer ct svc.TransferOut
-        Handler.register subscriber logger producer ct svc.TransferIn
+        Handler.register subscriber logger client ct svc.InitPeriod
+        Handler.register subscriber logger client ct svc.OpenPeriod
+        Handler.register subscriber logger client ct svc.SetLimit
+        Handler.register subscriber logger client ct svc.ChangeLimit
+        Handler.register subscriber logger client ct svc.SetTransLimit
+        Handler.register subscriber logger client ct svc.Deposit
+        Handler.register subscriber logger client ct svc.Withdraw
+        Handler.register subscriber logger client ct svc.TransferOut
+        Handler.register subscriber logger client ct svc.TransferIn
         subscriber.Launch ct
 ```
 
@@ -101,8 +102,11 @@ type TransactionWorker
       "Microsoft.Hosting.Lifetime": "Information"
     }
   },
-  "Kafka": {
-    "Bootstrap": "kafka-0.kafka-headless.default.svc.cluster.local:9092,kafka-1.kafka-headless.default.svc.cluster.local:9092,kafka-2.kafka-headless.default.svc.cluster.local:9092"
+  "Kurrent": {
+    "User": "admin",
+    "Pass": "changeit",
+    "Host": "kurrent-0.kurrent-headless.default.svc.cluster.local:2113,kurrent-1.kurrent-headless.default.svc.cluster.local:2113,kurrent-2.kurrent-headless.default.svc.cluster.local:2113",
+    "VerifyCert": false
   },
   "Aggregate": {
     "Account": {
@@ -277,8 +281,21 @@ type TransactionController(logger: ILogger<TransactionController>, sender: ISend
       "Microsoft.AspNetCore": "Warning"
     }
   },
-  "Kafka": {
-    "Bootstrap": "kafka-0.kafka-headless.default.svc.cluster.local:9092,kafka-1.kafka-headless.default.svc.cluster.local:9092,kafka-2.kafka-headless.default.svc.cluster.local:9092"
+  "Kurrent": {
+    "User": "admin",
+    "Pass": "changeit",
+    "Host": "kurrent-0.kurrent-headless.default.svc.cluster.local:2113,kurrent-1.kurrent-headless.default.svc.cluster.local:2113,kurrent-2.kurrent-headless.default.svc.cluster.local:2113",
+    "VerifyCert": false
+  },
+  "Aggregate": {
+    "Account": {
+      "Capacity": 10000,
+      "Multiple": 3
+    },
+    "Transaction": {
+      "Capacity": 10000,
+      "Multiple": 3
+    }
   },
   "Command": {
     "Interval": 15
@@ -290,7 +307,5 @@ type TransactionController(logger: ILogger<TransactionController>, sender: ISend
 
 # 其他注意事项
 
-* 需要预先运行投影程序 (后台任务)。
-* 命令发送者每个节点独立聚合类型消费组。
-* 命令订阅者每个节点独立聚合类型消费组。
-* 投影程序多节点共享聚合类型消费组。
+* 命令发送者每个节点独立聚合类型持久订阅。
+* 命令订阅者多节点共享命令类型持久订阅。

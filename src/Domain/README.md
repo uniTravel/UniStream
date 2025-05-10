@@ -49,17 +49,62 @@ type Account(id) =
     member val Approved = false with get, set
 ```
 
+### 创建事件类型
+
+```f#
+namespace Account.Domain
+
+open System
+
+
+type AccountCreated =
+    { Owner: string }
+
+    member me.Apply(agg: Account) = agg.Owner <- me.Owner
+
+
+type AccountVerified =
+    { VerifiedBy: string
+      Verified: bool
+      Conclusion: bool }
+
+    member me.Apply(agg: Account) =
+        agg.VerifiedBy <- me.VerifiedBy
+        agg.Verified <- me.Verified
+        agg.VerifyConclusion <- me.Conclusion
+
+
+type AccountLimited =
+    { AccountId: Guid
+      Limit: decimal }
+
+    member me.Apply(agg: Account) = agg.Limit <- me.Limit
+
+
+type AccountApproved =
+    { AccountId: Guid
+      ApprovedBy: string
+      Approved: bool
+      Limit: decimal }
+
+    member me.Apply(agg: Account) =
+        agg.ApprovedBy <- me.ApprovedBy
+        agg.Approved <- me.Approved
+        agg.Limit <- me.Limit
+```
+
 ### 创建命令类型
 
 ```f#
 namespace Account.Domain
 
 open System.ComponentModel.DataAnnotations
+open UniStream.Domain
 
 
 type CreateAccount() =
 
-    [<Required>]
+    [<Required(ErrorMessage = ValidateError.owner)>]
     member val Owner = "" with get, set
 
     member me.Validate(agg: Account) = ()
@@ -69,16 +114,15 @@ type CreateAccount() =
 
 type VerifyAccount() =
 
-    [<Required>]
+    [<Required(ErrorMessage = ValidateError.verifiedBy)>]
     member val VerifiedBy = "" with get, set
 
-    [<Required>]
     member val Conclusion = false with get, set
 
     member me.Validate(agg: Account) =
         if agg.Verified then
             let conclusion = if agg.VerifyConclusion then "审核通过" else "审核未通过"
-            raise <| ValidateError $"已经审核，结论为：{conclusion}"
+            raise <| ValidateException $"已经审核，结论为：{conclusion}"
 
     member me.Execute(agg: Account) =
         { VerifiedBy = me.VerifiedBy
@@ -88,18 +132,16 @@ type VerifyAccount() =
 
 type LimitAccount() =
 
-    [<Required>]
+    [<Range(typeof<decimal>, "100", "100000", ErrorMessage = ValidateError.limit)>]
+    [<RegularExpression(@"^\d+(\.\d{1,2})?$", ErrorMessage = ValidateError.money)>]
     member val Limit = 0.0m with get, set
 
     member me.Validate(agg: Account) =
         if not agg.Approved then
-            raise <| ValidateError "账户未批准"
+            raise <| ValidateException "账户未批准"
 
         if me.Limit = agg.Limit then
-            raise <| ValidateError "限额与原先一致"
-
-        if me.Limit <= 0m then
-            raise <| ValidateError "限额必须大于零"
+            raise <| ValidateException "限额与原先一致"
 
     member me.Execute(agg: Account) =
         { AccountId = agg.Id; Limit = me.Limit }
@@ -107,27 +149,29 @@ type LimitAccount() =
 
 type ApproveAccount() =
 
-    [<Required>]
+    [<Required(ErrorMessage = ValidateError.approvedBy)>]
     member val ApprovedBy = "" with get, set
 
-    [<Required>]
     member val Approved = false with get, set
 
-    [<Required>]
+    [<Range(typeof<decimal>, "100", "100000", ErrorMessage = ValidateError.limit)>]
+    [<RegularExpression(@"^\d+(\.\d{1,2})?$", ErrorMessage = ValidateError.money)>]
     member val Limit = 0m with get, set
 
     member me.Validate(agg: Account) =
         if not agg.VerifyConclusion then
-            raise <| ValidateError "未审核通过"
-
-        if me.Approved && me.Limit <= 0m then
-            raise <| ValidateError "批准的账户，限额必须大于零"
+            raise <| ValidateException "未审核通过"
 
     member me.Execute(agg: Account) =
         { AccountId = agg.Id
           ApprovedBy = me.ApprovedBy
           Approved = me.Approved
           Limit = if me.Approved then me.Limit else 0m }
+
+    interface IValidatableObject with
+        member me.Validate(validationContext: ValidationContext) =
+            [ if me.Approved && me.Limit <= 0m then
+                  yield ValidationResult ValidateError.approvedLimit ]
 ```
 
 ### 创建应用服务
@@ -135,6 +179,8 @@ type ApproveAccount() =
 ```f#
 namespace Account.Application
 
+open System
+open System.Threading
 open Microsoft.Extensions.Options
 open UniStream.Domain
 open Account.Domain
@@ -142,7 +188,9 @@ open Account.Domain
 
 type AccountService(stream: IStream<Account>, options: IOptionsMonitor<AggregateOptions>) =
     let options = options.Get(nameof Account)
-    let agent = Aggregator.init Account stream options
+    let cts = new CancellationTokenSource()
+    let agent = Aggregator.init Account cts.Token stream options
+    let mutable dispose = false
 
     do
         Aggregator.register agent <| Replay<Account, AccountCreated>()
@@ -155,7 +203,7 @@ type AccountService(stream: IStream<Account>, options: IOptionsMonitor<Aggregate
     /// <param name="aggId">聚合ID。</param>
     /// <param name="comId">命令ID。</param>
     /// <param name="com">命令。</param>
-    /// <returns>新账户</returns>
+    /// <returns>命令执行结果</returns>
     member _.CreateAccount aggId comId com =
         Aggregator.create<Account, CreateAccount, AccountCreated> agent aggId comId com
 
@@ -164,7 +212,7 @@ type AccountService(stream: IStream<Account>, options: IOptionsMonitor<Aggregate
     /// <param name="aggId">聚合ID。</param>
     /// <param name="comId">命令ID。</param>
     /// <param name="com">命令。</param>
-    /// <returns>账户</returns>
+    /// <returns>命令执行结果</returns>
     member _.VerifyAccount aggId comId com =
         Aggregator.apply<Account, VerifyAccount, AccountVerified> agent aggId comId com
 
@@ -173,7 +221,7 @@ type AccountService(stream: IStream<Account>, options: IOptionsMonitor<Aggregate
     /// <param name="aggId">聚合ID。</param>
     /// <param name="comId">命令ID。</param>
     /// <param name="com">命令。</param>
-    /// <returns>账户</returns>
+    /// <returns>命令执行结果</returns>
     member _.ApproveAccount aggId comId com =
         Aggregator.apply<Account, ApproveAccount, AccountApproved> agent aggId comId com
 
@@ -182,7 +230,20 @@ type AccountService(stream: IStream<Account>, options: IOptionsMonitor<Aggregate
     /// <param name="aggId">聚合ID。</param>
     /// <param name="comId">命令ID。</param>
     /// <param name="com">命令。</param>
-    /// <returns>账户</returns>
+    /// <returns>命令执行结果</returns>
     member _.LimitAccount aggId comId com =
         Aggregator.apply<Account, LimitAccount, AccountLimited> agent aggId comId com
+
+    /// <summary>获取账户聚合
+    /// </summary>
+    /// <param name="aggId">聚合ID。</param>
+    /// <returns>账户聚合</returns>
+    member internal _.Get aggId = Aggregator.get<Account> agent aggId
+
+    interface IDisposable with
+        member _.Dispose() =
+            if not dispose then
+                cts.Cancel()
+                agent.Dispose()
+                dispose <- true
 ```
