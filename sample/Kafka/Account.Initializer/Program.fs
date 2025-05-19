@@ -1,5 +1,6 @@
 namespace Account.Initializer
 
+open System
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Options
@@ -10,6 +11,11 @@ open Account.Domain
 
 
 module Program =
+
+    let getEnv (key: string) =
+        match Environment.GetEnvironmentVariable key with
+        | null -> None
+        | value -> Some value
 
     [<EntryPoint>]
     let main args =
@@ -22,13 +28,14 @@ module Program =
         let services = serviceScope.ServiceProvider
         let options = services.GetRequiredService<IOptions<AdminClientConfig>>()
         let cfg = options.Value
+        let partitions = getEnv "PARTITIONS" |> Option.defaultValue "3"
         use admin = AdminClientBuilder(cfg).Build()
 
         let ta =
             [ typeof<Account>; typeof<Transaction> ]
             |> List.collect (fun t ->
-                [ TopicSpecification(Name = t.FullName, NumPartitions = 3)
-                  TopicSpecification(Name = t.FullName + "_Command", NumPartitions = 3) ])
+                [ TopicSpecification(Name = t.FullName, NumPartitions = int partitions)
+                  TopicSpecification(Name = t.FullName + "_Command", NumPartitions = int partitions) ])
 
         try
             admin.CreateTopicsAsync(ta).Wait()

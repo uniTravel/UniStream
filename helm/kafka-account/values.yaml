@@ -50,6 +50,8 @@ tolerations: []
 
 affinity: {}
 
+partitions: 6
+
 component:
   sender: "sender"
   subscriber: "subscriber"

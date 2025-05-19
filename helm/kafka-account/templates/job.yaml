@@ -18,4 +18,7 @@ spec:
         - name: kafka-init
           image: kafka-init:latest
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: PARTITIONS
+              value: {{ .Values.partitions | quote }}
       restartPolicy: Never
