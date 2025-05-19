@@ -10,4 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Account.Domain\Account.Domain.fsproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
 </Project>

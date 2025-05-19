@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <UserSecretsId>de33a9d3-1147-4763-a2f9-9ae1c5bb8090</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Controllers\AccountContraller.fs" />
@@ -13,7 +12,8 @@
     <ProjectReference Include="..\..\Account.Command\Account.Command.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.4" />
-    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUi" Version="8.1.1" />
+    <PackageReference Include="FSharp.Core" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUi" />
   </ItemGroup>
 </Project>

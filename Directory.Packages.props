@@ -1,0 +1,22 @@
+<Project>
+    <PropertyGroup>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageVersion Include="FSharp.Core" Version="9.0.300" />
+        <PackageVersion Include="MinVer" Version="6.0.0" />
+        <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.5" />
+        <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.5" />
+        <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions"
+            Version="9.0.5" />
+        <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.5" />
+        <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="9.0.5" />
+        <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUi" Version="8.1.1" />
+        <PackageVersion Include="Expecto" Version="10.2.3" />
+        <PackageVersion Include="Expecto.FsCheck" Version="10.2.3" />
+        <PackageVersion Include="Confluent.Kafka" Version="2.10.0" />
+        <PackageVersion Include="EventStore.Client.Grpc.PersistentSubscriptions" Version="23.3.9" />
+        <PackageVersion Include="EventStore.Client.Grpc.ProjectionManagement" Version="23.3.9" />
+        <PackageVersion Include="EventStore.Client.Grpc.Streams" Version="23.3.9" />
+    </ItemGroup>
+</Project>

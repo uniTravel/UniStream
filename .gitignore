@@ -5,7 +5,7 @@
 
 certs/
 /kafka/
-*.rest
+Api.Tests/
 
 # User-specific files
 *.rsuser

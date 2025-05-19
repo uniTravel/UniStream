@@ -29,10 +29,11 @@
     <ProjectReference Include="..\Infrastructure\Infrastructure.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="EventStore.Client.Grpc.PersistentSubscriptions" Version="23.3.8" />
-    <PackageReference Include="EventStore.Client.Grpc.ProjectionManagement" Version="23.3.8" />
-    <PackageReference Include="EventStore.Client.Grpc.Streams" Version="23.3.8" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.4" />
-    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.4" />
+    <PackageReference Include="FSharp.Core" />
+    <PackageReference Include="EventStore.Client.Grpc.PersistentSubscriptions" />
+    <PackageReference Include="EventStore.Client.Grpc.ProjectionManagement" />
+    <PackageReference Include="EventStore.Client.Grpc.Streams" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
   </ItemGroup>
 </Project>

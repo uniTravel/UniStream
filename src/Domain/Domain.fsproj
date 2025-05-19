@@ -15,4 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Infrastructure\Infrastructure.fsproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" />
+  </ItemGroup>
 </Project>
